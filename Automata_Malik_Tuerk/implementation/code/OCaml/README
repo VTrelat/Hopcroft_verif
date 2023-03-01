@@ -1,0 +1,13 @@
+Automata_Minimise_Test runs Hopcroft's algorithm benchmarks.
+The implementation of CAVA is run against Manuel Baclet and Clair Pagetti's 
+implementation (see Around Hopcroft's Algorithm).
+
+Parameters:
+ - number of tests
+ - no states in nondetermistic automata
+ - no of labels
+ - density of transition relation (float)
+
+Example:
+
+./Automata_Minimise_Test.native 1 120 2 .8
