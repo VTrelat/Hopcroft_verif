@@ -1,0 +1,56 @@
+The Isabelle theories in this package provide a formal development of
+some essential elements of the theory of omega-automata, i.e. finite
+automata that operate on infinite words, in the proof assistant
+Isabelle/HOL.
+
+- Preliminaries.thy: miscellaneous lemmas about HOL structures that
+  could at some point be integrated in the appropriate HOL theory.
+
+- Words.thy: (finite and) infinite words, and various operations on
+  them such as concatenation and omega-iteration.
+
+- Dags.thy: a formalization of omega-dags, used to represent run dags
+  of omega-automata.
+
+- NDTable.thy: non-deterministic transition systems, their (finite and
+  infinite) executions and run dags.
+
+- Buchi.thy: Buchi automata, their languages, closure under union.
+
+- GBuchi.thy: generalized Buchi automata, closure under intersection
+  (for ordinary and generalized Buchi automata), simulation between
+  ordinary and generalized Buchi automata.
+
+- BuchiComplement.thy: complementation of Buchi automata, via the
+  Kupferman-Vardi proof.
+
+The development relies on the theories Infinite_Set and Parity that
+are part of the Isabelle distribution (inside HOL/Library), but not
+included in HOL/Main.thy.
+
+Use a command such as 
+
+  isatool usedir -d pdf -s Automata HOL isa-automata
+
+(from the parent directory) to produce a human-readable document from
+these theories. Assuming default settings, the document will appear in
+~/isabelle/browser_info/HOL/Automata.
+
+----------------------------------------------------------------------
+
+The subdirectory WAA contains an older development of weak alternating
+automata (including closure under complementation and their link with
+propositional temporal logic), which could eventually be integrated
+into the development of the main theories.
+
+----------------------------------------------------------------------
+
+The theories are distributed under the BSD license. Contributions,
+questions and suggestions are very welcome. Please contact the main
+author:
+
+Stephan Merz
+INRIA Nancy
+Nancy, France
+
+Stephan.Merz@inria.fr
