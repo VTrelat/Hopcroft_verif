@@ -1,0 +1,30 @@
+## targets
+
+default: Automata_Malik_Tuerk
+test: Automata_Malik_Tuerk
+images: 
+
+all: images test
+
+
+## global settings
+
+SRC = $(ISABELLE_HOME)/src
+OUT = $(ISABELLE_OUTPUT)
+LOG = $(OUT)/log
+
+USEDIR = $(ISABELLE_TOOL) usedir -v true -i true -d pdf -D generated
+
+
+## Automata_Malik_Tuerk
+
+Automata_Malik_Tuerk: $(LOG)/HOL-Automata_Malik_Tuerk.gz
+
+$(LOG)/HOL-Automata_Malik_Tuerk.gz: ## ROOT.ML document/root.tex *.thy
+	@cd ..; $(USEDIR) HOL-Cava-Libs Automata_Malik_Tuerk
+
+
+## clean
+
+clean:
+	@rm -f $(LOG)/HOL-Automata_Malik_Tuerk.gz
