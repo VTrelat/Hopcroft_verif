@@ -1,0 +1,3 @@
+#!/bin/sh
+
+isabelle usedir -b HOL-Cava-Libs HOL-Cava-LTS-Impl
