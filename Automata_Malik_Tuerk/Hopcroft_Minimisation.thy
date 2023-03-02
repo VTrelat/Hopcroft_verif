@@ -8,6 +8,7 @@ theory Hopcroft_Minimisation
   imports Main DFA
         "../Collections/ICF/Collections"
         "../Nested_Multisets_Ordinals/Multiset_more"
+        "../Partition"
 begin
 
 text \<open> In this theory, Hopcroft's minimisation algorithm [see
@@ -728,7 +729,7 @@ proof (rule ccontr)
     unfolding is_weak2_language_equiv_set_def
       by metis
 
-  def counter_P \<equiv> "\<lambda>(q1, q2, p, w).
+    define counter_P where "counter_P \<equiv> \<lambda>(q1, q2, p, w).
         (p \<in> P \<and> q1 \<in> p \<and> q2 \<in> p \<and>
         ((w \<in> \<L>_in_state \<A> q1) \<noteq> (w \<in> \<L>_in_state \<A> q2)))"
 
@@ -811,7 +812,7 @@ shows "P = Myhill_Nerode_partition \<A>"
 proof (rule ccontr)
   assume not_strong_part: "P \<noteq> Myhill_Nerode_partition \<A>"
 
-  def counter_P \<equiv> "\<lambda>(q1, q2, p, w).
+  define counter_P where "counter_P \<equiv> \<lambda>(q1, q2, p, w).
         (p \<in> P \<and> q1 \<in> p \<and> q2 \<in> p \<and>
         ((w \<in> \<L>_in_state \<A> q1) \<noteq> (w \<in> \<L>_in_state \<A> q2)))"
 
@@ -975,7 +976,6 @@ next
   show "is_weak_language_equiv_partition \<A> (Hopcroft_accepting_partition \<A>)"
     by (rule is_weak_language_equiv_partition_init)
 next
-  case (goal3 P) 
   note weak_part_P = goal3(1)
   show ?case
     apply (intro refine_vcg)

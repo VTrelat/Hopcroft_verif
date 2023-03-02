@@ -2,14 +2,13 @@
     Authors:     Thomas Tuerk <tuerk@in.tum.de>
 *)
 
-section\<open>A nondeterministic while combinator\<close>
+section \<open> A nondeterministic while combinator \<close>
 
 theory Workset 
-imports Main "Collections/Refine_Dflt" "HOL-Library.Multiset"
+imports Main "Refine_Monadic/Refine_Monadic" "~~/src/HOL/Library/Multiset" Utils
 begin
 
 subsection \<open> Worklist algorithm \<close>
-
 text \<open>
 Peter Lammich's refinement framework provides tools to reason about 
 while loops. Let's use these tools to define worklist algorithms.
@@ -31,10 +30,10 @@ definition WHILE_variant_OK where
     wf r \<and> 
 
    \<comment>\<open>each step does not fail, decreases according to r and preserves the invariant\<close>
-   (\<forall>s. invar s \<and> cond s --> step s \<le> SPEC (\<lambda>s'. invar s' \<and> (s', s) \<in> r)))"
+   (\<forall>s. invar s \<and> cond s \<longrightarrow> step s \<le> SPEC (\<lambda>s'. invar s' \<and> (s', s) \<in> r)))"
 
 lemma WHILE_variant_OK_I [intro!] :
-  "[|wf r; !!s. [| cond s; invar s |] ==> step s \<le> SPEC (\<lambda>s'. invar s' \<and> (s', s) \<in> r)|] ==> 
+  "\<lbrakk>wf r; \<And>s. \<lbrakk> cond s; invar s \<rbrakk> \<Longrightarrow> step s \<le> SPEC (\<lambda>s'. invar s' \<and> (s', s) \<in> r)\<rbrakk> \<Longrightarrow> 
     WHILE_variant_OK cond step invar r"
 unfolding WHILE_variant_OK_def by blast 
 
@@ -43,14 +42,14 @@ definition WHILE_variant_exists where
    \<exists>r. WHILE_variant_OK cond step invar r"
 
 lemma WHILE_variant_exists_I [intro!] :
-  "WHILE_variant_OK cond step invar r ==> WHILE_variant_exists cond step invar"
+  "WHILE_variant_OK cond step invar r \<Longrightarrow> WHILE_variant_exists cond step invar"
 unfolding WHILE_variant_exists_def by blast 
 
 definition "WHILE_invar_OK cond step invar \<equiv>
-            (\<forall>s. (cond s \<and> invar s) --> step s \<le> SPEC invar)"
+            (\<forall>s. (cond s \<and> invar s) \<longrightarrow> step s \<le> SPEC invar)"
 
 lemma WHILE_invar_OK_I [intro!] :
-  "[|!!s. [| cond s; invar s |] ==> step s \<le> SPEC invar|] ==> WHILE_invar_OK cond step invar"
+  "\<lbrakk>\<And>s. \<lbrakk> cond s; invar s \<rbrakk> \<Longrightarrow> step s \<le> SPEC invar\<rbrakk> \<Longrightarrow> WHILE_invar_OK cond step invar"
 unfolding WHILE_invar_OK_def by blast 
 
 lemma WHILE_variant___invar_extract :
@@ -73,8 +72,8 @@ qed
 text \<open> Invariants can be combined ... \<close>
 
 lemma WHILE_invar_OK___combine :
-  "[|WHILE_invar_OK cond step invar1;
-    WHILE_invar_OK cond step invar2|] ==>
+  "\<lbrakk>WHILE_invar_OK cond step invar1;
+    WHILE_invar_OK cond step invar2\<rbrakk> \<Longrightarrow>
    WHILE_invar_OK cond step (\<lambda>s. invar1 s \<and> invar2 s)"
   unfolding WHILE_invar_OK_def
   by (auto simp: pw_le_iff refine_pw_simps)
@@ -82,8 +81,8 @@ lemma WHILE_invar_OK___combine :
 text \<open> ... and extended. \<close>
 
 lemma WHILE_invar_OK___extend :
-  "[|WHILE_invar_OK cond step invar1;
-    !!s. [| cond s; invar1 s; invar2 s |] ==> step s \<le> SPEC invar2|] ==>
+  "\<lbrakk>WHILE_invar_OK cond step invar1;
+    \<And>s. \<lbrakk> cond s; invar1 s; invar2 s \<rbrakk> \<Longrightarrow> step s \<le> SPEC invar2\<rbrakk> \<Longrightarrow>
    WHILE_invar_OK cond step (\<lambda>s. invar1 s \<and> invar2 s)"
 unfolding WHILE_invar_OK_def
   by (auto simp: pw_le_iff refine_pw_simps)
@@ -91,7 +90,7 @@ unfolding WHILE_invar_OK_def
 lemma WHILE_variant_OK___extend_invariant :
 assumes invar_OK: "WHILE_invar_OK cond step invar"
     and wf_r: "wf r"
-    and in_r: "!!s. [| cond s; invar s |] ==> step s \<le> SPEC (\<lambda>s'. (s', s) \<in> r)" 
+    and in_r: "\<And>s. \<lbrakk> cond s; invar s \<rbrakk> \<Longrightarrow> step s \<le> SPEC (\<lambda>s'. (s', s) \<in> r)" 
 shows "WHILE_variant_OK cond step invar r"
 proof 
   show "wf r" by fact
@@ -115,7 +114,7 @@ text \<open> Interface to WHILE rules using these definitions \<close>
 lemma WHILEI_rule_manual:
   assumes I0: "I x0"
   assumes IS: "WHILE_invar_OK b f I"
-  assumes II: "!!x. [| I x; \<not>b x |] ==> P x"
+  assumes II: "\<And>x. \<lbrakk> I x; \<not>b x \<rbrakk> \<Longrightarrow> P x"
   shows "WHILEI I b f x0 \<le> SPEC P"
   using assms
   unfolding WHILE_invar_OK_def
@@ -124,7 +123,7 @@ lemma WHILEI_rule_manual:
 lemma WHILEIT_rule_manual:
   assumes I0: "I x0"
   assumes IS: "WHILE_variant_exists b f I"
-  assumes II: "!!x. [| I x; \<not>b x |] ==> P x"
+  assumes II: "\<And>x. \<lbrakk> I x; \<not>b x \<rbrakk> \<Longrightarrow> P x"
   shows "WHILEIT I b f x0 \<le> SPEC P"
   proof -
     from IS [unfolded WHILE_variant_exists_def]
@@ -140,7 +139,7 @@ lemma WHILEIT_rule_manual:
 lemma WHILE_rule_manual:
   assumes I0: "I x0"
   assumes IS: "WHILE_invar_OK b f I"
-  assumes II: "!!x. [| I x; \<not>b x |] ==> P x"
+  assumes II: "\<And>x. \<lbrakk> I x; \<not>b x \<rbrakk> \<Longrightarrow> P x"
   shows "WHILE b f x0 \<le> SPEC P"
   using assms
   unfolding WHILE_invar_OK_def
@@ -149,7 +148,7 @@ lemma WHILE_rule_manual:
 lemma WHILET_rule_manual:
   assumes I0: "I x0"
   assumes IS: "WHILE_variant_exists b f I"
-  assumes II: "!!x. [| I x; \<not>b x |] ==> P x"
+  assumes II: "\<And>x. \<lbrakk> I x; \<not>b x \<rbrakk> \<Longrightarrow> P x"
   shows "WHILET b f x0 \<le> SPEC P"
   proof -
     from IS [unfolded WHILE_variant_exists_def]
@@ -171,28 +170,28 @@ definition WORKBAG_b where
   "WORKBAG_b b = (\<lambda>swb. snd swb \<noteq> {#} \<and> b (fst swb))"
 
 definition WORKBAG_f ::
- "('s => bool) => ('s => 'e => ('s \<times> 'e multiset) nres) => 
-   's \<times> 'e multiset => ('s \<times> 'e multiset) nres" where
+ "('s \<Rightarrow> bool) \<Rightarrow> ('s \<Rightarrow> 'e \<Rightarrow> ('s \<times> 'e multiset) nres) \<Rightarrow> 
+   's \<times> 'e multiset \<Rightarrow> ('s \<times> 'e multiset) nres" where
   "WORKBAG_f b f = (\<lambda>swb. do {
      ASSERT (WORKBAG_b b swb);
      e \<leftarrow> SPEC (\<lambda>e. e \<in># (snd swb)); 
      (s', N) \<leftarrow> f (fst swb) e;
      RETURN (s', workbag_update (snd swb) e N)})"
 
-definition WORKBAGI ("WORKBAGI_") where
-  "WORKBAGI \<Phi> b f swb0 \<equiv> 
+definition WORKBAGI ("WORKBAGI\<^bsup>_\<^esup>") where
+  "WORKBAGI \<Phi> b f swb0 = 
    WHILEI \<Phi> (WORKBAG_b b) (WORKBAG_f b f) swb0"
 
 definition WORKBAG where "WORKBAG \<equiv> WORKBAGI (\<lambda>_. True)"
 
-definition WORKBAGIT ("WORKBAGIT_") where 
+definition WORKBAGIT ("WORKBAGI\<^sub>T\<^bsup>_\<^esup>") where 
   "WORKBAGIT \<Phi> b f swb0 \<equiv> WHILEIT \<Phi> (WORKBAG_b b) (WORKBAG_f b f) swb0"
 
-definition WORKBAGT ("WORKBAGT") where "WORKBAGT \<equiv> WORKBAGIT (\<lambda>_. True)"
+definition WORKBAGT ("WORKBAG\<^sub>T") where "WORKBAG\<^sub>T \<equiv> WORKBAGIT (\<lambda>_. True)"
 
 definition WORKBAG_invar_OK where
   "WORKBAG_invar_OK cond step invar =
-   (\<forall>s wb e. invar (s, wb) \<and> e \<in># wb \<and> cond s -->
+   (\<forall>s wb e. invar (s, wb) \<and> e \<in># wb \<and> cond s \<longrightarrow>
              step s e \<le> SPEC (\<lambda>s'N. (invar (fst s'N, (workbag_update wb e (snd s'N))))))"
 
 lemma WORKBAG_invar_OK___lift_to_while :
@@ -202,12 +201,12 @@ proof
   fix swb
   assume cond: "WORKBAG_b cond swb"
      and invar: "invar swb"
-  obtain s wb where swb_eq[simp]: "swb = (s, wb)" by (rule PairE)
+  obtain s wb where swb_eq[simp]: "swb = (s, wb)" by fastforce
 
   from cond have wb_neq: "wb \<noteq> {#}" unfolding WORKBAG_b_def by simp
 
   from cond invar invar_OK 
-  have invar_OK': "!!e. e \<in># wb ==> step s e \<le> SPEC (\<lambda>s'N. invar (fst s'N, workbag_update wb e (snd s'N)))" 
+  have invar_OK': "\<And>e. e \<in># wb \<Longrightarrow> step s e \<le> SPEC (\<lambda>s'N. invar (fst s'N, workbag_update wb e (snd s'N)))" 
     unfolding WORKBAG_invar_OK_def WORKBAG_b_def by simp
 
   thus "WORKBAG_f cond step swb \<le> SPEC invar"
@@ -215,14 +214,14 @@ proof
     apply (intro refine_vcg)
     apply (rule cond)
     apply (simp add: wb_neq)[]
-    apply (simp add: split_beta)
+    apply (simp add: case_prod_beta')
   done
 qed
 
 definition WORKBAG_variant_OK where
   "WORKBAG_variant_OK cond step invar r \<equiv>
    (wf r \<and>
-   (\<forall>s wb e. (invar (s, wb) \<and> e \<in># wb \<and> cond s -->
+   (\<forall>s wb e. (invar (s, wb) \<and> e \<in># wb \<and> cond s \<longrightarrow>
      step s e \<le> SPEC (\<lambda>s'N. (invar (fst s'N, (workbag_update wb e (snd s'N)))) \<and>
       ((fst s'N, s) \<in> r \<or> (s'N = (s, {#})))))))"
 
@@ -231,42 +230,42 @@ definition WORKBAG_variant_exists where
    \<exists>r. WORKBAG_variant_OK cond step invar r"
 
 lemma WORKBAG_variant_OK___lift_to_while :
-fixes invar :: "'S \<times> 'e multiset => bool"
+fixes invar :: "'S \<times> 'e multiset \<Rightarrow> bool"
 assumes var_OK: "WORKBAG_variant_OK cond step invar r"
-shows "WHILE_variant_OK (WORKBAG_b cond) (WORKBAG_f cond step) invar (r <*lex*> mset_less_rel)"
+shows "WHILE_variant_OK (WORKBAG_b cond) (WORKBAG_f cond step) invar (r <*lex*> subset_mset_rel)"
 proof 
   { 
     from var_OK have "wf r" 
       unfolding WORKBAG_variant_OK_def
       by fast
-    with wf_mset_less_rel 
-    show "wf (r <*lex*> mset_less_rel)" by auto
+    with wf_subset_mset_rel
+    show "wf (r <*lex*> subset_mset_rel)" unfolding subset_mset_rel_def by blast
   }
 
   fix swb :: "'S \<times> 'e multiset"
-  obtain s wb where swb_eq[simp]: "swb = (s, wb)" by (rule PairE)
+  obtain s wb where swb_eq[simp]: "swb = (s, wb)" by fastforce
 
   assume invar_swb: "invar swb"
      and cond_swb: "WORKBAG_b cond swb"
 
-  from var_OK invar_swb cond_swb have var_OK': "!!e. e \<in># wb ==> 
+  from var_OK invar_swb cond_swb have var_OK': "\<And>e. e \<in># wb \<Longrightarrow> 
     step s e \<le> SPEC (\<lambda>s'N. invar (fst s'N, workbag_update wb e (snd s'N)) \<and>
              ((fst s'N, s) \<in> r \<or> s'N = (s, {#})))" 
     unfolding WORKBAG_b_def WORKBAG_variant_OK_def by simp
 
-  have spec_step: "!!e. e \<in># wb ==>
+  have spec_step: "\<And>e. e \<in># wb \<Longrightarrow>
         SPEC (\<lambda>s'N. invar (fst s'N, workbag_update wb e (snd s'N)) \<and>
              ((fst s'N, s) \<in> r \<or> s'N = (s, {#}))) \<le> 
         SPEC
            (\<lambda>xa. invar (fst xa, workbag_update wb e (snd xa)) \<and>
                  ((fst xa, s) \<in> r \<or>
                   fst xa = s \<and>
-                  (workbag_update wb e (snd xa), wb) \<in> mset_less_rel))"
-   by (auto simp add: subset_iff workbag_update_def mset_less_rel_def mset_less_diff_self)
+                  (workbag_update wb e (snd xa), wb) \<in> subset_mset_rel))"
+   by (auto simp add: subset_iff workbag_update_def subset_mset_rel_def mset_subset_diff_self)
 
   from cond_swb have "wb \<noteq> {#}" unfolding WORKBAG_b_def by simp
   with order_trans [OF var_OK' spec_step]
-  show "WORKBAG_f cond step swb \<le> SPEC (\<lambda>s'. invar s' \<and> (s', swb) \<in> r <*lex*> mset_less_rel)" 
+  show "WORKBAG_f cond step swb \<le> SPEC (\<lambda>s'. invar s' \<and> (s', swb) \<in> r <*lex*> subset_mset_rel)" 
     unfolding WORKBAG_f_def
     apply (intro refine_vcg cond_swb)
     apply (simp_all add: split_beta)
@@ -274,7 +273,7 @@ proof
 qed
 
 lemma WORKBAG_variant_exists___lift_to_while :
-"WORKBAG_variant_exists cond step invar ==>
+"WORKBAG_variant_exists cond step invar \<Longrightarrow>
  WHILE_variant_exists (WORKBAG_b cond) (WORKBAG_f cond step) invar"
 unfolding WORKBAG_variant_exists_def WHILE_variant_exists_def         
 by (metis WORKBAG_variant_OK___lift_to_while)
@@ -283,8 +282,8 @@ by (metis WORKBAG_variant_OK___lift_to_while)
 lemma WORKBAGI_rule_manual:
   assumes I0: "I (s0, wb0)"
   assumes IS: "WORKBAG_invar_OK b f I"
-  assumes II1: "!!s wb. [| I (s, wb); \<not>b s; wb \<noteq> {#} |] ==> P (s, wb)"
-  assumes II2: "!!s. I (s, {#}) ==> P (s, {#})"
+  assumes II1: "\<And>s wb. \<lbrakk> I (s, wb); \<not>b s; wb \<noteq> {#} \<rbrakk> \<Longrightarrow> P (s, wb)"
+  assumes II2: "\<And>s. I (s, {#}) \<Longrightarrow> P (s, {#})"
   shows "WORKBAGI I b f (s0, wb0) \<le> SPEC P"
   unfolding WORKBAGI_def
   proof (rule WHILEI_rule_manual)
@@ -303,8 +302,8 @@ lemma WORKBAGI_rule_manual:
 lemma WORKBAGIT_rule_manual:
   assumes I0: "I (s0, wb0)"
   assumes IS: "WORKBAG_variant_exists b f I"
-  assumes II1: "!!s wb. [| I (s, wb); \<not>b s; wb \<noteq> {#} |] ==> P (s, wb)"
-  assumes II2: "!!s. I (s, {#}) ==> P (s, {#})"
+  assumes II1: "\<And>s wb. \<lbrakk> I (s, wb); \<not>b s; wb \<noteq> {#} \<rbrakk> \<Longrightarrow> P (s, wb)"
+  assumes II2: "\<And>s. I (s, {#}) \<Longrightarrow> P (s, {#})"
   shows "WORKBAGIT I b f (s0, wb0) \<le> SPEC P"
   unfolding WORKBAGIT_def
   proof (rule WHILEIT_rule_manual)
@@ -323,12 +322,12 @@ lemma WORKBAGIT_rule_manual:
 lemma WORKBAGIT_rule:
   assumes "I (s0, wb0)"
   assumes "wf R"
-  assumes "!!s wb e. [|I (s, wb); e \<in># wb; b s|] ==>
+  assumes "\<And>s wb e. \<lbrakk>I (s, wb); e \<in># wb; b s\<rbrakk> \<Longrightarrow>
     f s e \<le> SPEC (\<lambda>s'N.
            I (fst s'N, workbag_update wb e (snd s'N)) \<and>
            ((fst s'N, s) \<in> R \<or> s'N = (s, {#})))"
-  assumes "!!s wb. [| I (s, wb); \<not>b s; wb \<noteq> {#} |] ==> P (s, wb)"
-  assumes "!!s. I (s, {#}) ==> P (s, {#})"
+  assumes "\<And>s wb. \<lbrakk> I (s, wb); \<not>b s; wb \<noteq> {#} \<rbrakk> \<Longrightarrow> P (s, wb)"
+  assumes "\<And>s. I (s, {#}) \<Longrightarrow> P (s, {#})"
   shows "WORKBAGIT I b f (s0, wb0) \<le> SPEC P"
   using assms 
   apply (rule_tac WORKBAGIT_rule_manual)
@@ -344,24 +343,24 @@ definition WORKLIST_b where
   "WORKLIST_b b = (\<lambda>swl. snd swl \<noteq> [] \<and> b (fst swl))"
 
 definition WORKLIST_f ::
- "('s => bool) =>
-  ('s => 'e => ('s \<times> 'e list) nres) => 
-   's \<times> 'e list => ('s \<times> 'e list) nres" where
+ "('s \<Rightarrow> bool) \<Rightarrow>
+  ('s \<Rightarrow> 'e \<Rightarrow> ('s \<times> 'e list) nres) \<Rightarrow> 
+   's \<times> 'e list \<Rightarrow> ('s \<times> 'e list) nres" where
   "WORKLIST_f b f = (\<lambda>swl. do {
      ASSERT (WORKLIST_b b swl);
      let e = hd (snd swl); 
      (s', N) \<leftarrow> f (fst swl) e;
      RETURN (s', N @ tl (snd swl))})"
 
-definition WORKLISTI ("WORKLISTI_") where
+definition WORKLISTI ("WORKLISTI\<^bsup>_\<^esup>") where
   "WORKLISTI \<Phi> b f swl0 = WHILEI \<Phi> (WORKLIST_b b) (WORKLIST_f b f) swl0"
 
 definition WORKLIST where "WORKLIST \<equiv> WORKLISTI (\<lambda>_. True)"
 
-definition WORKLISTIT ("WORKLISTIT_") where 
+definition WORKLISTIT ("WORKLISTI\<^sub>T\<^bsup>_\<^esup>") where 
   "WORKLISTIT \<Phi> b f swl0 \<equiv> WHILEIT \<Phi> (WORKLIST_b b) (WORKLIST_f b f) swl0"
 
-definition WORKLISTT ("WORKLISTT") where "WORKLISTT \<equiv> WORKLISTIT (\<lambda>_. True)"
+definition WORKLISTT ("WORKLIST\<^sub>T") where "WORKLIST\<^sub>T \<equiv> WORKLISTIT (\<lambda>_. True)"
 
 lemma WORKLISTT_alt_def :
   "WORKLISTT b f swl0 = WHILET (WORKLIST_b b) (WORKLIST_f b f) swl0"
@@ -376,10 +375,10 @@ lemma worklist_build_rel_sv[simp, intro!]: "single_valued worklist_build_rel"
 
 lemma WORKBAGIT_LIST_refine:
   assumes R0: "s0' = (s0::'S) \<and> wb0 = multiset_of (wl0 :: 'e list)"
-  assumes RPHI: "!!s wl. \<Phi>' (s, multiset_of wl) ==> \<Phi> (s, wl)"
-  assumes RB: "!!s wl. [|  \<Phi>(s, wl); \<Phi>' (s, multiset_of wl) |] ==> b s <-> b' s"
+  assumes RPHI: "\<And>s wl. \<Phi>' (s, multiset_of wl) \<Longrightarrow> \<Phi> (s, wl)"
+  assumes RB: "\<And>s wl. \<lbrakk>  \<Phi>(s, wl); \<Phi>' (s, multiset_of wl) \<rbrakk> \<Longrightarrow> b s \<longleftrightarrow> b' s"
   assumes RS[refine]: 
-    "!!s wl e. [| \<Phi>(s, wl); \<Phi>' (s, multiset_of wl); b s; b' s; e \<in> set wl|] ==> 
+    "\<And>s wl e. \<lbrakk> \<Phi>(s, wl); \<Phi>' (s, multiset_of wl); b s; b' s; e \<in> set wl\<rbrakk> \<Longrightarrow> 
         f s e \<le> \<Down>worklist_build_rel (f' s e)"
   shows "WORKLISTIT \<Phi> b f (s0, wl0) \<le> 
          \<Down>worklist_build_rel (WORKBAGIT \<Phi>' b' f' (s0', wb0))"
@@ -400,7 +399,9 @@ next
   with RPHI show PHI: "\<Phi> swl" by simp
 
   from RB PHI PHI' show "WORKLIST_b b swl = WORKBAG_b b' swb"
-    by (simp add: WORKLIST_b_def WORKBAG_b_def)
+    unfolding WORKLIST_b_def WORKBAG_b_def apply simp
+    unfolding multiset_of_def
+    using neq_NilE by fastforce  
 
   assume "WORKLIST_b b swl"
   with RB PHI PHI' have "b s" and "b' s"
@@ -422,14 +423,15 @@ next
     apply (simp add: Image_iff pw_le_iff refine_pw_simps)
     apply (rule_tac bind_refine [where R' = "worklist_build_rel"])
     apply (simp add: f_ref)
-    apply (auto simp add: br_def
-      worklist_build_rel_def workbag_update_def pw_le_iff refine_pw_simps union_commute)
+    apply (auto simp add: 
+      worklist_build_rel_def workbag_update_def pw_le_iff refine_pw_simps
+      union_commute refine_rel_defs)
   done
-qed simp
+qed
 
 lemma WORKBAGIT_LIST_refine_simple:
   assumes RS: 
-    "!!s wl e. [| \<Phi> (s, multiset_of wl); b s; e \<in> set wl |] ==> 
+    "\<And>s wl e. \<lbrakk> \<Phi> (s, multiset_of wl); b s; e \<in> set wl \<rbrakk> \<Longrightarrow> 
         f s e \<le> \<Down>worklist_build_rel (f' s e)"
   shows "WORKLISTIT (\<lambda>(s, wl). \<Phi> (s, multiset_of wl)) b f (s0, wl0) \<le> 
          \<Down>worklist_build_rel (WORKBAGIT \<Phi> b f' (s0, multiset_of wl0))"
@@ -440,7 +442,7 @@ done
 
 definition WORKLIST_invar_OK where
   "WORKLIST_invar_OK cond step invar =
-   (\<forall>s wl e. invar (s, (e # wl)) \<and> cond s -->
+   (\<forall>s wl e. invar (s, (e # wl)) \<and> cond s \<longrightarrow>
              step s e \<le> SPEC (\<lambda>s'N. (invar (fst s'N, (snd s'N) @ wl))))"
 
 lemma WORKLIST_invar_OK___lift_to_while :
@@ -450,7 +452,7 @@ proof
   fix swl
   assume cond: "WORKLIST_b cond swl"
      and invar: "invar swl"
-  obtain s wl where swl_eq[simp]: "swl = (s, wl)" by (rule PairE)
+  obtain s wl where swl_eq[simp]: "swl = (s, wl)" by fastforce
 
   from cond obtain e wl' where wl_eq[simp]: "wl = e # wl'" 
     unfolding WORKLIST_b_def by (simp, cases wl, blast)
@@ -470,7 +472,7 @@ qed
 definition WORKLIST_variant_OK where
   "WORKLIST_variant_OK cond step invar r \<equiv>
    (wf r \<and>
-   (\<forall>s wl e. (invar (s, e # wl) \<and> cond s -->
+   (\<forall>s wl e. (invar (s, e # wl) \<and> cond s \<longrightarrow>
      step s e \<le> SPEC (\<lambda>s'N. (invar (fst s'N, (snd s'N) @ wl)) \<and>
       ((fst s'N, s) \<in> r \<or> (s'N = (s, [])))))))"
 
@@ -479,7 +481,7 @@ definition WORKLIST_variant_exists where
    \<exists>r. WORKLIST_variant_OK cond step invar r"
 
 lemma WORKLIST_variant_OK___lift_to_while :
-fixes invar :: "'S \<times> 'e list => bool"
+fixes invar :: "'S \<times> 'e list \<Rightarrow> bool"
 assumes var_OK: "WORKLIST_variant_OK cond step invar r"
 shows "WHILE_variant_OK (WORKLIST_b cond) (WORKLIST_f cond step) invar (r <*lex*> measure length)"
 proof 
@@ -491,7 +493,7 @@ proof
   }
 
   fix swl :: "'S \<times> 'e list"
-  obtain s wl where swl_eq[simp]: "swl = (s, wl)" by (rule PairE)
+  obtain s wl where swl_eq[simp]: "swl = (s, wl)" by fastforce
 
   assume invar_swl: "invar swl"
      and cond_swl: "WORKLIST_b cond swl"
@@ -523,7 +525,7 @@ proof
 qed
 
 lemma WORKLIST_variant_exists___lift_to_while :
-"WORKLIST_variant_exists cond step invar ==>
+"WORKLIST_variant_exists cond step invar \<Longrightarrow>
  WHILE_variant_exists (WORKLIST_b cond) (WORKLIST_f cond step) invar"
 unfolding WORKLIST_variant_exists_def WHILE_variant_exists_def         
 by (metis WORKLIST_variant_OK___lift_to_while)
@@ -531,8 +533,8 @@ by (metis WORKLIST_variant_OK___lift_to_while)
 lemma WORKLISTI_rule_manual:
   assumes I0: "I (s0, wl0)"
   assumes IS: "WORKLIST_invar_OK b f I"
-  assumes II1: "!!s wl. [| I (s, wl); \<not>b s; wl \<noteq> []|] ==> P (s, wl)"
-  assumes II2: "!!s. I (s, []) ==> P (s, [])"
+  assumes II1: "\<And>s wl. \<lbrakk> I (s, wl); \<not>b s; wl \<noteq> []\<rbrakk> \<Longrightarrow> P (s, wl)"
+  assumes II2: "\<And>s. I (s, []) \<Longrightarrow> P (s, [])"
   shows "WORKLISTI I b f (s0, wl0) \<le> SPEC P"
   unfolding WORKLISTI_def
   proof (rule WHILEI_rule_manual)
@@ -551,8 +553,8 @@ lemma WORKLISTI_rule_manual:
 lemma WORKLISTIT_rule_manual:
   assumes I0: "I (s0, wl0)"
   assumes IS: "WORKLIST_variant_exists b f I"
-  assumes II1: "!!s wl. [| I (s, wl); \<not>b s; wl \<noteq> [] |] ==> P (s, wl)"
-  assumes II2: "!!s. I (s, []) ==> P (s, [])"
+  assumes II1: "\<And>s wl. \<lbrakk> I (s, wl); \<not>b s; wl \<noteq> [] \<rbrakk> \<Longrightarrow> P (s, wl)"
+  assumes II2: "\<And>s. I (s, []) \<Longrightarrow> P (s, [])"
   shows "WORKLISTIT I b f (s0, wl0) \<le> SPEC P"
   unfolding WORKLISTIT_def
   proof (rule WHILEIT_rule_manual)
@@ -571,12 +573,12 @@ lemma WORKLISTIT_rule_manual:
 lemma WORKLISTIT_rule:
   assumes "I (s0, wl0)"
   assumes "wf R"
-  assumes "!!s wl e. [|I (s, e # wl); b s|] ==>
+  assumes "\<And>s wl e. \<lbrakk>I (s, e # wl); b s\<rbrakk> \<Longrightarrow>
     f s e \<le> SPEC (\<lambda>s'N.
            I (fst s'N, (snd s'N) @ wl) \<and>
            ((fst s'N, s) \<in> R \<or> s'N = (s, [])))"
-  assumes "!!s wl. [| I (s, wl); \<not>b s; wl \<noteq> [] |] ==> P (s, wl)"
-  assumes "!!s. I (s, []) ==> P (s, [])"
+  assumes "\<And>s wl. \<lbrakk> I (s, wl); \<not>b s; wl \<noteq> [] \<rbrakk> \<Longrightarrow> P (s, wl)"
+  assumes "\<And>s. I (s, []) \<Longrightarrow> P (s, [])"
   shows "WORKLISTIT I b f (s0, wl0) \<le> SPEC P"
   using assms 
   apply (rule_tac WORKLISTIT_rule_manual)
@@ -585,30 +587,30 @@ lemma WORKLISTIT_rule:
 done
 
 
-(*
+
 definition WORKLISTIT_refine_rel where
-  "WORKLISTIT_refine_rel Rs Re = \<langle>Rs,\<langle>Re\<rangle>list_rel\<rangle>prod_rel"
+  "WORKLISTIT_refine_rel Rs Re = Rs \<times>\<^sub>r (\<langle>Re\<rangle>list_rel)"
 
 
-lemma WORKLISTIT_refine_rel_sv[simp,intro!,refine,refine_post]:
-  "single_valued Rs ==> single_valued Re ==> single_valued (WORKLISTIT_refine_rel Rs Re)"
+lemma WORKLISTIT_refine_rel_sv[simp,intro!,refine,relator_props]:
+  "single_valued Rs \<Longrightarrow> single_valued Re \<Longrightarrow> single_valued (WORKLISTIT_refine_rel Rs Re)"
   unfolding WORKLISTIT_refine_rel_def
   by (tagged_solver)
 
 lemma WORKLISTIT_refine_rel_in [simp] :
-  "x \<in> WORKLISTIT_refine_rel R_s R_e <-> 
+  "x \<in> WORKLISTIT_refine_rel R_s R_e \<longleftrightarrow> 
    ((fst (fst x), fst (snd x)) \<in> R_s \<and>
-    (snd (fst x), snd (snd x)) \<in> map_list_rel R_e)"
+    (snd (fst x), snd (snd x)) \<in> \<langle>R_e\<rangle>list_rel)"
 unfolding WORKLISTIT_refine_rel_def
 by (auto simp: refine_rel_defs)
 
 lemma WORKLISTIT_refine[refine] :
-assumes [refine,refine_post]: "single_valued R_s" "single_valued R_e"
-assumes I0: "(s0, s0') \<in> R_s" "(wl0, wl0') \<in> map_list_rel R_e"
-assumes I_OK: "!!s wl s' wl'. [|(s, s') \<in> R_s; (wl, wl') \<in> map_list_rel R_e; I' (s', wl')|] ==> I (s, wl)"
-assumes b_OK: "!!s wl s' wl'. [|(s, s') \<in> R_s; (wl, wl') \<in> map_list_rel R_e; I' (s', wl'); I (s, wl)|] ==> 
+assumes [relator_props]: "single_valued R_s" "single_valued R_e"
+assumes I0: "(s0, s0') \<in> R_s" "(wl0, wl0') \<in> \<langle>R_e\<rangle>list_rel"
+assumes I_OK: "\<And>s wl s' wl'. \<lbrakk>(s, s') \<in> R_s; (wl, wl') \<in> \<langle>R_e\<rangle>list_rel; I' (s', wl')\<rbrakk> \<Longrightarrow> I (s, wl)"
+assumes b_OK: "\<And>s wl s' wl'. \<lbrakk>(s, s') \<in> R_s; (wl, wl') \<in> \<langle>R_e\<rangle>list_rel; I' (s', wl'); I (s, wl)\<rbrakk> \<Longrightarrow> 
               b s = b' s'"
-assumes f_OK: "!!s e s' e'. [|(s, s') \<in> R_s; (e, e') \<in> R_e; b s; b' s'|] ==> 
+assumes f_OK: "\<And>s e s' e'. \<lbrakk>(s, s') \<in> R_s; (e, e') \<in> R_e; b s; b' s'\<rbrakk> \<Longrightarrow> 
    f s e \<le> \<Down>(WORKLISTIT_refine_rel R_s R_e) (f' s' e')"
 shows "WORKLISTIT I b f (s0, wl0) \<le> \<Down>(WORKLISTIT_refine_rel R_s R_e) (WORKLISTIT I' b' f' (s0', wl0'))"
 unfolding WORKLISTIT_def 
@@ -618,16 +620,16 @@ proof (rule WHILEIT_refine)
 next
   fix swl swl'
   assume in_R: "(swl, swl') \<in> WORKLISTIT_refine_rel R_s R_e"
-  obtain s wl where swl_eq[simp]: "swl = (s, wl)" by (rule PairE)
-  obtain s' wl' where swl'_eq[simp]: "swl' = (s', wl')" by (rule PairE)
+  obtain s wl where swl_eq[simp]: "swl = (s, wl)" by fastforce
+  obtain s' wl' where swl'_eq[simp]: "swl' = (s', wl')" by fastforce
 
   from in_R have in_Rs[simp]: "(s, s') \<in> R_s" and 
-                 in_Re[simp]: "(wl, wl') \<in> map_list_rel R_e" by simp_all
+                 in_Re[simp]: "(wl, wl') \<in> \<langle>R_e\<rangle>list_rel" by simp_all
 
   assume I_swl': "I' swl'"
   thus I_swl: "I swl" using I_OK[OF in_Rs in_Re] by simp
 
-  from in_Re have "wl = [] <-> wl' = []"
+  from in_Re have "wl = [] \<longleftrightarrow> wl' = []"
     by (rule_tac iffI, simp_all add: refine_rel_defs)
   thus "WORKLIST_b b swl = WORKLIST_b b' swl'"
     unfolding WORKLIST_b_def 
@@ -642,7 +644,9 @@ next
   from b_swl' obtain e' wl_tl' where wl'_eq[simp]: "wl' = e' # wl_tl'"
     unfolding WORKLIST_b_def by (simp, cases wl', blast)
 
-  from in_Re have in_Re': "(e, e') \<in> R_e" and in_Re'': "(wl_tl, wl_tl') \<in> map_list_rel R_e" by (simp_all add: refine_rel_defs)
+  from in_Re have in_Re': "(e, e') \<in> R_e" 
+    and in_Re'': "(wl_tl, wl_tl') \<in> \<langle>R_e\<rangle>list_rel" 
+    by (simp_all add: refine_rel_defs)
 
   from b_swl b_swl'
   show "WORKLIST_f b f swl \<le> \<Down> (WORKLISTIT_refine_rel R_s R_e) (WORKLIST_f b' f' swl')"
@@ -654,7 +658,7 @@ next
     apply (insert in_Re'')
     apply (simp add: list_all2_appendI refine_rel_defs)
   done
-qed refine_post
+qed
 
 
 subsection \<open> Code Generation for Worklists \<close>
@@ -683,21 +687,21 @@ done
 lemmas worklist_alt_def [simp, code] = worklist_alt_Nil_def worklist_alt_Cons_def
 
 lemma WORKLISTIT_cgt [refine_transfer]:
-  assumes F_OK[refine_transfer]: "!!s e. RETURN (f s e) \<le> F s e" 
+  assumes F_OK[refine_transfer]: "\<And>s e. RETURN (f s e) \<le> F s e" 
   shows "RETURN (worklist b f (s, wl)) \<le> WORKLISTIT \<Phi> b F (s, wl)"
 unfolding WORKLISTIT_def worklist_def WORKLIST_f_def
 apply refine_transfer
 done
 
 lemma WORKLISTT_cgt [refine_transfer]:
-  assumes F_OK: "!!s e. RETURN (f s e) \<le> F s e" 
+  assumes F_OK: "\<And>s e. RETURN (f s e) \<le> F s e" 
   shows "RETURN (worklist b f (s, wl)) \<le> WORKLISTT b F (s, wl)"
 unfolding WORKLISTT_def 
 by (intro WORKLISTIT_cgt F_OK)
 
 lemma WORKBAGIT_LIST_cgt :
   assumes RS: 
-    "!!s wl e. [| \<Phi> (s, multiset_of wl); b s; e \<in> set wl |] ==> 
+    "\<And>s wl e. \<lbrakk> \<Phi> (s, multiset_of wl); b s; e \<in> set wl \<rbrakk> \<Longrightarrow> 
         RETURN (f s e) \<le> \<Down>worklist_build_rel (f' s e)"
   shows "RETURN (worklist b f (s0, wl0)) \<le> 
          \<Down>worklist_build_rel (WORKBAGIT \<Phi> b f' (s0, multiset_of wl0))"
@@ -709,7 +713,7 @@ proof -
   from step3 RS show ?thesis
     by simp
 qed
-*)
+
 subsubsection \<open> Sets \<close>
 
 text \<open> 
@@ -726,9 +730,9 @@ definition WORKSET_b where
   "WORKSET_b b = (\<lambda>sws. snd sws \<noteq> {} \<and> b (fst sws))"
 
 definition WORKSET_f ::
- "('s => bool) => 
-  ('s => 'e => ('s \<times> 'e set) nres) => 
-   's \<times> 'e set => ('s \<times> 'e set) nres" where
+ "('s \<Rightarrow> bool) \<Rightarrow> 
+  ('s \<Rightarrow> 'e \<Rightarrow> ('s \<times> 'e set) nres) \<Rightarrow> 
+   's \<times> 'e set \<Rightarrow> ('s \<times> 'e set) nres" where
   "WORKSET_f b f = (\<lambda>sws. do {
      ASSERT (WORKSET_b b sws);
      e \<leftarrow> SPEC (\<lambda>e. e \<in> (snd sws)); 
@@ -739,19 +743,19 @@ definition WORKSET_f ::
 definition WORKSET_I where
   "WORKSET_I I = (\<lambda>sws. finite (snd sws) \<and> I sws)"
 
-definition WORKSETI ("WORKSETI_") where
+definition WORKSETI ("WORKSETI\<^bsup>_\<^esup>") where
   "WORKSETI \<Phi> b f sws0 = WHILEI (WORKSET_I \<Phi>) (WORKSET_b b) (WORKSET_f b f) sws0"
 
 definition WORKSET where "WORKSET \<equiv> WORKSETI (\<lambda>_. True)"
 
-definition WORKSETIT ("WORKSETIT_") where 
+definition WORKSETIT ("WORKSETI\<^sub>T\<^bsup>_\<^esup>") where 
   "WORKSETIT \<Phi> b f swb0 \<equiv> WHILEIT (WORKSET_I \<Phi>) (WORKSET_b b) (WORKSET_f b f) swb0"
 
-definition WORKSETT ("WORKSETT") where "WORKSETT \<equiv> WORKSETIT (\<lambda>_. True)"
+definition WORKSETT ("WORKSET\<^sub>T") where "WORKSET\<^sub>T \<equiv> WORKSETIT (\<lambda>_. True)"
 
 definition WORKSET_invar_OK where
   "WORKSET_invar_OK cond step invar =
-   (\<forall>s ws e. invar (s, ws) \<and> e \<in> ws \<and> cond s -->
+   (\<forall>s ws e. invar (s, ws) \<and> e \<in> ws \<and> cond s \<longrightarrow>
              step s e \<le> SPEC (\<lambda>s'N. finite (snd s'N) \<and> 
                             invar (fst s'N, (workset_update ws e (snd s'N)))))"
 
@@ -762,17 +766,17 @@ proof
   fix sws
   assume cond: "WORKSET_b cond sws"
      and invar: "WORKSET_I invar sws"
-  obtain s ws where sws_eq[simp]: "sws = (s, ws)" by (rule PairE)
+  obtain s ws where sws_eq[simp]: "sws = (s, ws)" by fastforce
 
   from cond invar invar_OK 
-  have invar_OK': "!!e. e \<in> ws ==> step s e \<le> SPEC (\<lambda>s'N. finite (snd s'N) \<and> 
+  have invar_OK': "\<And>e. e \<in> ws \<Longrightarrow> step s e \<le> SPEC (\<lambda>s'N. finite (snd s'N) \<and> 
          invar (fst s'N, workset_update ws e (snd s'N)))" 
     unfolding WORKSET_invar_OK_def WORKSET_b_def WORKSET_I_def by simp
 
   from invar have "finite ws" unfolding WORKSET_I_def by simp
-  hence spec_step: "!!e. e \<in> ws ==> SPEC (\<lambda>s'N. finite (snd s'N) \<and> 
+  hence spec_step: "\<And>e. e \<in> ws \<Longrightarrow> SPEC (\<lambda>s'N. finite (snd s'N) \<and> 
          invar (fst s'N, workset_update ws e (snd s'N))) \<le> 
-         SPEC (\<lambda>xa. ASSERT (finite (snd xa)) \<guillemotright>=
+         SPEC (\<lambda>xa. ASSERT (finite (snd xa)) \<bind>
                  (\<lambda>_. RETURN (fst xa, workset_update ws e (snd xa)))
                  \<le> SPEC (\<lambda>sws. finite (snd sws) \<and> invar sws))" 
      by (simp add: subset_iff workset_update_def)
@@ -788,7 +792,7 @@ qed
 definition WORKSET_variant_OK where
   "WORKSET_variant_OK cond step invar r \<equiv>
    (wf r \<and>
-   (\<forall>s ws e. (invar (s, ws) \<and> e \<in> ws \<and> cond s -->
+   (\<forall>s ws e. (invar (s, ws) \<and> e \<in> ws \<and> cond s \<longrightarrow>
      step s e \<le> SPEC (\<lambda>s'N. finite (snd s'N) \<and>
       (invar (fst s'N, (workset_update ws e (snd s'N)))) \<and>
       ((fst s'N, s) \<in> r \<or> ((s = fst s'N) \<and> snd s'N = {}))))))"
@@ -798,7 +802,7 @@ definition WORKSET_variant_exists where
    \<exists>r. WORKSET_variant_OK cond step invar r"
 
 lemma WORKSET_variant_OK___lift_to_while :
-fixes invar :: "'S \<times> 'e set => bool"
+fixes invar :: "'S \<times> 'e set \<Rightarrow> bool"
 assumes var_OK: "WORKSET_variant_OK cond step invar r"
 shows "WHILE_variant_OK (WORKSET_b cond) (WORKSET_f cond step) 
                         (WORKSET_I invar) (r <*lex*> measure card)"
@@ -807,26 +811,26 @@ proof
     from var_OK have "wf r" 
       unfolding WORKSET_variant_OK_def
       by fast
-    with wf_mset_less_rel 
+    with wf_subset_mset_rel 
     show "wf (r <*lex*> measure card)" by auto
   }
 
   fix sws :: "'S \<times> 'e set"
-  obtain s ws where sws_eq[simp]: "sws = (s, ws)" by (rule PairE)
+  obtain s ws where sws_eq[simp]: "sws = (s, ws)" by fastforce
 
   assume invar_sws: "WORKSET_I invar sws"
      and cond_sws: "WORKSET_b cond sws"
 
-  from var_OK invar_sws cond_sws have var_OK': "!!e. e \<in> ws ==> 
+  from var_OK invar_sws cond_sws have var_OK': "\<And>e. e \<in> ws \<Longrightarrow> 
     step s e \<le> SPEC (\<lambda>s'N. finite (snd s'N) \<and> invar (fst s'N, workset_update ws e (snd s'N)) \<and>
              ((fst s'N, s) \<in> r \<or> s = fst s'N \<and> snd s'N = {}))" 
     unfolding WORKSET_b_def WORKSET_variant_OK_def WORKSET_I_def by simp
 
   from invar_sws
-  have spec_step: "!!e. e \<in> ws ==>
+  have spec_step: "\<And>e. e \<in> ws \<Longrightarrow>
         SPEC (\<lambda>s'N. finite (snd s'N) \<and> invar (fst s'N, workset_update ws e (snd s'N)) \<and>
              ((fst s'N, s) \<in> r \<or> s = fst s'N \<and> snd s'N = {})) \<le> SPEC
-           (\<lambda>xa. ASSERT (finite (snd xa)) \<guillemotright>=
+           (\<lambda>xa. ASSERT (finite (snd xa)) \<bind>
                  (\<lambda>_. RETURN (fst xa, workset_update ws e (snd xa)))
                  \<le> SPEC
                     (\<lambda>s'. WORKSET_I invar s' \<and>
@@ -844,7 +848,7 @@ proof
 qed
 
 lemma WORKSET_variant_exists___lift_to_while :
-"WORKSET_variant_exists cond step invar ==>
+"WORKSET_variant_exists cond step invar \<Longrightarrow>
  WHILE_variant_exists (WORKSET_b cond) (WORKSET_f cond step) (WORKSET_I invar)"
 proof -
   assume "WORKSET_variant_exists cond step invar"
@@ -859,8 +863,8 @@ lemma WORKSETI_rule_manual:
   assumes I0_fin: "finite ws0"
   assumes I0: "I (s0, ws0)"
   assumes IS: "WORKSET_invar_OK b f I"
-  assumes II1: "!!s ws. [| I (s, ws); finite ws; \<not>b s |] ==> P (s, ws)"
-  assumes II2: "!!s. I (s, {}) ==> P (s, {})"
+  assumes II1: "\<And>s ws. \<lbrakk> I (s, ws); finite ws; \<not>b s \<rbrakk> \<Longrightarrow> P (s, ws)"
+  assumes II2: "\<And>s. I (s, {}) \<Longrightarrow> P (s, {})"
   shows "WORKSETI I b f (s0, ws0) \<le> SPEC P"
   unfolding WORKSETI_def
   proof (rule WHILEI_rule_manual)
@@ -880,8 +884,8 @@ lemma WORKSETIT_rule_manual:
   assumes I0_fin: "finite ws0"
   assumes I0: "I (s0, ws0)"
   assumes IS: "WORKSET_variant_exists b f I"
-  assumes II1: "!!s ws. [| I (s, ws); finite ws; \<not>b s |] ==> P (s, ws)"
-  assumes II2: "!!s. I (s, {}) ==> P (s, {})"
+  assumes II1: "\<And>s ws. \<lbrakk> I (s, ws); finite ws; \<not>b s \<rbrakk> \<Longrightarrow> P (s, ws)"
+  assumes II2: "\<And>s. I (s, {}) \<Longrightarrow> P (s, {})"
   shows "WORKSETIT I b f (s0, ws0) \<le> SPEC P"
   unfolding WORKSETIT_def
   proof (rule WHILEIT_rule_manual)

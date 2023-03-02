@@ -3,7 +3,7 @@
 *)
 
 theory Accessible
-imports Main Workset "HOL.Transitive_Closure"
+imports Main Workset
 begin
 
 
@@ -12,7 +12,7 @@ subsection \<open> accessible\<close>
 text \<open> Let's define the set of value that are accessible/reachable from
  a given value using a binary relation. \<close>
 definition accessible where
-  "accessible R ws \<equiv> (R\<^sup>*) `` ws"
+  "accessible R ws \<equiv> R\<^sup>* `` ws"
 
 lemma accessible_empty [simp] :
   "accessible R {} = {}" by (simp add: accessible_def)
@@ -26,9 +26,9 @@ lemma accessible_Union :
   "accessible R (\<Union> wss) = \<Union> (accessible R ` wss)" 
 by (auto simp add: accessible_def)
 
-lemma accessible_insert:
+lemma accessible_insert :
   "accessible R (insert x ws) = 
-   {y. (x, y) \<in> R\<^sup>*} \<union> accessible R ws"
+   {y. (x, y) \<in> R\<^sup>*} \<union> accessible R ws" 
 by (auto simp add: accessible_def)
 
 lemma accessible_eq_empty [simp] :
@@ -36,7 +36,7 @@ lemma accessible_eq_empty [simp] :
 unfolding accessible_def by auto
 
 lemma accessible_mono :
-  "ws \<subseteq> ws' ==> (accessible R ws \<subseteq> accessible R ws')"
+  "ws \<subseteq> ws' \<Longrightarrow> (accessible R ws \<subseteq> accessible R ws')"
 unfolding accessible_def by auto
 
 lemma accessible_subset_ws :
@@ -113,7 +113,7 @@ lemma accessible_restrict_final [simp] :
   by (simp add: accessible_restrict_def)
 
 lemma accessible_restrict_insert_in :
-  "x \<in> rs ==> 
+  "x \<in> rs \<Longrightarrow> 
    accessible_restrict R rs (insert x ws) = 
    accessible_restrict R rs ws"
 unfolding accessible_restrict_def
@@ -124,7 +124,7 @@ lemma accessible_restrict_diff_rs :
    accessible_restrict R rs (ws - rs)"
 proof -
   { fix x y 
-    have "[|(x, y) \<in> (R - rs \<times> UNIV)\<^sup>*;y \<notin> rs|] ==> x \<notin> rs" 
+    have "\<lbrakk>(x, y) \<in> (R - rs \<times> UNIV)\<^sup>*;y \<notin> rs\<rbrakk> \<Longrightarrow> x \<notin> rs" 
     by (erule converse_rtranclE, simp_all)
   }
   thus ?thesis
@@ -133,7 +133,7 @@ proof -
 qed
 
 lemma accessible_restrict_insert_nin :
-  "x \<notin> rs ==> 
+  "x \<notin> rs \<Longrightarrow> 
    accessible_restrict R rs (insert x ws) = 
    accessible_restrict R (insert x rs) (ws \<union> {y. (x, y) \<in> R})"
 proof -
@@ -157,11 +157,11 @@ proof -
     fix e
     let ?ws' = "ws \<union> {y. (x, y) \<in> R}"
 
-    have ind_part: "!!y. [|(y, e) \<in> (R_res rs)\<^sup>*; y \<in> ?ws'|] ==>
+    have ind_part: "\<And>y. \<lbrakk>(y, e) \<in> (R_res rs)\<^sup>*; y \<in> ?ws'\<rbrakk> \<Longrightarrow>
                          \<exists>y'. y' \<in> ?ws' \<and> (y', e) \<in> (R_res (insert x rs))\<^sup>*"
     proof -
       fix y
-      show "[|(y, e) \<in> (R_res rs)\<^sup>*; y \<in> ?ws'|] ==>
+      show "\<lbrakk>(y, e) \<in> (R_res rs)\<^sup>*; y \<in> ?ws'\<rbrakk> \<Longrightarrow>
              \<exists>y'. y' \<in> ?ws' \<and> (y', e) \<in> (R_res (insert x rs))\<^sup>*"
       proof (induct rule: rtrancl_induct)
         case base thus ?case by auto
@@ -206,7 +206,7 @@ lemma accessible_restrict_union :
   by (auto simp add: accessible_union)
 
 lemma accessible_restrict_Union :
-  "wss \<noteq> {} ==>
+  "wss \<noteq> {} \<Longrightarrow>
    accessible_restrict R rs (\<Union> wss) = (\<Union>ws \<in> wss. (accessible_restrict R rs ws))" 
   unfolding accessible_restrict_def
   by (simp add: accessible_Union)
@@ -283,7 +283,7 @@ assumes fin_S: "finite S"
 shows "accessible_worklist exit R rs wl \<le>
        SPEC (\<lambda>((ex, rs'), wl'). 
             (accessible_restrict R rs' (set wl') = S) \<and>
-            (ex \<longleftrightarrow> (\<exists>e \<in> rs'-rs. exit e)) \<and> (\<not>ex --> wl' = []))"
+            (ex \<longleftrightarrow> (\<exists>e \<in> rs'-rs. exit e)) \<and> (\<not>ex \<longrightarrow> wl' = []))"
 unfolding accessible_worklist_def S_def[symmetric]
 proof (rule WORKLISTIT_rule [where R = "inv_image (bounded_superset_rel S) snd"])
   show "accessible_worklist_invar exit R rs S ((False, rs), wl)"
@@ -295,13 +295,12 @@ next
 next
   fix s
   assume invar: "accessible_worklist_invar exit R rs S (s, [])"
-  obtain ex rs' where s_eq[simp]: "s = (ex, rs')"
-    by fastforce
+  obtain ex rs' where s_eq[simp]: "s = (ex, rs')" by fastforce
 
   from invar
   show "(\<lambda>((ex, rs'), wl').
             accessible_restrict R rs' (set wl') = S \<and>
-            ex = (\<exists>e\<in>rs' - rs. exit e) \<and> (\<not> ex --> wl' = []))
+            ex = (\<exists>e\<in>rs' - rs. exit e) \<and> (\<not> ex \<longrightarrow> wl' = []))
          (s, [])"
     unfolding accessible_worklist_invar_def
     by simp
@@ -315,7 +314,7 @@ next
 
   with invar show "(\<lambda>((ex, rs'), wl').
            accessible_restrict R rs' (set wl') = S \<and>
-           ex = (\<exists>e\<in>rs' - rs. exit e) \<and> (\<not> ex --> wl' = []))
+           ex = (\<exists>e\<in>rs' - rs. exit e) \<and> (\<not> ex \<longrightarrow> wl' = []))
         (s, wl)" 
     unfolding accessible_worklist_invar_def
     by simp
