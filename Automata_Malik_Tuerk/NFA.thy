@@ -96,7 +96,7 @@ text \<open> It is also useful to define the language accepted in a state. \<clo
 definition \<L>_in_state where
   "\<L>_in_state \<A> q = {w. (\<exists>q'\<in> (\<F> \<A>). LTS_is_reachable (\<Delta> \<A>) q w q')}"
 
-abbreviation "\<L>_right == \<L>_in_state"
+abbreviation "\<L>_right \<equiv> \<L>_in_state"
 
 lemma \<L>_in_state_alt_def :
   "\<L>_in_state \<A> q = \<L> \<lparr> \<Q> = \<Q> \<A>, \<Sigma> = \<Sigma> \<A>, \<Delta> = \<Delta> \<A>, \<I> = {q}, \<F> = \<F> \<A> \<rparr>"

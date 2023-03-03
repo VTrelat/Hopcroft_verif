@@ -1,5 +1,6 @@
 (*  Title:       Hopcroft's Minimisation Algorithm 
     Authors:     Thomas Tuerk <tuerk@in.tum.de>
+    Updates:     Vincent Trélat <vincent.trelat@depinfonancy.net>
 *)
 
 section\<open>Hopcroft's Minimisation Algorithm\<close>
@@ -7,7 +8,7 @@ section\<open>Hopcroft's Minimisation Algorithm\<close>
 theory Hopcroft_Minimisation
   imports Main DFA
         "../Collections/ICF/Collections"
-        "../Nested_Multisets_Ordinals/Multiset_more"
+        "../Nested_Multisets_Ordinals/Multiset_More"
         "../Partition"
 begin
 
@@ -76,7 +77,7 @@ proof -
   done
 qed
 
-text \<open> This allows to define a high level, non-executable version of an minimisation
+text \<open> This allows to define a high level, non-executable version of a minimisation
         algorithm. These definitions and lemmata are later used as an abstract interface to
         an executable implementation. \<close>
 definition Hopcroft_minimise :: "('q, 'a, 'x) NFA_rec_scheme \<Rightarrow> ('q, 'a) NFA_rec" where
@@ -174,9 +175,9 @@ only accepting states or only non-accepting states. \<close>
 
 definition is_weak_language_equiv_set where
   "is_weak_language_equiv_set \<A> p \<equiv>
-   (p \<subseteq> \<Q> \<A>) \<and>
-   ((p \<subseteq> \<F> \<A>) \<or> (p \<inter> \<F> \<A> = {})) \<and>
-   (\<forall>q1 \<in> \<Q> \<A>. \<forall>q2 \<in> \<Q> \<A>.  
+   (p \<subseteq> \<Q> \<A>) \<and>                                  \<comment>\<open>p is a subset of the set of states of \<A>\<close>
+   ((p \<subseteq> \<F> \<A>) \<or> (p \<inter> \<F> \<A> = {})) \<and>             \<comment>\<open>p either contains final states only or non final states only\<close>
+   (\<forall>q1 \<in> \<Q> \<A>. \<forall>q2 \<in> \<Q> \<A>.                      \<comment>\<open>For any two states accepting the same language and if one belongs to p, so does the other\<close>
       \<L>_in_state \<A> q1 = \<L>_in_state \<A> q2 \<and>
       q1 \<in> p \<longrightarrow> q2 \<in> p)"
 
@@ -244,6 +245,7 @@ can be given using the connection between partitions and equivalence relations. 
 
 definition Hopcroft_accepting_relation where
   "Hopcroft_accepting_relation \<A> \<equiv> {(q1, q2) . q1 \<in> \<Q> \<A> \<and> q2 \<in> \<Q> \<A> \<and> (q1 \<in> \<F> \<A> \<longleftrightarrow> q2 \<in> \<F> \<A>)}"
+  (* q\<^sub>1 R\<^sub>H q\<^sub>2 \<equiv> q\<^sub>1 \<in> \<F>\<^sub>\<A> \<longleftrightarrow> q\<^sub>2 \<in> \<F>\<^sub>\<A> *)
 
 lemma equiv_Hopcroft_accepting_relation :
   "equiv (\<Q> \<A>) (Hopcroft_accepting_relation \<A>)"
@@ -255,13 +257,14 @@ definition Hopcroft_accepting_partition where
 
 lemma Hopcroft_accepting_partition_alt_def :
 assumes wf_A: "NFA \<A>"
-shows "Hopcroft_accepting_partition \<A> = {\<Q> \<A> - \<F> \<A>, \<F> \<A>} \<inter> {s. s \<noteq> {}}"
+shows "Hopcroft_accepting_partition \<A> = {\<Q> \<A> - \<F> \<A>, \<F> \<A>} \<inter> {s. s \<noteq> {}}" \<comment>\<open>Corresponds to the base case\<close>
 unfolding Hopcroft_accepting_partition_def quotient_def Hopcroft_accepting_relation_def Bex_def
 using NFA.\<F>_consistent [OF wf_A]
 by auto
 
 definition Myhill_Nerode_relation where
   "Myhill_Nerode_relation \<A> \<equiv> {(q1, q2) . q1 \<in> \<Q> \<A> \<and> q2 \<in> \<Q> \<A> \<and> (\<L>_in_state \<A> q1 = \<L>_in_state \<A> q2)}"
+  (* q\<^sub>1 R\<^sub>M\<^sub>N q\<^sub>2 \<equiv> \<L>\<^sub>\<A>(q\<^sub>1) = \<L>\<^sub>\<A>(q\<^sub>2) *)
 
 lemma equiv_Myhill_Nerode_relation :
   "equiv (\<Q> \<A>) (Myhill_Nerode_relation \<A>)"
@@ -300,7 +303,7 @@ lemma is_weak_language_equiv_partition_alt_def :
 "is_weak_language_equiv_partition \<A> P \<longleftrightarrow>
  is_partition (\<Q> \<A>) P \<and>
  partition_less_eq (Myhill_Nerode_partition \<A>) P \<and>
- partition_less_eq P (Hopcroft_accepting_partition \<A>)"
+ partition_less_eq P (Hopcroft_accepting_partition \<A>)" (* i.e. R\<^sub>M\<^sub>N \<subseteq> R\<^sub>P \<subseteq> R\<^sub>H on states of \<A>*)
 proof (cases "is_partition (\<Q> \<A>) P")
   case False thus ?thesis unfolding is_weak_language_equiv_partition_def by simp
 next
@@ -321,10 +324,10 @@ qed
 
 text \<open> Hopcroft's algorithm is interested in finding a partition such that
 two states are in the same set of the partition, if and only if they are equivalent.
-The concept of weak language equivalence partitions above guarentees that
+The concept of weak language equivalence partitions above guarantees that
 two states that are equivalent are in the same partition. 
 
-In the following the missing property that all the states in one partition are equivalent is
+In the following, the missing property that all the states in one partition are equivalent is
 formalised. \<close>
 
 definition is_weak2_language_equiv_set where
@@ -349,7 +352,7 @@ definition is_weak2_language_equiv_partition where
 
 lemma is_weak2_language_equiv_partition_alt_def :
 "is_weak2_language_equiv_partition \<A> P \<longleftrightarrow>
- is_partition (\<Q> \<A>) P \<and> partition_less_eq P (Myhill_Nerode_partition \<A>)"
+ is_partition (\<Q> \<A>) P \<and> partition_less_eq P (Myhill_Nerode_partition \<A>)" (* i.e. R\<^sub>P \<subseteq> R\<^sub>M\<^sub>N on states of \<A> *)
 proof (cases "is_partition (\<Q> \<A>) P")
   case False thus ?thesis unfolding is_weak2_language_equiv_partition_def by simp
 next
@@ -486,7 +489,7 @@ qed
 subsubsection \<open> Initial partition \<close>
 
 text \<open> By now, the essential concepts of different partitions have been introduced.
-Hopcrofts algorithm operates by splitting weak language partions. If no further split is 
+Hopcroft's algorithm operates by splitting weak language partitions. If no further split is 
 possible, the searched partition has been found. For this algorithm a suitable initial
 partition is needed: \<close>
 
@@ -528,7 +531,7 @@ lemma split_set_insert :
     (if P s then (insert s ST, SF) else (ST, insert s SF)))"
 unfolding split_set_def by auto
 
-lemma split_set_union_distint: 
+lemma split_set_union_distinct:
   "split_set P S = (S1, S2) \<Longrightarrow>
    (S = S1 \<union> S2) \<and> (S1 \<inter> S2 = {})"
 unfolding split_set_def by auto
@@ -540,8 +543,8 @@ definition split_language_equiv_partition where
   "split_language_equiv_partition \<A> p1 a p2 =
    split_set (\<lambda>q. \<exists>q' \<in> p2. (q, a, q') \<in> \<Delta> \<A>) p1"
 
-text \<open> Hopcroft's algorithm operates on determistic automata. Exploiting the property, that
- the automaton is determistic, the definition of splitting a partition becomes much simpler. \<close>
+text \<open> Hopcroft's algorithm operates on deterministic automata. Exploiting the property, that
+ the automaton is deterministic, the definition of splitting a partition becomes much simpler. \<close>
 lemma (in DFA) split_language_equiv_partition_alt_def :
 assumes p1_subset: "p1 \<subseteq> \<Q> \<A>"
     and a_in: "a \<in> \<Sigma> \<A>"
@@ -557,13 +560,13 @@ lemma split_language_equiv_partition_disjoint :
   "\<lbrakk>split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)\<rbrakk> \<Longrightarrow>
    p1a \<inter> p1b = {}"
 unfolding split_language_equiv_partition_def
-by (simp add: split_set_union_distint)
+by (simp add: split_set_union_distinct)
 
 lemma split_language_equiv_partition_union :
   "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b) \<Longrightarrow>
    p1 = p1a \<union> p1b"
 unfolding split_language_equiv_partition_def
-by (simp add: split_set_union_distint)
+by (simp add: split_set_union_distinct)
 
 lemma split_language_equiv_partition_subset :
 assumes "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)" 
@@ -580,7 +583,7 @@ definition split_language_equiv_partition_pred ::
     (snd (split_language_equiv_partition \<A> p1 a p2) \<noteq> {})"
 
 text \<open> Splitting according to this definition preserves the property 
-        that the partion is a weak language equivalence partition. \<close>
+        that the partition is a weak language equivalence partition. \<close>
 lemma (in DFA) split_language_equiv_partition___weak_language_equiv_set :
 assumes split: "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)"
     and a_in: "a \<in> \<Sigma> \<A>"
@@ -713,7 +716,7 @@ proof
   }
 qed
 
-text\<open> If no more splitting is possible, the desired strong language equivalence partion has been found. \<close>
+text\<open> If no more splitting is possible, the desired strong language equivalence partition has been found. \<close>
 lemma (in DFA) split_language_equiv_partition_final___weak2 :
 assumes is_part: "is_partition (\<Q> \<A>) P"
    and accept_P: "\<And>p. p \<in> P \<Longrightarrow> (p \<subseteq> \<F> \<A>) \<or> (p \<inter> \<F> \<A> = {})"
@@ -976,6 +979,46 @@ next
   show "is_weak_language_equiv_partition \<A> (Hopcroft_accepting_partition \<A>)"
     by (rule is_weak_language_equiv_partition_init)
 next
+  show "\<lbrakk>is_weak_language_equiv_partition \<A> P; \<exists>p1 a p2. p1 \<in> P \<and> a \<in> \<Sigma> \<A> \<and> p2 \<in> P \<and> split_language_equiv_partition_pred \<A> p1 a p2\<rbrakk>
+         \<Longrightarrow> SPEC (\<lambda>(p1, a, p2). p1 \<in> P \<and> a \<in> \<Sigma> \<A> \<and> p2 \<in> P \<and> split_language_equiv_partition_pred \<A> p1 a p2) \<bind> (\<lambda>(p1, a, p2). let (p1a, p1b) = split_language_equiv_partition \<A> p1 a p2 in RETURN (P - {p1} \<union> {p1a, p1b}))
+              \<le> SPEC (\<lambda>s'. is_weak_language_equiv_partition \<A> s' \<and> (s', P) \<in> measure (\<lambda>P. card (\<Q> \<A>) - card P))" for P
+    apply (intro refine_vcg)
+    apply (simp)
+    apply (clarify)
+  proof -
+    fix p1 a p2 p1a p1b
+    assume "p1 \<in> P" "a \<in> \<Sigma> \<A>"  "p2 \<in> P" and
+           weak_part_P: "is_weak_language_equiv_partition \<A> P" and
+           split_pred: "split_language_equiv_partition_pred \<A> p1 a p2" and
+           eval_part: "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)"
+
+    from \<open>p2 \<in> P\<close> weak_part_P have weak_set_p2: "is_weak_language_equiv_set \<A> p2"
+      unfolding is_weak_language_equiv_partition_def by simp
+
+    note step = split_language_equiv_partition_step  [OF weak_part_P `p1 \<in> P` `a \<in> \<Sigma> \<A>` weak_set_p2 
+      split_pred eval_part]
+
+    from is_partition_card_P[OF finite_\<Q> is_weak_language_equiv_partitionD3[OF step(1)]] step(2)
+    have "card P < card (\<Q> \<A>)" by simp
+
+    with step
+    show "is_weak_language_equiv_partition \<A> (insert p1a (insert p1b (P - {p1}))) \<and>
+          card (\<Q> \<A>) - card (insert p1a (insert p1b (P - {p1}))) < card (\<Q> \<A>) - card P" 
+      by simp
+  qed
+next
+  show "\<lbrakk>is_weak_language_equiv_partition \<A> P; \<nexists>p1 a p2. p1 \<in> P \<and> a \<in> \<Sigma> \<A> \<and> p2 \<in> P \<and> split_language_equiv_partition_pred \<A> p1 a p2\<rbrakk> \<Longrightarrow> P = Myhill_Nerode_partition \<A>" for P
+    by (metis split_language_equiv_partition_final)
+qed
+
+(*    --- OLD PROOF ---
+
+proof (rule WHILEIT_rule [where R = "measure (\<lambda>P. card (\<Q> \<A>) - card P)"])
+  show "wf (measure (\<lambda>P. card (\<Q> \<A>) - card P))" by simp
+next
+  show "is_weak_language_equiv_partition \<A> (Hopcroft_accepting_partition \<A>)"
+    by (rule is_weak_language_equiv_partition_init)
+next
   note weak_part_P = goal3(1)
   show ?case
     apply (intro refine_vcg)
@@ -1006,6 +1049,8 @@ next
     by (metis split_language_equiv_partition_final)
 qed
 
+*)
+
 
 subsection \<open> Abstract implementation \<close>
 
@@ -1028,7 +1073,8 @@ shows "split_language_equiv_partition_pred \<A> p1 a p2a \<or>
 proof -
   obtain p1a p1b where p1ab_eq: 
     "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)"
-    by (rule PairE) 
+    by (rule prod.exhaust)
+
   with part_pred_p2 have p1ab_neq_emp: "p1a \<noteq> {}" "p1b \<noteq> {}"
     unfolding split_language_equiv_partition_pred_def
     by simp_all
@@ -1084,18 +1130,18 @@ shows "(split_language_equiv_partition_pred \<A> p1 a p2a) \<longleftrightarrow>
 proof -
   obtain p1a p1b where p1ab_eq: 
     "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)"
-    by (rule PairE) 
+    by (rule prod.exhaust) 
   with part_pred_p2 have p1ab_eq_emp: "p1a = {} \<or> p1b = {}"
     unfolding split_language_equiv_partition_pred_def
     by simp
 
   obtain p1aa p1ba where p1aba_eq: 
     "split_language_equiv_partition \<A> p1 a p2a = (p1aa, p1ba)"
-    by (rule PairE) 
+    by (rule prod.exhaust) 
 
   obtain p1ab p1bb where p1abb_eq: 
     "split_language_equiv_partition \<A> p1 a p2b = (p1ab, p1bb)"
-    by (rule PairE) 
+    by (rule prod.exhaust) 
 
   def P \<equiv> "\<lambda>p2 q. \<exists>q'\<in>p2. (q, a, q') \<in> \<Delta> \<A>"
   from p1aba_eq [symmetric] p1abb_eq[symmetric] p1ab_eq[symmetric] 
@@ -1133,10 +1179,10 @@ shows "split_language_equiv_partition_pred \<A> p1' a p2"
 proof -  
   obtain p1a p1b where p1ab_eq: 
     "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)"
-    by (rule PairE) 
+    by (rule prod.exhaust) 
   obtain p1a' p1b' where p1ab_eq': 
     "split_language_equiv_partition \<A> p1' a p2 = (p1a', p1b')"
-    by (rule PairE) 
+    by (rule prod.exhaust) 
 
   have "p1a \<subseteq> p1a' \<and> p1b \<subseteq> p1b'"
     using p1ab_eq p1ab_eq' p1_sub
@@ -1185,7 +1231,7 @@ shows "Hopcroft_split_aux \<A> p2 a res p1 =
         (insert p1a (insert p1b res))))"
 proof -
   obtain p1a p1b where p1ab_eq: "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)"
-    by (rule PairE)
+    by (rule prod.exhaust)
 
   note p1ab_union = split_language_equiv_partition_union [OF p1ab_eq]
   note p1ab_disj = split_language_equiv_partition_disjoint [OF p1ab_eq]
@@ -1341,7 +1387,7 @@ proof -
       
   obtain p1a p1b where 
     p1ab_eq: "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)"
-    by (rule PairE)
+    by (rule prod.exhaust)
 
   have "p1a = p1 \<or> p1b = p1"
     using p1ab_eq p1_eq pab_eq
@@ -1417,7 +1463,7 @@ proof
     by (simp add: Hopcroft_split_in Bex_def, metis)
   obtain p1a p1b where p1ab_eq: 
     "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)"
-    by (rule PairE) 
+    by (rule prod.exhaust) 
   with p_eq' have p_eq: "p = p1a \<or> p = p1b" by simp
 
   from is_partition_in_subset [OF is_part p1_in_P]
@@ -1449,7 +1495,7 @@ next
     case True note rs1 = this
     obtain pa pb where pab_eq: 
       "split_language_equiv_partition \<A> p a p2 = (pa, pb)"
-      by (rule PairE)
+      by (rule prod.exhaust)
     with rs1
     have pab_eq_emp: "pa = {} \<or> pb = {}" 
       unfolding Hopcroft_splitted_def
@@ -1787,7 +1833,7 @@ shows "L' = L - {(a, p)}"
 proof (intro set_eqI iffI)
   fix aap2
   assume aap2_in: "aap2 \<in> L - {(a, p)}"
-  obtain aa p2 where aap2_eq [simp]: "aap2 = (aa, p2)" by (rule PairE)
+  obtain aa p2 where aap2_eq [simp]: "aap2 = (aa, p2)" by (rule prod.exhaust)
 
   from L_OK[of aap2] aap2_in have aap2_wf: "aa \<in> \<Sigma> \<A>" "p2 \<in> P" by simp_all
 
@@ -1799,7 +1845,7 @@ proof (intro set_eqI iffI)
 next
   fix aap2
   assume aap2_in: "aap2 \<in> L'"
-  obtain aa p2 where aap2_eq [simp]: "aap2 = (aa, p2)" by (rule PairE)
+  obtain aa p2 where aap2_eq [simp]: "aap2 = (aa, p2)" by (rule prod.exhaust)
 
   show "aap2 \<in> L - {(a, p)}"
     apply (rule Hopcroft_update_splitters_pred_in_E2 [OF L'_OK aap2_in[unfolded aap2_eq]])
@@ -2146,7 +2192,7 @@ lemma (in NFA) Hopcroft_abstract_invar___implies_finite_L:
 assumes invar: "Hopcroft_abstract_invar \<A> PL"
   shows "finite (snd PL)"
 proof -
-  obtain P L where PL_eq[simp]: "PL = (P, L)" by (rule PairE)
+  obtain P L where PL_eq[simp]: "PL = (P, L)" by (rule prod.exhaust)
 
   from invar 
   have L_sub: "L \<subseteq> \<Sigma> \<A> \<times> P" and part_P: "is_partition (\<Q> \<A>) P"
@@ -2174,7 +2220,7 @@ next
   fix PL 
   assume invar : "Hopcroft_abstract_invar \<A> PL"
      and cond: "Hopcroft_abstract_b PL"
-  obtain P L where PL_eq[simp]: "PL = (P, L)" by (rule PairE)
+  obtain P L where PL_eq[simp]: "PL = (P, L)" by (rule prod.exhaust)
 
   from invar cond
   show "Hopcroft_abstract_f \<A> PL \<le> SPEC (\<lambda>PL'. (PL', PL) \<in> Hopcroft_abstract_variant \<A>)"
@@ -2267,7 +2313,7 @@ next
     fix PL
     assume invar: "Hopcroft_abstract_invar \<A> PL" 
        and not_cond: " \<not> (Hopcroft_abstract_b PL)"      
-    obtain P L where PL_eq[simp]: "PL = (P, L)" by (rule PairE)
+    obtain P L where PL_eq[simp]: "PL = (P, L)" by (rule prod.exhaust)
 
     from not_cond have L_eq[simp]: "L = {}"
       unfolding Hopcroft_abstract_b_def by simp
@@ -2369,7 +2415,7 @@ proof -
       fix p'
       assume "p' \<in> P" "p' \<notin> P'" 
       obtain pt' pf' where split_eq: "split_language_equiv_partition \<A> p' a p = (pt', pf')"
-        by (rule PairE)
+        by (rule prod.exhaust)
 
       note p'_eq = split_language_equiv_partition_union [OF split_eq] 
 
@@ -2782,7 +2828,7 @@ proof (intro ballI impI)
   assume "i2 \<in> p"
   assume map_i12_eq: "partition_index_map P i1 = partition_index_map P i2"
 
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
 
   from p_OK[OF `i1 \<in> p`] have "i1 < n" by simp
   with invar have "i1 \<in> dom im" by simp
@@ -2819,7 +2865,7 @@ next
   fix p
   assume p_in: "p \<in> partition_map_\<alpha> P"
 
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
   from p_in obtain i where p_eq: "im i = Some p" and "i < n" by auto
 
   from invar have "im i \<noteq> Some {}" by simp
@@ -2830,7 +2876,7 @@ next
      and p2_in: "p2 \<in> partition_map_\<alpha> P" 
      and q_in_p12: "q \<in> p1" "q \<in> p2"
 
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
 
   from p1_in obtain i1 where p1_eq: "im i1 = Some p1" and "i1 < n" by auto
   from p2_in obtain i2 where p2_eq: "im i2 = Some p2" and "i2 < n" by auto
@@ -2854,7 +2900,7 @@ proof -
 
   note is_part = partition_map_is_partition [OF invar]
 
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
 
   from invar i_j_OK
   have "i \<in> dom im" and "j \<in> dom im" by (simp_all)
@@ -2889,7 +2935,7 @@ assumes invar: "partition_map_invar P"
     and q_in: "q \<in> (\<Union> (partition_map_\<alpha> P))"
 shows "partition_state_map P q < partition_free_index P"
 proof -
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
   from q_in obtain i s where "im i = Some s"  "q \<in> s" "i < n" by auto
   from invar `q \<in> s` `im i = Some s` have sm_q_eq: "sm q = Some i" by simp  
   from sm_q_eq `i < n` show ?thesis by (simp add: partition_state_map_def)
@@ -2991,7 +3037,7 @@ next
     using partition_map_is_partition_eq[OF invar_P, folded P'_eq, OF part_P'] P'_eq
     by simp
 
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
 
   show pre_subset': "pre \<subseteq> dom (fst (snd P)) \<and> dom (fst (snd P)) \<subseteq> \<Q> \<A>"
     using invar_P pre_subset
@@ -3548,8 +3594,8 @@ lemma (in DFA) Hopcroft_map_f_correct :
 assumes PL_OK: "(PL, PL') \<in> Hopcroft_map_state_rel"
 shows "Hopcroft_map_f \<A> PL \<le> \<Down>Hopcroft_map_state_rel (Hopcroft_abstract_f \<A> PL')"
 proof -
-  obtain P L where PL_eq[simp]: "PL = (P, L)" by (rule PairE)
-  obtain P' L' where PL'_eq[simp]: "PL' = (P', L')" by (rule PairE)
+  obtain P L where PL_eq[simp]: "PL = (P, L)" by (rule prod.exhaust)
+  obtain P' L' where PL'_eq[simp]: "PL' = (P', L')" by (rule prod.exhaust)
 
   from PL_OK have PL_\<alpha>: "Hopcroft_map_state_\<alpha> (P, L) = (P', L')" 
               and invar: "Hopcroft_map_state_invar (P, L)"
@@ -3583,7 +3629,7 @@ proof -
                    and ai_in_L: "(a, i) \<in> L"
         by simp_all
 
-      obtain im sm n where P_eq: "P = (im, sm, n)" by (metis PairE)
+      obtain im sm n where P_eq: "P = (im, sm, n)" by (metis prod.exhaust)
 
       show "i \<in> dom (fst P)"
         using ai_in_L invar
@@ -3726,7 +3772,7 @@ assumes invar: "partition_map_invar P"
 shows "dom (fst (snd P)) = \<Q> \<A>"
       "NFA_is_strong_equivalence_rename_fun \<A> (\<lambda>q. states_enumerate (the ((fst (snd P)) q)))"
 proof -
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
 
   from invar have dom_i: "\<And>i Q. im i = Some Q \<Longrightarrow> i < n" by (auto simp add: dom_def)
   from invar have sm_eq: "\<And>q i. (sm q = Some i) = (\<exists>p. im i = Some p \<and> q \<in> p)" by simp
@@ -4032,7 +4078,7 @@ defer
 -- "goal solved"
 using [[goals_limit = 10]]
 proof -
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
   def im' \<equiv> "partition_map2_\<alpha>_im cm im"
 
   have dom_im'_eq: "dom im' = dom im" unfolding im'_def dom_def partition_map2_\<alpha>_im_def by simp 
@@ -4351,7 +4397,7 @@ next
   def pm'' \<equiv> "pm' (q \<mapsto> s) (qs \<mapsto> iq)"
   def pim'' \<equiv> "pim' (s \<mapsto> q) (iq \<mapsto> qs)"
 
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
 
   -- "destruct assumptions into usefull facts"
   from iM_invar invar_P' is_part_P''
@@ -4567,7 +4613,7 @@ next
         case None thus ?thesis unfolding partition_map2_\<alpha>_im_def by simp
       next
         case (Some lu)
-        then obtain l' u' where im_ii_eq: "im ii = Some (l', u')" by (metis PairE)
+        then obtain l' u' where im_ii_eq: "im ii = Some (l', u')" by (metis prod.exhaust)
 
         have "class_map_\<alpha> (pm'(q \<mapsto> s, qs \<mapsto> iq), pim'(s \<mapsto> q, iq \<mapsto> qs)) (l', u') =
               class_map_\<alpha> (pm', pim') (l', u')"
@@ -4769,7 +4815,7 @@ proof -
           Some qs"
      and lu_eq: "partition_index_map P (partition_state_map P q) = (l, u)"
 
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
 
   from i_eq have sm_q_eq: "sm q = Some i" by (simp)
 
@@ -4982,14 +5028,14 @@ defer
   apply simp
 defer
 proof -
-  obtain pm pim where cm_eq: "cm = (pm, pim)" by (rule PairE)
+  obtain pm pim where cm_eq: "cm = (pm, pim)" by (rule prod.exhaust)
   show "inj_on fst ((\<lambda>q. (q, the (fst cm q))) ` pre)"
     using class_map_invar___pm_inj[OF invar_cm[unfolded cm_eq]]
     by (simp add: cm_eq inj_on_def)
 next
   case goal2
   def it' \<equiv> "fst ` it"
-  obtain im sm n where P_eq: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq: "P = (im, sm, n)" by (metis prod.exhaust)
   from goal2(1) have iq_le: "\<And>q' iq'. (q', iq') \<in> it \<Longrightarrow> iq \<le> iq'" by auto
   note q_iq_in = goal2(2)
   note it_subset = goal2(3)
@@ -5150,7 +5196,7 @@ next
          (simp_all add:`l \<le> iq` `s = l`)
     next
       case (Some ch)
-      then obtain i'' l'' u'' s'' where ch_eq: "cache = Some (i'', l'', u'', s'')" by (metis PairE)
+      then obtain i'' l'' u'' s'' where ch_eq: "cache = Some (i'', l'', u'', s'')" by (metis prod.exhaust)
 
       from invar_cache_add[unfolded ch_eq] q_iq_in have im_i''_eq: "im i'' = Some (l'', u'')" 
           and l''_le: "l'' \<le> s''" and s''_le: "s'' \<le> iq"
@@ -5405,7 +5451,7 @@ apply (simp_all)
 prefer 6
 apply (simp add: subset_iff)
 proof -
-  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis PairE)
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
   def im' \<equiv> "partition_map2_\<alpha>_im cm im"
 
   have dom_im'_eq: "dom im' = dom im" unfolding im'_def dom_def partition_map2_\<alpha>_im_def by simp 
@@ -5445,9 +5491,9 @@ assumes PL_OK: "(PLc, PL') \<in> Hopcroft_map2_state_rel_full (\<Q> \<A>)"
     and invar_P': "partition_map_invar (fst PL')"
 shows "Hopcroft_map2_f \<A> PLc \<le> \<Down>(Hopcroft_map2_state_rel_full (\<Q> \<A>)) (Hopcroft_map_f \<A> PL')"
 proof -
-  obtain P L cm where PLc_eq[simp]: "PLc = ((P, L), cm)" by (metis PairE)
-  obtain P' L' where PL'_eq[simp]: "PL' = (P', L')" by (rule PairE)
-  obtain im sm n where P_eq: "P = (im, sm, n)" by (metis PairE)
+  obtain P L cm where PLc_eq[simp]: "PLc = ((P, L), cm)" by (metis prod.exhaust)
+  obtain P' L' where PL'_eq[simp]: "PL' = (P', L')" by (rule prod.exhaust)
+  obtain im sm n where P_eq: "P = (im, sm, n)" by (metis prod.exhaust)
 
   from PL_OK have 
     PL_\<alpha>: "Hopcroft_map2_state_\<alpha> cm (P, L) = (P', L')" and
@@ -6401,11 +6447,11 @@ proof -
 
   obtain iM_new i l u s where 
      impl_eq: "Hopcroft_impl_step_compute_iM_update_cache im sm q iq iM cache = (iM_new, i, l, u, s)"
-     by (metis PairE)
+     by (metis prod.exhaust)
 
   obtain iM_new' i' l' u' s' where 
      map2_eq: "Hopcroft_map2_step_compute_iM_update_cache (im', sm', n) q iq iM' cache = (iM_new', i', l', u', s')"
-     by (metis PairE)
+     by (metis prod.exhaust)
 
   from Hopcroft_impl_step_compute_iM_update_cache_correct[OF im_OK sm_OK iM_OK impl_eq map2_eq]
   have cache_eq: "i' = i" "l' = l" "u' = u" "s'=s" and iM_new_OK: "(iM_new, iM_new') \<in> iM_rel" 
@@ -6878,7 +6924,7 @@ shows "sm.invar sm"
       "dom (sm.\<alpha> sm) = \<Q> \<A>"
       "NFA_is_strong_equivalence_rename_fun \<A> (\<lambda>q. states_enumerate (the (sm.lookup q sm)))"
 proof -
-   obtain im n sm' pm pim where rs_eq: "Hopcroft_code Q F AL pre_fun = ((im, sm', n), (pm, pim))"  by (metis PairE)
+   obtain im n sm' pm pim where rs_eq: "Hopcroft_code Q F AL pre_fun = ((im, sm', n), (pm, pim))"  by (metis prod.exhaust)
     from rs_eq sm_def have sm'_eq: "sm' = sm"  unfolding Hopcroft_code_rename_map_def by simp
 
   def P' \<equiv> "(partition_map2_\<alpha>_im (map_op_\<alpha> pm_ops pm, map_op_\<alpha> pim_ops pim)

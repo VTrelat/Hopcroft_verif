@@ -308,7 +308,7 @@ text \<open> Often, one is interested in deterministic transition
 \<close>
 
 definition LTS_is_deterministic :: "('q, 'a) LTS \<Rightarrow> bool" where
-  "LTS_is_deterministic \<Delta> = (\<forall>q \<sigma> q1' q2'. ((q, \<sigma>, q1') \<in> \<Delta> \<and> (q, \<sigma>, q2') \<in> \<Delta>) --> (q1' = q2'))"
+  "LTS_is_deterministic \<Delta> = (\<forall>q \<sigma> q1' q2'. ((q, \<sigma>, q1') \<in> \<Delta> \<and> (q, \<sigma>, q2') \<in> \<Delta>) \<longrightarrow> (q1' = q2'))"
 
 lemma LTS_is_deterministic_I[intro] :
   "\<lbrakk>\<And>q \<sigma> q1' q2'. \<lbrakk>(q, \<sigma>, q1') \<in> \<Delta>; (q, \<sigma>, q2') \<in> \<Delta>\<rbrakk> \<Longrightarrow> (q1' = q2')\<rbrakk> \<Longrightarrow>
