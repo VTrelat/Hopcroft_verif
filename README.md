@@ -4,4 +4,4 @@ Research project supervised by [Prof. Dr. Tobias Nipkow](https://www21.in.tum.de
 
 The main theory is in [Hopcroft_Minimisation.thy](./Automata_Malik_Tuerk/Hopcroft_Minimisation.thy).
 
-The biweekly progress report is in [Progress_Reports](./Progress_Reports.md).
+A biweekly progress report can be found in [Progress_Report](./Progress_Report.md).
