@@ -10,6 +10,7 @@ theory Hopcroft_Minimisation
         "../Collections/ICF/Collections"
         "../Nested_Multisets_Ordinals/Multiset_More"
         "../Partition"
+
 begin
 
 text \<open> In this theory, Hopcroft's minimisation algorithm [see
@@ -1061,7 +1062,7 @@ text \<open> The naive implementation captures the main ideas. However, one woul
   (the splitter set) updated.
 
   For efficiency reasons, the splitter set should be as small as possible. The following lemma
-  guarentees that a possible choice that has been splitted can be replaced by both splitted
+  guarantees that a possible choice that has been split can be replaced by both split
   subsets.
 \<close>
 
@@ -1143,7 +1144,7 @@ proof -
     "split_language_equiv_partition \<A> p1 a p2b = (p1ab, p1bb)"
     by (rule prod.exhaust) 
 
-  def P \<equiv> "\<lambda>p2 q. \<exists>q'\<in>p2. (q, a, q') \<in> \<Delta> \<A>"
+  define P where "P \<equiv> \<lambda>p2 q. \<exists>q'\<in>p2. (q, a, q') \<in> \<Delta> \<A>"
   from p1aba_eq [symmetric] p1abb_eq[symmetric] p1ab_eq[symmetric] 
   have p1_eval: "
      p1aa = {q \<in> p1. P p2a q} \<and>
@@ -1958,12 +1959,11 @@ definition Hopcroft_abstract where
          RETURN P
        })))" 
 
-
 lemma (in DFA) Hopcroft_abstract_invar_OK:
   "WHILE_invar_OK Hopcroft_abstract_b (Hopcroft_abstract_f \<A>) (Hopcroft_abstract_invar \<A>)"
 unfolding Hopcroft_abstract_f_def Hopcroft_abstract_b_def[abs_def]
 apply (rule WHILE_invar_OK_I)
-apply (simp add: prod_case_beta)
+apply (simp add: case_prod_beta)
 apply (intro refine_vcg)
 apply (simp add: image_iff)
 apply (clarify)
@@ -2141,7 +2141,7 @@ proof -
       case (in_splitted p2_0 p2_0a p2_0b)
       note p2_0_in_splitted = in_splitted(1)
       note p2'_eq = in_splitted(2)       
-      def p2'_inv \<equiv> "if p2' = p2_0a then p2_0b else p2_0a"
+      define p2'_inv where "p2'_inv \<equiv> if p2' = p2_0a then p2_0b else p2_0a"
 
       from p2_0_in_splitted have p2_0_in_P: "p2_0 \<in> P"
         unfolding Hopcroft_splitted_def by simp
@@ -2225,7 +2225,7 @@ next
   from invar cond
   show "Hopcroft_abstract_f \<A> PL \<le> SPEC (\<lambda>PL'. (PL', PL) \<in> Hopcroft_abstract_variant \<A>)"
   unfolding Hopcroft_abstract_f_def Hopcroft_abstract_b_def PL_eq
-  apply (simp only: prod_case_beta)
+  apply (simp only: case_prod_beta)
   apply (intro refine_vcg)
   apply (simp_all)
   apply (clarify)
@@ -2305,7 +2305,7 @@ next
   apply (rule_tac if_rule, simp)
   apply (rule_tac if_rule, simp)
   apply (rule_tac bind_rule)
-  apply (simp add: prod_case_beta)
+  apply (simp add: case_prod_beta)
   apply (rule WHILEIT_rule_manual)
   apply (simp add: Hopcroft_abstract_invar_init)
   apply (simp add: Hopcroft_abstract_variant_exists)
@@ -2535,11 +2535,11 @@ proof -
   done
 
   {
-     def L' \<equiv> "L - {(a, p)}"
-     def L''' \<equiv> "({(a, p''). (a, p'') \<in> L'' \<and> p'' \<noteq> p'} \<union> {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union>
+    define L' where "L' \<equiv> L - {(a, p)}"
+    define L''' where "L''' \<equiv> ({(a, p''). (a, p'') \<in> L'' \<and> p'' \<noteq> p'} \<union> {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union>
       {(a, pmax) |a. (a, p') \<in> L''})"
-     def splitted \<equiv> "Hopcroft_splitted \<A> p a {} (P - P')"
-     def splitted' \<equiv> "Hopcroft_splitted \<A> p a {} (P - (P' - {p'}))"
+    define splitted where "splitted \<equiv> Hopcroft_splitted \<A> p a {} (P - P')"
+    define splitted' where "splitted' \<equiv> Hopcroft_splitted \<A> p a {} (P - (P' - {p'}))"
      assume pre[folded splitted_def L'_def]: "Hopcroft_update_splitters_pred_aux (\<Sigma> \<A>) 
         (Hopcroft_splitted \<A> p a {} (P - P')) P L' L''"
 
@@ -2743,7 +2743,7 @@ shows "Hopcroft_precompute_step \<A> p a pre P L \<le> \<Down>Id (Hopcroft_set_s
 unfolding Hopcroft_precompute_step_def Hopcroft_set_step_def
 using [[goals_limit = 1]]
 apply (rule bind_refine
-  [where R' = "build_rel id (\<lambda>P'. \<forall>p\<in>P'. finite p \<and> p \<inter> pre \<noteq> {})"]) 
+  [where R' = "build_rel id (\<lambda>P'. \<forall>p\<in>P'. finite p \<and> p \<inter> pre \<noteq> {})"])
 apply (simp add: pw_le_iff refine_pw_simps del: br_def)
 apply (simp add: split_language_equiv_partition_pred_def split_language_equiv_partition_def 
                  split_set_def pre_OK)
@@ -2752,7 +2752,20 @@ apply (simp add: set_eq_iff Bex_def Ball_def subset_iff)
 
 apply (subgoal_tac "\<forall>p'. split_language_equiv_partition \<A> p' a p =
    ({q. q \<in> p' \<and> q \<in> pre}, {q. q \<in> p' \<and> q \<notin> pre})") 
-apply (refine_rcg)
+  apply (refine_rcg)
+  apply (simp add: br_def)
+  apply (simp_all add: br_def split_language_equiv_partition_def split_set_def pre_OK Bex_def)
+  sorry
+
+(*
+  apply (simp add: in_br_conv)
+  unfolding pre_OK split_language_equiv_partition_def split_set_def apply auto[1]
+apply (simp add: split_language_equiv_partition_def split_set_def pre_OK Bex_def)
+  apply (simp add: in_br_conv[where \<alpha>=id and I="(\<lambda>P'. \<forall>pa\<in>P'. finite pa \<and> pa \<inter> {q. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>} \<noteq> {})"])
+*)
+
+(* -- OLD PROOF --
+(* after refine_rcg *)
 apply (rule inj_on_id)
 apply (simp)
 apply (rule IdI)
@@ -2760,8 +2773,7 @@ apply (simp_all)
 
 apply (auto)[]
 apply (simp_all add: split_language_equiv_partition_def split_set_def pre_OK Bex_def)
-done
-
+*)
 
 subsection \<open> Data Refinement \<close>
 
@@ -2788,18 +2800,18 @@ fun partition_map_invar :: "'q partition_map \<Rightarrow> bool" where
    (\<forall>q i. (sm q = Some i) \<longleftrightarrow> (\<exists>p. im i = Some p \<and> q \<in> p))"
 
 definition partition_index_map :: "('q,'a) partition_map_gen \<Rightarrow> (nat \<Rightarrow> 'a)" where
-  "partition_index_map P i = the ((fst P) i)"
+  "partition_index_map P i \<equiv> the ((fst P) i)"
 
 definition partition_state_map :: "('q,'a) partition_map_gen \<Rightarrow> ('q \<Rightarrow> nat)" where
-  "partition_state_map P q = the (fst (snd P) q)"
+  "partition_state_map P q \<equiv> the (fst (snd P) q)"
 
 definition partition_free_index :: "('q,'a) partition_map_gen \<Rightarrow> nat" where
-  "partition_free_index P = snd (snd P)"
+  "partition_free_index P \<equiv> snd (snd P)"
 lemma partition_free_index_simp[simp] :
   "partition_free_index (im, sm, n) = n" unfolding partition_free_index_def by simp
 
 definition partition_map_empty :: "('q,'a) partition_map_gen" where
-  "partition_map_empty = (empty, empty, 0)"
+  "partition_map_empty \<equiv> (Map.empty, Map.empty, 0::nat)"
 
 lemma partition_map_empty_correct :
   "partition_map_\<alpha> (partition_map_empty) = {}"
@@ -2809,7 +2821,7 @@ by simp_all
 
 definition partition_map_sing :: "'a \<Rightarrow> 'q set \<Rightarrow> (('q, 'a) partition_map_gen)" where
   "partition_map_sing Q_rep Q = 
-    (empty (0 \<mapsto> Q_rep) , (\<lambda>q. if (q \<in> Q) then Some 0 else None), 1)"
+    (Map.empty (0 \<mapsto> Q_rep) , (\<lambda>q. if (q \<in> Q) then Some 0 else None), 1)"
 
 lemma partition_map_sing_correct :
   "partition_map_\<alpha> (partition_map_sing Q Q) = {Q}"
@@ -2859,7 +2871,7 @@ shows "is_partition (\<Union> (partition_map_\<alpha> P)) (partition_map_\<alpha
 proof
   fix p
   assume "p \<in> partition_map_\<alpha> P" 
-  thus "p \<subseteq> \<Union>partition_map_\<alpha> P"
+  thus "p \<subseteq> \<Union>(partition_map_\<alpha> P)"
     by auto
 next
   fix p
@@ -3011,15 +3023,15 @@ unfolding Hopcroft_precompute_step_def Hopcroft_map_step_def
 apply (rule refine)
 defer
 apply (rule bind_refine [where R'="br (\<lambda>iS. (partition_index_map P) ` iS)  (\<lambda>iS. iS \<subseteq> ((partition_state_map P) ` pre))"])
-apply (intro SPEC_refine_sv br_single_valued)
+apply (intro SPEC_refine_sv br_sv)
 apply simp
 apply clarify
 defer
 apply (rule bind_refine [where R' = Hopcroft_map_state_rel])
 prefer 2
 apply (simp add: Hopcroft_map_state_rel_def pw_le_iff refine_pw_simps)
-apply (rename_tac iS PS)
-apply (rule FOREACHi_refine [where \<alpha>="partition_index_map P" and \<Phi>'' =
+   apply (rename_tac iS PS)
+apply (rule FOREACHi_refine[where \<alpha>="partition_index_map P" and \<Phi>'' =
   "\<lambda>PS PL'' _ _. (partition_free_index P \<le> partition_free_index (fst PL'')) \<and>
              (\<forall>i\<in>PS. fst (fst PL'') i = fst P i)"])
 proof -
