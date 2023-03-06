@@ -2757,13 +2757,6 @@ apply (subgoal_tac "\<forall>p'. split_language_equiv_partition \<A> p' a p =
   apply (simp_all add: br_def split_language_equiv_partition_def split_set_def pre_OK Bex_def)
   sorry
 
-(*
-  apply (simp add: in_br_conv)
-  unfolding pre_OK split_language_equiv_partition_def split_set_def apply auto[1]
-apply (simp add: split_language_equiv_partition_def split_set_def pre_OK Bex_def)
-  apply (simp add: in_br_conv[where \<alpha>=id and I="(\<lambda>P'. \<forall>pa\<in>P'. finite pa \<and> pa \<inter> {q. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>} \<noteq> {})"])
-*)
-
 (* -- OLD PROOF --
 (* after refine_rcg *)
 apply (rule inj_on_id)
