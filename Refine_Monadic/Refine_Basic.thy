@@ -986,6 +986,13 @@ lemma SPEC_refine:
   using assms
   by (force simp: pw_le_iff refine_pw_simps)
 
+lemma SPEC_refine_sv: 
+  assumes "single_valued R"
+  assumes "S \<le> SPEC (\<lambda>x. \<exists>x'. (x,x')\<in>R \<and> \<Phi> x')"
+  shows "S \<le> \<Down>R (SPEC \<Phi>)"
+  using assms
+  by (force simp: pw_le_iff refine_pw_simps dest: single_valuedD)
+
 (* TODO/FIXME: This is already part of a type-based heuristics! *)
 lemma Id_SPEC_refine[refine]: 
   "S \<le> SPEC \<Phi> \<Longrightarrow> S \<le> \<Down>Id (SPEC \<Phi>)" by simp
