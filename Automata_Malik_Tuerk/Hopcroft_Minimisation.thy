@@ -246,7 +246,7 @@ can be given using the connection between partitions and equivalence relations. 
 
 definition Hopcroft_accepting_relation where
   "Hopcroft_accepting_relation \<A> \<equiv> {(q1, q2) . q1 \<in> \<Q> \<A> \<and> q2 \<in> \<Q> \<A> \<and> (q1 \<in> \<F> \<A> \<longleftrightarrow> q2 \<in> \<F> \<A>)}"
-  (* q\<^sub>1 R\<^sub>H q\<^sub>2 \<equiv> q\<^sub>1 \<in> \<F>\<^sub>\<A> \<longleftrightarrow> q\<^sub>2 \<in> \<F>\<^sub>\<A> *)
+  (* q\<^sub>1 R\<^sub>H q\<^sub>2 \<equiv> q\<^sub>1 \<in> \<F>\<^sub>\<A> \<longleftrightarrow> q\<^sub>2 \<in> \<F>\<^sub>\<A> i.e. q\<^sub>1 R\<^sub>H q\<^sub>2 iff q\<^sub>1 and q\<^sub>2 are both final or both non-final *)
 
 lemma equiv_Hopcroft_accepting_relation :
   "equiv (\<Q> \<A>) (Hopcroft_accepting_relation \<A>)"
@@ -538,10 +538,10 @@ lemma split_set_union_distinct:
 unfolding split_set_def by auto
       
 text \<open> Given two sets of states @{text p1}, @{text p2} of an automaton
-        @{text \<A>} and a label @{text a}. The set @{text p1} is splitted according to whether
+        @{text \<A>} and a label @{text a}. The set @{text p1} is split according to whether
         a state in @{text p2} is reachable by @{text a}.\<close>
 definition split_language_equiv_partition where
-  "split_language_equiv_partition \<A> p1 a p2 =
+  "split_language_equiv_partition \<A> p1 a p2 = \<comment>\<open>(a, p2) splits p1.\<close>
    split_set (\<lambda>q. \<exists>q' \<in> p2. (q, a, q') \<in> \<Delta> \<A>) p1"
 
 text \<open> Hopcroft's algorithm operates on deterministic automata. Exploiting the property, that
@@ -579,7 +579,7 @@ text \<open> Splitting only makes sense if one of the resulting sets is non-empt
  This property is very important. Therefore, a special predicate is introduced. \<close>
 definition split_language_equiv_partition_pred ::
   "('q, 'a, 'x) NFA_rec_scheme \<Rightarrow> 'q set \<Rightarrow> 'a \<Rightarrow> 'q set \<Rightarrow> bool" where
-  "split_language_equiv_partition_pred \<A> p1 a p2 \<equiv>
+  "split_language_equiv_partition_pred \<A> p1 a p2 \<equiv> \<comment>\<open>(a, p2) is a splitter of p1.\<close>
     (fst (split_language_equiv_partition \<A> p1 a p2) \<noteq> {}) \<and> 
     (snd (split_language_equiv_partition \<A> p1 a p2) \<noteq> {})"
 
@@ -961,15 +961,21 @@ subsection \<open> Naive implementation \<close>
 
 definition Hopcroft_naive where
   "Hopcroft_naive \<A> = 
-    WHILEIT (is_weak_language_equiv_partition \<A>)
+    WHILEIT (is_weak_language_equiv_partition \<A>) 
+            \<comment>\<open>invariant: loop variable has to be a partition satisfying the weak
+            equivalence property.\<close>
 
             (\<lambda>P. \<exists>p1 a p2. (p1 \<in> P \<and> a \<in> \<Sigma> \<A> \<and> p2 \<in> P \<and> split_language_equiv_partition_pred \<A> p1 a p2))
-
+            \<comment>\<open>loop condition: there exists a splitter (p1, a, p2) splitting P in \<A>.\<close>
             (\<lambda>P. do { 
                (p1, a, p2) \<leftarrow> SPEC (\<lambda>(p1,a,p2). p1 \<in> P \<and> a \<in> \<Sigma> \<A> \<and> p2 \<in> P \<and> 
                    split_language_equiv_partition_pred \<A> p1 a p2); 
                let (p1a, p1b) = split_language_equiv_partition \<A> p1 a p2;
-               RETURN ((P - {p1}) \<union> {p1a, p1b})}) (Hopcroft_accepting_partition \<A>)"
+               RETURN ((P - {p1}) \<union> {p1a, p1b})})
+            \<comment>\<open>loop body: pick such a splitter (p1, a, p2) splitting P into (p1a, p1b)
+            and modify partition to (P - {p1}) \<union> {p1a, p1b}\<close>
+            (Hopcroft_accepting_partition \<A>)"
+            \<comment>\<open>loop variable: initial partition {final states, non-final states}\<close>
 
 lemma (in DFA) Hopcroft_naive_correct :
   "Hopcroft_naive \<A> \<le> SPEC (\<lambda>P. P = Myhill_Nerode_partition \<A>)"
@@ -996,8 +1002,7 @@ next
     from \<open>p2 \<in> P\<close> weak_part_P have weak_set_p2: "is_weak_language_equiv_set \<A> p2"
       unfolding is_weak_language_equiv_partition_def by simp
 
-    note step = split_language_equiv_partition_step  [OF weak_part_P `p1 \<in> P` `a \<in> \<Sigma> \<A>` weak_set_p2 
-      split_pred eval_part]
+    note step = split_language_equiv_partition_step  [OF weak_part_P \<open>p1 \<in> P\<close> \<open>a \<in> \<Sigma> \<A>\<close> weak_set_p2 split_pred eval_part]
 
     from is_partition_card_P[OF finite_\<Q> is_weak_language_equiv_partitionD3[OF step(1)]] step(2)
     have "card P < card (\<Q> \<A>)" by simp
@@ -1056,7 +1061,7 @@ qed
 subsection \<open> Abstract implementation \<close>
 
 text \<open> The naive implementation captures the main ideas. However, one would like to optimise 
-  for sets @{text p1}, @{text p2} and a label @{text a}. In the following an explicit 
+  for sets @{text p1}, @{text p2} and a label @{text a}. In the following, an explicit 
   set of possible choices for @{text p2} and @{text a} is maintained. An element from this
   set is chosen, all elements of the current partition processed and the set of possible choices
   (the splitter set) updated.
@@ -1120,7 +1125,7 @@ qed
 text \<open>
   More interestingly, if one already knows that there is no split according to a set @{text p2}
   (as it is for example not in the set of splitters), then it is sufficient to consider only one
-  of its splitted components. 
+  of its split components. 
 \<close>
 lemma (in DFA) split_language_equiv_partition_pred_split_neg :
 assumes p2ab_union: "p2a \<union> p2b = p2"
@@ -1586,7 +1591,7 @@ definition Hopcroft_update_splitters_pred_aux_upper ::
     ('a \<times> 'q set) set \<Rightarrow> ('a \<times> 'q set) set \<Rightarrow> bool"
 where
  "Hopcroft_update_splitters_pred_aux_upper Q splitted P L L' \<longleftrightarrow> 
-  (\<forall>a p. (a, p) \<in> L' -->
+  (\<forall>a p. (a, p) \<in> L' \<longrightarrow>
          ((a, p) \<in> L \<and> (\<forall>pa pb. (p, pa, pb) \<notin> splitted)) \<or>
          (\<exists>p' pa pb. (p', pa, pb) \<in> splitted \<and> a \<in> Q \<and> (p = pa \<or> p = pb)))"
 
@@ -1596,7 +1601,7 @@ definition Hopcroft_update_splitters_pred_aux_lower_not_splitted ::
 where
  "Hopcroft_update_splitters_pred_aux_lower_not_splitted Q splitted P L L' \<longleftrightarrow> 
    (\<forall>a p. ((a, p) \<in> L \<and> a \<in> Q \<and> p \<in> P \<and> 
-          (\<forall>pa pb. (p, pa, pb) \<notin> splitted)) -->
+          (\<forall>pa pb. (p, pa, pb) \<notin> splitted)) \<longrightarrow>
           (a, p) \<in> L')"
 
 definition Hopcroft_update_splitters_pred_aux_lower_splitted_in_L ::
@@ -1605,7 +1610,7 @@ definition Hopcroft_update_splitters_pred_aux_lower_splitted_in_L ::
 where
  "Hopcroft_update_splitters_pred_aux_lower_splitted_in_L Q splitted P L L' \<longleftrightarrow> 
    (\<forall>a p pa pb. 
-          ((a, p) \<in> L \<and> a \<in> Q \<and> (p, pa, pb) \<in> splitted) -->
+          ((a, p) \<in> L \<and> a \<in> Q \<and> (p, pa, pb) \<in> splitted) \<longrightarrow>
            ((a, pa) \<in> L') \<and> (a, pb) \<in> L')"
 
 
@@ -1615,7 +1620,7 @@ definition Hopcroft_update_splitters_pred_aux_lower_splitted ::
 where
  "Hopcroft_update_splitters_pred_aux_lower_splitted Q splitted P L L' \<longleftrightarrow> 
    (\<forall>a p pa pb. 
-          (a \<in> Q \<and> (p, pa, pb) \<in> splitted) -->
+          (a \<in> Q \<and> (p, pa, pb) \<in> splitted) \<longrightarrow>
            ((a, pa) \<in> L') \<or> (a, pb) \<in> L')"
 
 
@@ -1864,6 +1869,8 @@ definition Hopcroft_abstract_invar where
    (\<forall>p1 a p2. (a \<in> \<Sigma> \<A> \<and> (\<exists>p1' \<in> P. p1 \<subseteq> p1') \<and> p2 \<in> P \<and>
        split_language_equiv_partition_pred \<A> p1 a p2) \<longrightarrow>
        (\<exists>p2'. (a, p2') \<in> L \<and> split_language_equiv_partition_pred \<A> p1 a p2')))"
+\<comment>\<open>P is a partition of the states satisfying weak language equivalence,
+L is a subset of \<Sigma>\<times>P containing splitters of P.\<close>
 
 lemma Hopcroft_abstract_invarI [intro!] :
   "\<lbrakk>is_weak_language_equiv_partition \<A> P;
@@ -1878,6 +1885,7 @@ unfolding Hopcroft_abstract_invar_def
 by auto metis
 
 definition "Hopcroft_abstract_init \<A> \<equiv> (Hopcroft_accepting_partition \<A>, (\<Sigma> \<A> \<times> {\<F> \<A>}))"
+\<comment>\<open>({{non-final states},{final states}}, letters \<times> final states)\<close>
 
 lemma (in DFA) Hopcroft_abstract_invar_init :
 assumes \<F>_OK: "\<F> \<A> \<noteq> {}"
@@ -1937,15 +1945,16 @@ qed
 
 definition Hopcroft_abstract_b where
 "Hopcroft_abstract_b PL = (snd PL \<noteq> {})"
+\<comment>\<open>set of splitters is not empty\<close>
 
 definition Hopcroft_abstract_f where
 "Hopcroft_abstract_f \<A> = 
  (\<lambda>(P, L). do {
-       ASSERT (Hopcroft_abstract_invar \<A> (P, L));
-       ASSERT (L \<noteq> {});
-       (a,p) \<leftarrow> SPEC (\<lambda>(a,p). (a,p) \<in> L);
+     ASSERT (Hopcroft_abstract_invar \<A> (P, L));                             \<comment>\<open>(P, L) satisfy the invariant\<close>
+     ASSERT (L \<noteq> {});                                                       \<comment>\<open>set of splitters is not empty\<close>
+       (a,p) \<leftarrow> SPEC (\<lambda>(a,p). (a,p) \<in> L);                                   \<comment>\<open>pick some splitter\<close>
        (P', L') \<leftarrow> SPEC (\<lambda>(P', L'). Hopcroft_update_splitters_pred \<A> p a P L L' \<and>
-                                    (P' = Hopcroft_split \<A> p a {} P));
+                                    (P' = Hopcroft_split \<A> p a {} P));      \<comment>\<open>split elements of P and update L accordingly\<close>
        RETURN (P', L')
      })"
 
@@ -2741,7 +2750,7 @@ assumes pre_OK: "pre = {q. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Del
     and P_fin: "\<And>p. p \<in> P \<Longrightarrow> finite p"
 shows "Hopcroft_precompute_step \<A> p a pre P L \<le> \<Down>Id (Hopcroft_set_step \<A> p a P L)"
 unfolding Hopcroft_precompute_step_def Hopcroft_set_step_def
-using [[goals_limit = 1]]
+(* using [[goals_limit = 1]] *)
 apply (rule bind_refine
   [where R' = "build_rel id (\<lambda>P'. \<forall>p\<in>P'. finite p \<and> p \<inter> pre \<noteq> {})"])
 apply (simp add: pw_le_iff refine_pw_simps del: br_def)
@@ -2968,7 +2977,7 @@ definition Hopcroft_map_state_rel where
 lemma Hopcroft_map_state_rel_sv[refine] :
 "single_valued Hopcroft_map_state_rel"
 unfolding Hopcroft_map_state_rel_def
-by (rule br_single_valued)
+by (rule br_sv)
 
 definition Hopcroft_map_step_invar where
 "Hopcroft_map_step_invar \<A> p a P L P' \<sigma> \<longleftrightarrow> 
