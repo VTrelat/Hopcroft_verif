@@ -7,9 +7,10 @@
     -   I have started to understand the refinement framework.
     -   reading and understanding the theory `Hopcroft_Minimisation.thy`
     -   those old theories needed to be updated to the current Isabelle version. I fixed all import related issues and syntax issues and got them to work again.
-    -   :x: proof of lemma `Hopcroft_precompute_step_correct` is broken:
+    -   :white_check_mark: proof of lemma `Hopcroft_precompute_step_correct` is ~~broken~~ **repaired**:
         -   use of rule `inj_on_id` that I do not understand
-        -   I found another way to fix the first subgoals but one is remaining that I cannot fix
+        -   I found another way to fix the first subgoals ~~but one is remaining that I cannot fix~~
+        -   for the last subgoal, I found an explicit way to prove it but am not sure if it is the shortest way to do it
     ##### Remarks
     -   `def` --> `define`
     -   `guess` --> `obtain`
