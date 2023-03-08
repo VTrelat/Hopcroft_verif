@@ -2758,72 +2758,24 @@ apply (rule bind_refine
 apply (simp add: pw_le_iff refine_pw_simps del: br_def)
 apply (simp add: split_language_equiv_partition_pred_def split_language_equiv_partition_def 
                  split_set_def pre_OK)
-apply (insert P_fin)[]
-apply (simp add: set_eq_iff Bex_def Ball_def subset_iff)
+  apply (insert P_fin)[]
+  apply (simp add: set_eq_iff Bex_def Ball_def subset_iff)
 
-apply (subgoal_tac "\<forall>p'. split_language_equiv_partition \<A> p' a p =
+  apply (subgoal_tac "\<forall>p'. split_language_equiv_partition \<A> p' a p =
    ({q. q \<in> p' \<and> q \<in> pre}, {q. q \<in> p' \<and> q \<notin> pre})") 
-apply (refine_rcg)
-apply (simp add: br_def)
-apply (simp_all add: br_def split_language_equiv_partition_def split_set_def pre_OK Bex_def)
-proof-
-  fix PS
-  assume asm:"\<forall>pa\<in>PS. finite pa \<and> pa \<inter> {q. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>} \<noteq> {}"
-
-  let ?I = "Hopcroft_set_step_invar \<A> p a P L"
-  let ?f = "(\<lambda>p' (P', L').
-               if card {q \<in> p'. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>} = 0 then RETURN (P', L')
-               else let (pmin, pmax) =
-                          if card {q \<in> p'. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>} < card {q \<in> p'. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>} then ({q \<in> p'. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>}, {q \<in> p'. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>})
-                          else ({q \<in> p'. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>}, {q \<in> p'. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>});
-                        P' = P' - {p'} \<union> {{q \<in> p'. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>}, {q \<in> p'. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>}};
-                        L' = {(a, p''). (a, p'') \<in> L' \<and> p'' \<noteq> p'} \<union> {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union> {(a, pmax) |a. (a, p') \<in> L'}
-                    in RETURN (P', L'))"
-  let ?\<sigma>0 = "(P, L - {(a, p)})"
-  let ?f' = "(\<lambda>p' (P', L').
-                  if (\<forall>x. x \<in> p' \<longrightarrow> (\<forall>xa. xa \<in> p \<longrightarrow> (x, a, xa) \<notin> \<Delta> \<A>)) \<or> (\<forall>x. x \<in> p' \<longrightarrow> (\<exists>xa. xa \<in> p \<and> (x, a, xa) \<in> \<Delta> \<A>)) then RETURN (P', L')
-                  else SPEC (\<lambda>pmm. pmm = ({s \<in> p'. \<exists>x. x \<in> p \<and> (s, a, x) \<in> \<Delta> \<A>}, {s \<in> p'. \<forall>x. x \<in> p \<longrightarrow> (s, a, x) \<notin> \<Delta> \<A>}) \<or> pmm = ({s \<in> p'. \<forall>x. x \<in> p \<longrightarrow> (s, a, x) \<notin> \<Delta> \<A>}, {s \<in> p'. \<exists>x. x \<in> p \<and> (s, a, x) \<in> \<Delta> \<A>})) \<bind>
-                       (\<lambda>(pmin, pmax).
-                           let P' = P' - {p'} \<union> {{s \<in> p'. \<exists>x. x \<in> p \<and> (s, a, x) \<in> \<Delta> \<A>}, {s \<in> p'. \<forall>x. x \<in> p \<longrightarrow> (s, a, x) \<notin> \<Delta> \<A>}};
-                               L' = {(a, p''). (a, p'') \<in> L' \<and> p'' \<noteq> p'} \<union> {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union> {(a, pmax) |a. (a, p') \<in> L'}
-                           in RETURN (P', L')))"
-
-  have "FOREACH\<^bsup>?I\<^esup> PS ?f ?\<sigma>0 \<le> \<Down>Id (FOREACH\<^bsup>?I\<^esup> PS ?f' ?\<sigma>0)"
-    unfolding FOREACH_to_oci_unfold apply(rule FOREACHoci_refine_rcg[where \<alpha>=id])
-          prefer 7
-  proof-
-    show "\<And>x it \<sigma> x' it' \<sigma>'.
-       \<lbrakk>\<forall>y\<in>it - {x}. True; x' = id x; x \<in> it; x' \<in> it'; it' = id ` it; it \<subseteq> PS; it' \<subseteq> PS; Hopcroft_set_step_invar \<A> p a P L it \<sigma>; Hopcroft_set_step_invar \<A> p a P L it' \<sigma>'; True; True; (\<sigma>, \<sigma>') \<in> Id\<rbrakk>
-       \<Longrightarrow> (case \<sigma> of
-             (P', L') \<Rightarrow>
-               if card {q \<in> x. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>} = 0 then RETURN (P', L')
-               else let (pmin, pmax) =
-                          if card {q \<in> x. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>} < card {q \<in> x. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>} then ({q \<in> x. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>}, {q \<in> x. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>})
-                          else ({q \<in> x. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>}, {q \<in> x. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>});
-                        P' = P' - {x} \<union> {{q \<in> x. \<exists>q'. q' \<in> p \<and> (q, a, q') \<in> \<Delta> \<A>}, {q \<in> x. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>}}; L' = {(a, p''). (a, p'') \<in> L' \<and> p'' \<noteq> x} \<union> {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union> {(a, pmax) |a. (a, x) \<in> L'}
-                    in RETURN (P', L'))
-            \<le> \<Down> Id (case \<sigma>' of
-                     (P', L') \<Rightarrow>
-                       if (\<forall>x. x \<in> x' \<longrightarrow> (\<forall>xa. xa \<in> p \<longrightarrow> (x, a, xa) \<notin> \<Delta> \<A>)) \<or> (\<forall>x. x \<in> x' \<longrightarrow> (\<exists>xa. xa \<in> p \<and> (x, a, xa) \<in> \<Delta> \<A>)) then RETURN (P', L')
-                       else SPEC (\<lambda>pmm. pmm = ({s \<in> x'. \<exists>x. x \<in> p \<and> (s, a, x) \<in> \<Delta> \<A>}, {s \<in> x'. \<forall>x. x \<in> p \<longrightarrow> (s, a, x) \<notin> \<Delta> \<A>}) \<or> pmm = ({s \<in> x'. \<forall>x. x \<in> p \<longrightarrow> (s, a, x) \<notin> \<Delta> \<A>}, {s \<in> x'. \<exists>x. x \<in> p \<and> (s, a, x) \<in> \<Delta> \<A>})) \<bind>
-                            (\<lambda>(pmin, pmax).
-                                let P' = P' - {x'} \<union> {{s \<in> x'. \<exists>x. x \<in> p \<and> (s, a, x) \<in> \<Delta> \<A>}, {s \<in> x'. \<forall>x. x \<in> p \<longrightarrow> (s, a, x) \<notin> \<Delta> \<A>}};
-                                    L' = {(a, p''). (a, p'') \<in> L' \<and> p'' \<noteq> x'} \<union> {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union> {(a, pmax) |a. (a, x') \<in> L'}
-                                in RETURN (P', L')))"
-    apply (refine_rcg)
-    apply simp_all
-    apply (auto simp add: asm)
-    apply (rename_tac p' P' x1 x2)
-    proof-
-      fix p' P' x1 x2
-      assume asm':"p' \<in> P'" "P' \<subseteq> PS" "Hopcroft_set_step_invar \<A> p a P L P' (x1, x2)" "\<forall>x. x \<in> p' \<longrightarrow> (\<forall>x'. x' \<in> p \<longrightarrow> (x, a, x') \<notin> \<Delta> \<A>)"
-      with asm show "card {q \<in> p'. \<forall>q'. q' \<in> p \<longrightarrow> (q, a, q') \<notin> \<Delta> \<A>} = 0"
-        using subsetD by blast
-    qed
-  qed simp+
-  then show "FOREACH\<^bsup>?I\<^esup> PS ?f ?\<sigma>0 \<le> FOREACH\<^bsup>?I\<^esup> PS ?f' ?\<sigma>0"
-    by simp
-qed
+  apply (refine_rcg)
+  apply (simp add: br_def)
+  apply (simp add: br_def split_language_equiv_partition_def split_set_def pre_OK Bex_def)
+  apply refine_rcg
+  apply (rule inj_on_id)
+  apply refine_dref_type
+  apply (simp_all add: in_br_conv)
+  apply (clarsimp simp: split_language_equiv_partition_def split_set_def pre_OK Bex_def)
+  apply (subst card_0_eq)
+  apply fastforce
+  apply clarsimp apply (safe ; blast)
+  apply (simp_all add: split_language_equiv_partition_def split_set_def pre_OK Bex_def)
+  done
 
 (* -- OLD PROOF --
 (* after refine_rcg *)
