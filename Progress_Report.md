@@ -35,3 +35,5 @@
     -   `the.simps` --> `option.sel`
     -   `op f` --> `(f)` for any function `f`
     -   `map_pair_inj_on` --> `map_prod_inj_on`
+    -   `Option.map` --> `map_option`
+    -   `br_single_valued` --> `br_sv`
