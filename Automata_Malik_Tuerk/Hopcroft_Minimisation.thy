@@ -20,7 +20,7 @@ Academic Press  189--196 (1971)] is verified. \<close>
 
 subsection \<open> Main idea \<close>
 
-text \<open> A determinsitic automaton with no unreachable states 
+text \<open> A determinisitic automaton with no unreachable states 
         can be minimised by merging equivalent states. \<close>
 
 lemma merge_is_minimal :
@@ -2791,12 +2791,12 @@ apply (simp_all add: split_language_equiv_partition_def split_set_def pre_OK Bex
 subsection \<open> Data Refinement \<close>
 
 text\<open> Till now, the algorithm has been refined in several steps. However, the datastructures
-remained unchanged. Let's now use efficient datastructure. Currently the state consists of
+remained unchanged. Let us now use efficient datastructures. Currently the state consists of
 a partition of the states and a set of pairs of labels and state sets. In the following the
-partition will be implemented using maps. 
+partition will be implemented using maps.
 
 The partition @{text P} will be represented by a triple @{text "(im, sm, n)"}. 
-This triple consists of a finite map @{text nm} mapping indices (natural numbers) to sets, a map
+This triple consists of a finite map @{text im} mapping indices (natural numbers) to sets, a map
 @{text sm} mapping states to the index of the set it is in, and finally a natural number 
 @{text n} that determines the number of used indices.\<close>
 
@@ -2808,18 +2808,18 @@ fun partition_map_\<alpha> :: "'q partition_map \<Rightarrow> ('q set) set" wher
 
 fun partition_map_invar :: "'q partition_map \<Rightarrow> bool" where
   "partition_map_invar (im, sm, n) \<longleftrightarrow>
-   dom im = {i . i < n} \<and>
-   (\<forall>i. im i \<noteq> Some {}) \<and>
-   (\<forall>q i. (sm q = Some i) \<longleftrightarrow> (\<exists>p. im i = Some p \<and> q \<in> p))"
+   dom im = {i . i < n} \<and>                                     \<comment>\<open>domain is 0..n\<close>
+   (\<forall>i. im i \<noteq> Some {}) \<and>                                    \<comment>\<open>no component is empty\<close>
+   (\<forall>q i. (sm q = Some i) \<longleftrightarrow> (\<exists>p. im i = Some p \<and> q \<in> p))"  \<comment>\<open>sm and im map states and the corresponding indices correctly\<close>
 
 definition partition_index_map :: "('q,'a) partition_map_gen \<Rightarrow> (nat \<Rightarrow> 'a)" where
-  "partition_index_map P i \<equiv> the ((fst P) i)"
+  "partition_index_map P i \<equiv> the ((fst P) i)" \<comment>\<open>returns im i if P = (im, sm, n)\<close>
 
 definition partition_state_map :: "('q,'a) partition_map_gen \<Rightarrow> ('q \<Rightarrow> nat)" where
-  "partition_state_map P q \<equiv> the (fst (snd P) q)"
+  "partition_state_map P q \<equiv> the (fst (snd P) q)" \<comment>\<open>returns sm q if P = (im, sm, n)\<close>
 
 definition partition_free_index :: "('q,'a) partition_map_gen \<Rightarrow> nat" where
-  "partition_free_index P \<equiv> snd (snd P)"
+  "partition_free_index P \<equiv> snd (snd P)" \<comment>\<open>returns n if P = (im, sm, n)\<close>
 lemma partition_free_index_simp[simp] :
   "partition_free_index (im, sm, n) = n" unfolding partition_free_index_def by simp
 
@@ -2855,26 +2855,26 @@ proof (intro ballI impI)
 
   obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
 
-  from p_OK[OF `i1 \<in> p`] have "i1 < n" by simp
+  from p_OK[OF \<open>i1 \<in> p\<close>] have "i1 < n" by simp
   with invar have "i1 \<in> dom im" by simp
   then obtain s1 where im_i1_eq: "im i1 = Some s1"
     by (simp add: dom_def, blast)
 
-  from p_OK[OF `i2 \<in> p`] have "i2 < n" by simp
+  from p_OK[OF \<open>i2 \<in> p\<close>] have "i2 < n" by simp
   with invar have "i2 \<in> dom im" by simp
   then obtain s2 where im_i2_eq: "im i2 = Some s2"
     by (simp add: dom_def, blast)
 
-  from map_i12_eq `im i1 = Some s1` `im i2 = Some s2`
+  from map_i12_eq \<open>im i1 = Some s1\<close> \<open>im i2 = Some s2\<close>
   have s2_eq[simp]: "s2 = s1" unfolding partition_index_map_def by simp
 
   from invar have "im i1 \<noteq> Some {}" by simp
   with im_i1_eq have "s1 \<noteq> {}" by simp
   then obtain q where "q \<in> s1" by auto
 
-  from invar im_i1_eq `q \<in> s1` have "sm q = Some i1" by simp
+  from invar im_i1_eq \<open>q \<in> s1\<close> have "sm q = Some i1" by simp
   moreover
-  from invar im_i2_eq `q \<in> s1` have "sm q = Some i2" by simp
+  from invar im_i2_eq \<open>q \<in> s1\<close> have "sm q = Some i2" by simp
   finally show "i1 = i2" by simp
 qed
 
@@ -2894,7 +2894,7 @@ next
   from p_in obtain i where p_eq: "im i = Some p" and "i < n" by auto
 
   from invar have "im i \<noteq> Some {}" by simp
-  with `im i = Some p` show "p \<noteq> {}" by simp
+  with \<open>im i = Some p\<close> show "p \<noteq> {}" by simp
 next
   fix q p1 p2
   assume p1_in: "p1 \<in> partition_map_\<alpha> P" 
@@ -2962,8 +2962,8 @@ shows "partition_state_map P q < partition_free_index P"
 proof -
   obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
   from q_in obtain i s where "im i = Some s"  "q \<in> s" "i < n" by auto
-  from invar `q \<in> s` `im i = Some s` have sm_q_eq: "sm q = Some i" by simp  
-  from sm_q_eq `i < n` show ?thesis by (simp add: partition_state_map_def)
+  from invar \<open>q \<in> s\<close> \<open>im i = Some s\<close> have sm_q_eq: "sm q = Some i" by simp  
+  from sm_q_eq \<open>i < n\<close> show ?thesis by (simp add: partition_state_map_def)
 qed
 
 
@@ -2974,13 +2974,13 @@ fun partition_map_split :: "'q partition_map \<Rightarrow> nat \<Rightarrow> 'q 
     Suc n)"
 
 definition Hopcroft_map_state_\<alpha> where
-"Hopcroft_map_state_\<alpha> \<sigma> =
+"Hopcroft_map_state_\<alpha> \<sigma> = \<comment>\<open>\<sigma> = ((im, sm, n), S::'q \<times>nat set)\<close>
    (partition_map_\<alpha> (fst \<sigma>), (apsnd (partition_index_map (fst \<sigma>))) ` (snd \<sigma>))"
 
 definition Hopcroft_map_state_invar where
 "Hopcroft_map_state_invar \<sigma> =
-   (partition_map_invar (fst \<sigma>) \<and> 
-    (\<forall>ap \<in> (snd \<sigma>). snd ap < partition_free_index (fst \<sigma>)))"
+   (partition_map_invar (fst \<sigma>) \<and>                               \<comment>\<open>fst \<sigma> = (im, sm, n) is a well-formed mapping\<close>
+    (\<forall>ap \<in> (snd \<sigma>). snd ap < partition_free_index (fst \<sigma>)))"    \<comment>\<open>for all (a, k) in (snd \<sigma>) = S, k < n\<close>
 
 definition Hopcroft_map_state_rel where
   "Hopcroft_map_state_rel = build_rel Hopcroft_map_state_\<alpha> Hopcroft_map_state_invar"
@@ -2992,7 +2992,7 @@ by (rule br_sv)
 
 definition Hopcroft_map_step_invar where
 "Hopcroft_map_step_invar \<A> p a P L P' \<sigma> \<longleftrightarrow> 
- Hopcroft_set_step_invar \<A> (partition_index_map P p) a (partition_map_\<alpha> P) 
+ Hopcroft_set_step_invar \<A> (partition_index_map P p) a (partition_map_\<alpha> P)
  ((apsnd (partition_index_map P)) ` L) ((partition_index_map P) ` P') 
    (Hopcroft_map_state_\<alpha> \<sigma>) \<and> Hopcroft_map_state_invar \<sigma>"
 
@@ -3043,10 +3043,579 @@ defer
 apply (rule bind_refine [where R' = Hopcroft_map_state_rel])
 prefer 2
 apply (simp add: Hopcroft_map_state_rel_def pw_le_iff refine_pw_simps)
-   apply (rename_tac iS PS)
+apply (rename_tac iS PS)
+apply auto[1]
 apply (rule FOREACHi_refine[where \<alpha>="partition_index_map P" and \<Phi>'' =
   "\<lambda>PS PL'' _ _. (partition_free_index P \<le> partition_free_index (fst PL'')) \<and>
              (\<forall>i\<in>PS. fst (fst PL'') i = fst P i)"])
+proof -
+  from PL_OK have invar_P: "partition_map_invar P" and P'_eq: "P' = partition_map_\<alpha> P"
+              and L_OK: "\<And>a p. (a, p) \<in> L \<Longrightarrow> p < partition_free_index P"
+              and L'_eq: "L' = apsnd (partition_index_map P) ` L"
+    unfolding Hopcroft_map_state_rel_def Hopcroft_map_state_invar_def[abs_def] 
+              Hopcroft_map_state_\<alpha>_def[abs_def]
+       apply (simp_all add: Hopcroft_map_state_\<alpha>_def Hopcroft_map_state_rel_def PL_OK fst_conv in_br_conv)
+    by auto
+
+  have \<Q>_eq: "\<Union>(partition_map_\<alpha> P) = \<Q> \<A>" 
+    using partition_map_is_partition_eq[OF invar_P, folded P'_eq, OF part_P'] P'_eq
+    by simp
+
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
+
+  show pre_subset': "pre \<subseteq> dom (fst (snd P)) \<and> dom (fst (snd P)) \<subseteq> \<Q> \<A>"
+    using invar_P pre_subset
+    apply (simp add: set_eq_iff dom_def subset_iff \<Q>_eq[symmetric])
+    apply metis
+  done
+
+  from partition_state_map_le[OF invar_P, unfolded \<Q>_eq] 
+  have P_state_map_leq: "\<And>q. q \<in> \<Q> \<A> \<Longrightarrow> partition_state_map (im, sm, n) q < n" by simp
+
+  { fix iS 
+    assume iS_subset: "iS \<subseteq> partition_state_map P ` pre"
+       and in_iS_impl: "\<forall>i\<in>pre. split_language_equiv_partition_pred \<A>
+               (partition_index_map P (partition_state_map P i)) a
+               (partition_index_map P p) \<longrightarrow>
+             partition_state_map P i \<in> iS"
+
+    from iS_subset invar_P pre_subset'
+    have prop1: "partition_index_map P ` iS \<subseteq> P'"
+      apply (simp add: P'_eq subset_iff image_iff Bex_def dom_def partition_state_map_def
+                       partition_index_map_def set_eq_iff)
+      by (metis option.sel)
+   
+    { fix i'
+      assume "i' \<in> iS" 
+      with iS_subset have "i' \<in> (partition_state_map P) ` pre" by blast
+      then obtain q where q_in_pre: "q \<in> pre" and i'_eq: "i' = partition_state_map P q"
+        by auto      
+      from q_in_pre pre_subset' obtain i'' where "sm q = Some i''" by auto
+      with i'_eq have sm_q_eq: "sm q = Some i'" by (simp add: partition_state_map_def)
+
+      with invar_P obtain p where im_i'_eq: "im i' = Some p" and q_in_p: "q \<in> p" by auto
+
+      have "q \<in> partition_index_map (im, sm, n) i' \<inter> pre"
+        by (simp add: partition_index_map_def im_i'_eq q_in_p q_in_pre)
+      hence "partition_index_map (im, sm, n) i' \<inter> pre \<noteq> {}" by auto
+    } note prop2 = this
+
+    { fix p''
+      assume p''_in: "p'' \<in> P'"
+         and p''_not_disj_pre: "p'' \<inter> pre \<noteq> {}"
+         and part_pred: "split_language_equiv_partition_pred \<A> p'' a p'"
+
+      from p''_in obtain i' where i'_le: "i' < n" and im_i'_eq: "im i' = Some p''" 
+        unfolding P'_eq by auto
+
+      from p''_not_disj_pre obtain q where q_in_p'': "q \<in> p''" and q_in_pre: "q \<in> pre" by auto
+      from invar_P have sm_q_eq: "sm q = Some i'"  by simp (metis im_i'_eq q_in_p'')
+
+      have "partition_index_map P (partition_state_map P q) = p''"
+        by (simp add: partition_state_map_def partition_index_map_def sm_q_eq im_i'_eq)
+      with in_iS_impl p'_eq part_pred q_in_pre
+      have "partition_state_map P q \<in> iS" by metis
+
+      hence "p'' \<in> partition_index_map P ` iS" 
+        apply (simp add: image_iff partition_index_map_def partition_state_map_def sm_q_eq)
+        apply (metis im_i'_eq option.sel)
+      done
+    } note prop3 = this
+    from prop1 prop2 prop3
+
+    have "partition_index_map P ` iS \<subseteq> P' \<and>
+          (\<forall>i'\<in>iS. partition_index_map P i' \<inter> pre \<noteq> {}) \<and>
+          (\<forall>p'a\<in>P'.
+              p'a \<inter> pre \<noteq> {} \<and> split_language_equiv_partition_pred \<A> p'a a p' \<longrightarrow>
+              p'a \<in> partition_index_map P ` iS)" 
+      by simp
+  } note prop4 = this
+
+  {
+  fix iS PS 
+  assume "(iS, PS) \<in> br ((`) (partition_index_map P))
+          (\<lambda>iS. iS \<subseteq> partition_state_map P ` pre)"
+  hence PS_eq[simp]: "PS = partition_index_map (im, sm, n) ` iS" and
+        iS_subset: "iS \<subseteq> partition_state_map (im, sm, n) ` pre"
+    apply (simp add: in_br_conv)+
+    done
+
+  have map_pre_subset: "partition_state_map P ` pre \<subseteq> {i. i < n}"
+    apply (auto)
+    apply (rule_tac P_state_map_leq)
+    apply (insert pre_subset) 
+    apply auto
+  done 
+  with iS_subset have iS_subset': "iS \<subseteq> {i. i < n}" by simp
+
+  have im_inj_on: "\<And>S. S \<subseteq> {i. i < n} \<Longrightarrow> inj_on (partition_index_map P) S"
+    apply (rule partition_index_map_inj_on[OF invar_P])
+    apply (auto)
+  done
+
+  show "inj_on (partition_index_map P) iS"  by (intro im_inj_on iS_subset')
+  show "PS = partition_index_map P ` iS" by simp
+
+  show "((P, L - {(a, p)}), (P', L' - {(a, p')})) \<in> Hopcroft_map_state_rel"
+  proof -
+    have "(apsnd (partition_index_map (im, sm, n))) ` (L - {(a, p)}) =
+          (((apsnd (partition_index_map (im, sm, n))) ` L) - 
+           ((apsnd (partition_index_map (im, sm, n))) ` {(a, p)}))" 
+      apply (rule inj_on_image_set_diff [where C = "UNIV \<times> {i. i < n}"])
+      apply (simp add: apsnd_def)
+      apply (rule map_prod_inj_on)
+      apply (rule inj_on_id)
+      apply (rule im_inj_on[unfolded P_eq], simp)
+      apply (insert p_le L_OK)
+      apply auto
+    done
+
+    hence "apsnd (partition_index_map (im, sm, n)) ` L - {(a, p')} =
+           apsnd (partition_index_map (im, sm, n)) ` (L - {(a, p)})" by (simp add: p'_eq)
+
+    with PL_OK show ?thesis
+      by (simp add: Hopcroft_map_state_rel_def Hopcroft_map_state_\<alpha>_def[abs_def]
+                     Hopcroft_map_state_invar_def in_br_conv)
+  qed
+
+  show "partition_free_index P \<le> partition_free_index (fst (P, L - {(a, p)})) \<and>
+        (\<forall>i\<in>iS. fst (fst (P, L - {(a, p)})) i = fst P i)"
+    by simp
+
+  { fix it \<sigma> it' \<sigma>'
+    assume "Hopcroft_set_step_invar \<A> p' a P' L' it' \<sigma>'"
+           "(\<sigma>, \<sigma>') \<in> Hopcroft_map_state_rel" 
+           "it' = partition_index_map P ` it"
+    thus "Hopcroft_map_step_invar \<A> p a P L it \<sigma>"
+      unfolding Hopcroft_map_state_rel_def Hopcroft_map_step_invar_def
+      by (simp add: L'_eq p'_eq P'_eq in_br_conv)
+  }
+
+  apply_end clarify
+  apply_end (simp only: fst_conv)
+  apply_end (rule refine)
+
+  { fix i it im' sm' n' sL x' it' P'' L'' i'
+    assume "i \<in> it"
+       and it_subset: "it \<subseteq> iS"
+       and map_step_invar: "Hopcroft_map_step_invar \<A> p a P L it ((im', sm', n'), sL)"
+       and "Hopcroft_set_step_invar \<A> p' a P' L' (partition_index_map P ` it) (P'', L'')"
+       and in_rel: "(((im', sm', n'), sL), P'', L'') \<in> Hopcroft_map_state_rel"
+       and map_i_i'_eq: "partition_index_map P i = partition_index_map P i'"
+       and "i' \<in> it"
+           "partition_free_index P \<le> partition_free_index (im', sm', n')" 
+       and im'_eq: "\<forall>i\<in>it. im' i = fst P i"
+    
+    from map_pre_subset \<open>i \<in> it\<close> it_subset iS_subset' have i_le: "i < n"
+      by (simp add: subset_iff)
+
+    from map_pre_subset \<open>i' \<in> it\<close> it_subset iS_subset' have i'_le: "i' < n" 
+      by (simp add: subset_iff)
+
+    from im_inj_on[of "{i, i'}"] map_i_i'_eq have i'_eq[simp]: "i' = i"
+      by (simp add: subset_iff i_le i'_le image_iff)
+
+    define p'' where "p'' \<equiv> partition_index_map P i"
+    define pt' where "pt' \<equiv> {q \<in> p''. q \<in> pre}"
+    define pf' where "pf' \<equiv> {q \<in> p''. q \<notin> pre}"
+
+    from im'_eq `i\<in>it` have p''_intro: "partition_index_map (im', sm', n') i = p''"
+      unfolding p''_def partition_index_map_def by simp
+
+    from `i \<in> it` it_subset iS_subset pre_subset'
+    obtain q where q_in_pre: "q \<in> pre" and sm_q_eq: "sm q = Some i"
+      apply (simp add: subset_iff image_iff partition_state_map_def dom_def)
+      apply (metis option.sel)
+    done
+
+    from invar_P  sm_q_eq
+    have q_in_p'': "q \<in> p''" by (auto simp add: p''_def partition_index_map_def) 
+
+    have "q \<in> pt'"
+      unfolding pt'_def 
+      by (simp add: q_in_pre q_in_p'')
+    hence pt'_neq_emp: "pt' \<noteq> {}" by auto
+
+    define pmin where "pmin \<equiv> if card pf' < card pt' then pf' else pt'"
+    define pmax where "pmax \<equiv> if card pf' < card pt' then pt' else pf'"
+    
+    have pminmax: "(if card pf' < card pt' then (pf', pt') else (pt', pf')) = (pmin, pmax)"
+      unfolding pmin_def pmax_def by simp
+
+    from \<open>partition_free_index P \<le> partition_free_index (im', sm', n')\<close> have
+      n_le: "n \<le> n'" by simp
+
+    from invar_P \<open>i < n\<close> have "i \<in> (dom im)" by simp
+    hence im_i_eq: "im i = Some p''"
+      by (auto simp add: dom_def set_eq_iff p''_def partition_index_map_def) 
+
+    have "i \<in> dom im'"
+      using n_le i_le map_step_invar 
+      unfolding Hopcroft_map_step_invar_def Hopcroft_map_state_invar_def 
+        by simp
+ 
+    from \<open>i \<in> dom im\<close> \<open>i \<in> dom im'\<close> n_le
+    show "i \<in> dom im' \<and> i \<in> dom (fst P) \<and> fst P i = fst P i \<and>
+          snd (snd P) \<le> snd (snd (im', sm', n'))" by simp
+
+    have "(if card pf' = 0 then RETURN ((im', sm', n'), sL)
+     else ASSERT (\<forall>ai\<in>sL. snd ai < partition_free_index (im', sm', n')) \<bind>
+                 (\<lambda>_. let L' = {(a, partition_free_index (im', sm', n')) |a. a \<in> \<Sigma> \<A>} \<union> sL;
+                          P' = partition_map_split (im', sm', n') i pmin pmax
+                        in RETURN (P', L')))
+    \<le> \<Down> {(\<sigma>, \<sigma>').
+         (\<sigma>, \<sigma>') \<in> Hopcroft_map_state_rel \<and>
+         partition_free_index P \<le> partition_free_index (fst \<sigma>) \<and>
+         (\<forall>i\<in>it - {i}. fst (fst \<sigma>) i = fst P i)}
+       (if card pf' = 0 then RETURN (P'', L'')
+        else let P' = P'' - {partition_index_map P i'} \<union> {pt', pf'};
+                 L' = {(a, p''). (a, p'') \<in> L'' \<and> p'' \<noteq> partition_index_map P i'} \<union>
+                      {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union>
+                      {(a, pmax) |a. (a, partition_index_map P i') \<in> L''}
+             in RETURN (P', L'))" 
+    proof (cases "card pf' = 0")
+       case True 
+       with in_rel n_le im'_eq
+       show ?thesis by (simp add: Bex_def Hopcroft_map_state_rel_def pw_le_iff refine_pw_simps)
+    next
+      case False note card_pf'_neq = this
+      hence pf'_neq_emp: "pf' \<noteq> {}" by auto
+
+      with pt'_neq_emp have pminmax_neq_emp: "pmin \<noteq> {}" "pmax \<noteq> {}"
+         unfolding pmin_def pmax_def by simp_all
+
+      have p''_eq_minmax: "p'' = pmin \<union> pmax"
+         unfolding pmin_def pmax_def pt'_def pf'_def by auto
+      have pminmax_disj: "pmin \<inter> pmax = {}" 
+         unfolding pmin_def pmax_def pt'_def pf'_def by auto
+
+      from n_le it_subset iS_subset' have n'_not_in: "n' \<notin> it" 
+        by auto
+
+      from in_rel have sL_OK: "\<And>a i. (a, i) \<in> sL \<Longrightarrow> i < n'"
+           unfolding Hopcroft_map_state_rel_def Hopcroft_map_state_invar_def[abs_def] 
+                     Hopcroft_map_state_\<alpha>_def[abs_def]
+           by (auto simp add: in_br_conv)
+      have in_rel': "
+        (((im'(i \<mapsto> pmax, n' \<mapsto> pmin), \<lambda>q. if q \<in> pmin then Some n' else sm' q, Suc n'),
+          {(a, n') |a. a \<in> \<Sigma> \<A>} \<union> sL), insert pt' (insert pf' (P'' - {p''})),
+         {(a, p'''). (a, p''') \<in> L'' \<and> p''' \<noteq> p''} \<union> {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union>
+         {(a, pmax) |a. (a, p'') \<in> L''}) \<in> Hopcroft_map_state_rel" 
+       proof -
+         from i_le n_le have i_le': "i < n'" by simp
+         hence i_neq_n': "i \<noteq> n'" by simp
+
+         from in_rel have invar_P'': "partition_map_invar (im', sm', n')" and 
+                          P''_eq: "P'' = partition_map_\<alpha> (im', sm', n')"
+              and L''_eq: "L'' = apsnd (partition_index_map (im', sm', n')) ` sL"
+           unfolding Hopcroft_map_state_rel_def Hopcroft_map_state_invar_def[abs_def] 
+                     Hopcroft_map_state_\<alpha>_def[abs_def]
+           by (auto simp add: in_br_conv)
+
+         from invar_P'' i_le' have "i \<in> (dom im')" by simp
+         hence im'_i_eq: "im' i = Some p''"
+           by (auto simp add: dom_def p''_intro[symmetric] partition_index_map_def) 
+
+         have invar_OK: "Hopcroft_map_state_invar
+           ((im'(i \<mapsto> pmax, n' \<mapsto> pmin), \<lambda>q. if q \<in> pmin then Some n' else sm' q, Suc n'),
+           {(a, n') |a. a \<in> \<Sigma> \<A>} \<union> sL)" 
+           apply (simp add: Hopcroft_map_state_invar_def i_neq_n' pminmax_neq_emp Ball_def
+                            im'_eq all_conj_distrib imp_conjR)
+           apply (intro conjI allI impI)
+           proof -
+             from invar_P'' have "dom im' = {i. i < n'}" by simp
+             with i_le n_le show "insert n' (insert i (dom im')) = {i. i < Suc n'}"
+               by auto
+           next
+             fix i'
+             from invar_P'' show "im' i' \<noteq> Some {}" by simp
+           next
+             fix a i'
+             assume "(a, i') \<in> sL"
+             from sL_OK[OF this] have "i' < n'" .
+             thus "i' < Suc n'" by simp
+           next
+             fix q
+             assume "q \<in> pmin"
+             thus "q \<notin> pmax" using pminmax_disj by auto
+           next
+             fix q
+             from invar_P'' have "n' \<notin> dom im'" by simp
+             hence "im' n' = None" unfolding dom_def by simp
+             with invar_P'' show "sm' q \<noteq> Some n'"
+               by simp
+           next
+             fix q i'
+             assume "q \<notin> pmin" "i' \<noteq> i" "i' \<noteq> n'" 
+             with invar_P'' show "(sm' q = Some i') = (\<exists>p. im' i' = Some p \<and> q \<in> p)" 
+               by simp
+           next
+             fix q i' p
+             assume "q \<in> pmin" "i' \<noteq> i"  and 
+                    im'_i'_eq: "im' i' = Some p"
+             
+             from im'_i'_eq have "i' \<in> dom im'" by (simp add: dom_def)
+             with invar_P'' have "i' < n'" by simp
+
+             from `q \<in> pmin` have "q \<in> p''" 
+               unfolding p''_eq_minmax by simp
+             
+             from partition_index_map_disj [OF invar_P'', of i i'] `q \<in> p''` `i' < n'` i_le n_le
+             show "q \<notin> p"
+               by (simp add: partition_index_map_def p''_intro[symmetric] im'_i'_eq `i' \<noteq> i`[symmetric] set_eq_iff)
+           next
+             fix q
+             assume q_nin_min: "q \<notin> pmin"
+
+             from invar_P'' have "(sm' q = Some i) \<longleftrightarrow> q \<in> p''"
+               by (simp add: partition_index_map_def im'_i_eq)
+              with q_nin_min show "(sm' q = Some i) \<longleftrightarrow> q \<in> pmax"
+               unfolding p''_eq_minmax by simp
+           qed
+         
+         have alpha_OK: "(insert pt' (insert pf' (P'' - {p''})),
+               {(a, p'''). (a, p''') \<in> L'' \<and> p''' \<noteq> p''} \<union> {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union>
+               {(a, pmax) |a. (a, p'') \<in> L''}) =
+               Hopcroft_map_state_\<alpha>
+                ((im'(i \<mapsto> pmax, n' \<mapsto> pmin), \<lambda>q. if q \<in> pmin then Some n' else sm' q, Suc n'),
+                {(a, n') |a. a \<in> \<Sigma> \<A>} \<union> sL)" 
+            apply (simp add: Hopcroft_map_state_\<alpha>_def P''_eq)
+            apply (intro conjI set_eqI)
+            apply (simp_all split: prod.splits add: image_iff Bex_def i_neq_n')
+            prefer 2
+            apply clarify
+            apply simp
+            apply (rename_tac a pp) 
+          proof -
+            fix pp
+            show "(pp = pt' \<or> pp = pf' \<or> (\<exists>i<n'. im' i = Some pp) \<and> pp \<noteq> p'') =
+                  (\<exists>ia. (ia = i \<longrightarrow> i < Suc n' \<and> pmax = pp) \<and>
+                    (ia \<noteq> i \<longrightarrow> (ia = n' \<longrightarrow> pmin = pp) \<and> (ia \<noteq> n' \<longrightarrow> ia < Suc n' \<and> im' ia = Some pp)))"
+            proof (cases "pp = pt' \<or> pp = pf'")
+               case True note pp_eq_ptf' = this
+               show ?thesis 
+               proof (cases "pp = pmax")
+                 case True with pp_eq_ptf' i_le' show ?thesis
+                   by auto
+               next
+                 case False 
+                 with pp_eq_ptf' have "pp = pmin"
+                   unfolding pmax_def pmin_def by auto
+                  with pp_eq_ptf' i_le' show ?thesis
+                   by auto
+               qed
+            next
+               case False 
+               hence pp_neq: "pp \<noteq> pt'" "pp \<noteq> pf'" "pp \<noteq> pmin" "pp \<noteq> pmax"
+                 unfolding pmin_def pmax_def by simp_all
+
+               { fix i'
+                 have "((i' < n' \<and> im' i' = Some pp) \<and> pp \<noteq> p'') =
+                       (i' \<noteq> i \<and> i' \<noteq> n' \<and> i' < Suc n' \<and> im' i' = Some pp)"
+                 proof (cases "i' < n' \<and> im' i' = Some pp")
+                   case False thus ?thesis by auto
+                 next 
+                   case True 
+                   with partition_index_map_inj_on [OF invar_P'', of "{i', i}"] i_le'
+                   show ?thesis 
+                     apply (simp add: image_iff partition_index_map_def Ball_def
+                                      p''_intro[symmetric])
+                     apply auto
+                   done
+                 qed
+               } note step = this 
+ 
+               show ?thesis 
+                 apply (simp del: ex_simps add: pp_neq pp_neq[symmetric] ex_simps[symmetric])
+                 apply (rule iff_exI) 
+                 apply (metis step)
+               done
+            qed
+         next
+            fix a pp
+            { fix a pp
+              have "(a, pp) \<in> L'' \<longleftrightarrow>
+                    (\<exists>i'. (a, i') \<in> sL \<and> pp = the (im' i'))"
+                unfolding L''_eq
+                by (simp add: image_iff Bex_def partition_index_map_def)
+              moreover
+              { fix i'
+                have "(a, i') \<in> sL \<and> pp = the (im' i') \<longleftrightarrow>
+                      (a, i') \<in> sL \<and> i' < n' \<and> (im' i' = Some pp)"
+                proof (cases "(a, i') \<in> sL")
+                  case False thus ?thesis by simp
+                next
+                  case True note ai'_in_sL = this
+                  from sL_OK[OF ai'_in_sL] have "i' < n'" .
+                  with invar_P'' have "i' \<in> dom im'" by simp
+                  with ai'_in_sL `i' < n'` show ?thesis by auto
+                qed
+              }
+              ultimately have "(a, pp) \<in> L'' \<longleftrightarrow>
+                               (\<exists>i'. (a, i') \<in> sL \<and> i' < n' \<and> (im' i' = Some pp))"
+                by simp
+            } note in_L''_eq = this
+
+            { fix i'
+              have "(im' i' = Some p'') \<longleftrightarrow> i' = i"
+              proof
+                assume "i' = i" 
+                thus "im' i' = Some p''"
+                  by (simp add: im'_i_eq)
+              next
+                assume im'_i'_eq: "im' i' = Some p''"
+                hence "i' \<in> dom im'" by (simp add: dom_def)
+                with invar_P'' have "i' < n'" by simp
+
+                from partition_index_map_inj_on [OF invar_P'', of "{i, i'}"] `i' < n'` i_le'
+                show "i' = i"
+                  by (auto simp add: image_iff Bex_def partition_index_map_def im'_i'_eq im'_i_eq)
+              qed
+            } note im'_eq_p'' = this
+
+            show " ((a, pp) \<in> L'' \<and> pp \<noteq> p'' \<or> pp = pmin \<and> a \<in> \<Sigma> \<A> \<or> pp = pmax \<and> (a, p'') \<in> L'') =
+                   (\<exists>i'. (i' = n' \<and> a \<in> \<Sigma> \<A> \<or> (a, i') \<in> sL) \<and>
+                         pp = partition_index_map
+                         (im'(i \<mapsto> pmax, n' \<mapsto> pmin), \<lambda>q. if q \<in> pmin then Some n' else sm' q, Suc n') i')"
+                   (is "?ls = (\<exists>i'. (i' = n' \<and> a \<in> \<Sigma> \<A> \<or> (a, i') \<in> sL) \<and> pp = ?pm i')")
+              unfolding in_L''_eq
+              apply (rule iffI)
+              apply (elim disjE conjE exE)
+              prefer 4
+              apply (elim exE conjE disjE)
+            proof -
+              fix i'
+              assume "pp = ?pm i'" "i' = n'" "a \<in> \<Sigma> \<A>"
+              hence "pp = pmin \<and> a \<in> \<Sigma> \<A>" 
+                by (simp add: partition_index_map_def)
+              thus "(\<exists>i'. (a, i') \<in> sL \<and> i' < n' \<and> im' i' = Some pp) \<and> pp \<noteq> p'' \<or>
+                    pp = pmin \<and> a \<in> \<Sigma> \<A> \<or>
+                    pp = pmax \<and> (\<exists>i'. (a, i') \<in> sL \<and> i' < n' \<and> im' i' = Some p'')" by simp
+            next
+              assume "pp = pmin" "a \<in> \<Sigma> \<A>" 
+              thus "\<exists>i'. (i' = n' \<and> a \<in> \<Sigma> \<A> \<or> (a, i') \<in> sL) \<and>
+                         pp = ?pm i'"
+                apply (rule_tac exI[where x = n'])
+                apply (simp add: partition_index_map_def)
+              done
+            next
+              fix i'
+              assume "pp = pmax" "(a, i') \<in> sL" "i' < n'" "im' i' = Some p''"
+              moreover from `im' i' = Some p''` have "i' = i" by (simp add: im'_eq_p'')
+              ultimately
+              show "\<exists>i'. (i' = n' \<and> a \<in> \<Sigma> \<A> \<or> (a, i') \<in> sL) \<and>
+                         pp = ?pm i'"
+                apply (rule_tac exI[where x = i])
+                apply (simp add: partition_index_map_def)
+              done
+            next
+              fix i'
+              assume "pp \<noteq> p''" "(a, i') \<in> sL" "i' < n'" "im' i' = Some pp"
+              moreover from `im' i' = Some pp` `pp \<noteq> p''` 
+                have "i' \<noteq> i" using im'_eq_p'' [of i', symmetric]
+                  by simp
+              ultimately
+              show "\<exists>i'. (i' = n' \<and> a \<in> \<Sigma> \<A> \<or> (a, i') \<in> sL) \<and>
+                         pp = ?pm i'"
+                apply (rule_tac exI[where x = i'])
+                apply (simp add: partition_index_map_def)
+              done
+            next
+              fix i'
+              assume pp_eq: "pp = ?pm i'" and in_sL: "(a, i') \<in> sL" 
+
+              from sL_OK[OF in_sL] have i'_le: "i' < n'" .
+              with invar_P'' have "i' \<in> dom im'" by simp
+              then obtain pp' where im'_i'_eq: "im' i' = Some pp'" by blast 
+
+              show "(\<exists>i'. (a, i') \<in> sL \<and> i' < n' \<and> im' i' = Some pp) \<and> pp \<noteq> p'' \<or>
+                    pp = pmin \<and> a \<in> \<Sigma> \<A> \<or>
+                    pp = pmax \<and> (\<exists>i'. (a, i') \<in> sL \<and> i' < n' \<and> im' i' = Some p'')" 
+              proof (cases "i' = i")
+                case True note i'_eq = this
+                with pp_eq i_le' have "pp = pmax"
+                  by (simp add: partition_index_map_def)
+                with in_sL i'_eq have "pp = pmax \<and> (\<exists>i'. (a, i') \<in> sL \<and> i' < n' \<and> im' i' = Some p'')"
+                  apply simp
+                  apply (rule exI [where x = i])
+                  apply (simp add: im'_i_eq i_le')
+                done
+                thus ?thesis by blast
+              next
+                case False note i'_neq = this
+                with im'_i'_eq pp_eq i'_le have pp_eq: "pp = pp'" 
+                  by (simp add: partition_index_map_def)
+
+                with i'_neq im'_eq_p'' [of i'] have pp_neq: "pp \<noteq> p''" 
+                   by (simp add: im'_i'_eq)
+                
+                from in_sL i'_le pp_eq have "\<exists>i'. ((a, i') \<in> sL \<and> i' < n' \<and> im' i' = Some pp)"
+                  apply (rule_tac exI [where x = i'])
+                  apply (simp add: im'_i'_eq)
+                done
+                with `pp \<noteq> p''` show ?thesis by blast
+              qed
+            qed
+         qed
+         from alpha_OK invar_OK show ?thesis by (simp add: Hopcroft_map_state_rel_def in_br_conv)
+       qed
+
+       from in_rel' n_le i_le card_pf'_neq n'_not_in im'_eq sL_OK
+       show ?thesis 
+         apply refine_rcg
+         apply (simp_all add: partition_index_map_def im_i_eq Ball_def pw_le_iff 
+                              Hopcroft_map_state_rel_def single_valued_def)
+       done
+    qed
+    thus "(let (pt', pct', pf', pcf') =
+              ({q \<in> partition_index_map (im', sm', n') i. q \<in> pre},
+               card {q \<in> partition_index_map (im', sm', n') i. q \<in> pre},
+               {q \<in> partition_index_map (im', sm', n') i. q \<notin> pre},
+               card {q \<in> partition_index_map (im', sm', n') i. q \<notin> pre})
+        in if pcf' = 0 then RETURN ((im', sm', n'), sL)
+           else let (pmin, pmax) = if pcf' < pct' then (pf', pt') else (pt', pf')
+                in ASSERT (\<forall>ai\<in>sL. snd ai < partition_free_index (im', sm', n')) \<bind>
+                   (\<lambda>_. let L' = {(a, partition_free_index (im', sm', n')) |a. a \<in> \<Sigma> \<A>} \<union> sL;
+                            P' = partition_map_split (im', sm', n') i pmin pmax
+                        in RETURN (P', L')))
+       \<le> \<Down> {(\<sigma>, \<sigma>').
+            (\<sigma>, \<sigma>') \<in> Hopcroft_map_state_rel \<and>
+            partition_free_index P \<le> partition_free_index (fst \<sigma>) \<and>
+            (\<forall>i\<in>it - {i}. fst (fst \<sigma>) i = fst P i)}
+          (let (pt', pct', pf', pcf') =
+                 ({q \<in> partition_index_map P i'. q \<in> pre},
+                  card {q \<in> partition_index_map P i'. q \<in> pre},
+                  {q \<in> partition_index_map P i'. q \<notin> pre},
+                  card {q \<in> partition_index_map P i'. q \<notin> pre})
+           in if pcf' = 0 then RETURN (P'', L'')
+              else let (pmin, pmax) = if pcf' < pct' then (pf', pt') else (pt', pf');
+                       P' = P'' - {partition_index_map P i'} \<union> {pt', pf'};
+                       L' = {(a, p''). (a, p'') \<in> L'' \<and> p'' \<noteq> partition_index_map P i'} \<union>
+                            {(a, pmin) |a. a \<in> \<Sigma> \<A>} \<union>
+                            {(a, pmax) |a. (a, partition_index_map P i') \<in> L''}
+                   in RETURN (P', L'))" 
+      apply (simp split del: if_splits 
+                 del: P_eq
+                 add: p''_def[symmetric] pt'_def[symmetric] pf'_def[symmetric] p''_intro)
+      apply (unfold pminmax)
+      apply (cases "card pf' = 0")
+      apply (simp_all)
+    done
+  }
+}
+{
+  fix x
+  assume asm:"pre \<subseteq> dom (fst (snd P))" "dom (fst (snd P)) \<subseteq> \<Q> \<A>" "x \<subseteq> partition_state_map P ` pre"
+    "\<forall>i\<in>pre. split_language_equiv_partition_pred \<A> (partition_index_map P (partition_state_map P i)) a (partition_index_map P p) \<longrightarrow> partition_state_map P i \<in> x"
+  thus "\<exists>x'. (x, x') \<in> br ((`) (partition_index_map P)) (\<lambda>iS. iS \<subseteq> partition_state_map P ` pre) \<and>
+                   x' \<subseteq> P' \<and> (\<forall>p'\<in>x'. p' \<inter> pre \<noteq> {}) \<and>
+                   (\<forall>p'a\<in>P'. p'a \<inter> pre \<noteq> {} \<and> split_language_equiv_partition_pred \<A> p'a a p' \<longrightarrow> p'a \<in> x')"
+    apply (simp add: in_br_conv)
+    using P_eq prop4 by simp
+}
+qed 
+
+(* -- OLD PROOF --
 proof -
   show "single_valued Hopcroft_map_state_rel"
     unfolding Hopcroft_map_state_rel_def by (simp del: br_def)
@@ -3602,6 +4171,8 @@ next
     done
   }
 qed
+
+*)
 
 definition Hopcroft_map_f where
 "Hopcroft_map_f \<A> = 
