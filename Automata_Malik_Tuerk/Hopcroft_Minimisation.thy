@@ -4195,7 +4195,7 @@ proof -
 
   from PL_OK have PL_\<alpha>: "Hopcroft_map_state_\<alpha> (P, L) = (P', L')" 
               and invar: "Hopcroft_map_state_invar (P, L)"
-    by (simp_all add: Hopcroft_map_state_rel_def)
+    by (simp_all add: Hopcroft_map_state_rel_def in_br_conv)
 
   from PL_\<alpha> have P'_eq: "P' = partition_map_\<alpha> P"
              and L'_eq: "L' = apsnd (partition_index_map P) ` L"
@@ -4211,7 +4211,7 @@ proof -
     apply clarify apply simp
     proof -
       show "(RES L) \<le> \<Down> (build_rel (apsnd (partition_index_map P)) (\<lambda>x. x \<in> L)) (RES L')"
-        apply (simp del: br_def add: pw_le_iff refine_pw_simps)
+        apply (simp del: br_def add: pw_le_iff refine_pw_simps in_br_conv)
         apply (simp add: L'_eq subset_iff image_iff Bex_def)
         apply blast
       done
@@ -4223,7 +4223,7 @@ proof -
       from in_rel have a'_eq[simp]: "a' = a"  
                    and p'_eq: "p' = partition_index_map P i"  
                    and ai_in_L: "(a, i) \<in> L"
-        by simp_all
+        by (simp_all add: in_br_conv)
 
       obtain im sm n where P_eq: "P = (im, sm, n)" by (metis prod.exhaust)
 
@@ -4235,7 +4235,7 @@ proof -
       from abstr_invar have is_part_P': "is_partition (\<Q> \<A>) P'" and
                             L'_OK: "\<And>a p. (a, p) \<in> L' \<Longrightarrow> a \<in> \<Sigma> \<A>"
         unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def by auto
-      def pre \<equiv> "{q. \<exists>q'. q' \<in> p' \<and> (q, a, q') \<in> \<Delta> \<A>}"
+      define pre where "pre \<equiv> {q. \<exists>q'. q' \<in> p' \<and> (q, a, q') \<in> \<Delta> \<A>}"
 
       have "Hopcroft_map_step \<A> i a {q. \<exists>q'. q' \<in> partition_index_map P i \<and> (q, a, q') \<in> \<Delta> \<A>} P L
        \<le> \<Down> Hopcroft_map_state_rel
@@ -4258,7 +4258,7 @@ proof -
                     P'' = Hopcroft_split \<A> p' a' {} P'))" 
         by (simp add: is_part_P' L'_OK is_partition_memb_finite[OF finite_\<Q> is_part_P'])
   qed
-qed   
+qed
 
 
 definition partition_map_init where
@@ -4266,7 +4266,7 @@ definition partition_map_init where
    (if (\<Q> \<A> - \<F> \<A> = {}) then
       partition_map_sing (\<F> \<A>) (\<F> \<A>)
     else 
-      (empty (0 \<mapsto> (\<F> \<A>)) (1 \<mapsto> (\<Q> \<A> - \<F> \<A>)),
+      (Map.empty (0 \<mapsto> (\<F> \<A>)) (1 \<mapsto> (\<Q> \<A> - \<F> \<A>)),
        (\<lambda>q. if (q \<in> \<F> \<A>) then Some 0 else
             if (q \<in> \<Q> \<A>) then Some 1 else None),
        2))"
@@ -4315,12 +4315,12 @@ lemma (in DFA) Hopcroft_map_correct :
   "Hopcroft_map \<A> \<le> \<Down>(build_rel partition_map_\<alpha> partition_map_invar) (Hopcroft_abstract \<A>)"
 unfolding Hopcroft_map_def Hopcroft_abstract_def
 apply refine_rcg
-apply (simp_all add: partition_map_empty_correct partition_map_sing_correct)
+apply (simp_all add: partition_map_empty_correct partition_map_sing_correct in_br_conv)
 proof -
   assume "\<F> \<A> \<noteq> {}"
   thus "(Hopcroft_map_init \<A>, Hopcroft_abstract_init \<A>) \<in> Hopcroft_map_state_rel"
     unfolding Hopcroft_map_state_rel_def Hopcroft_abstract_init_def Hopcroft_map_init_def
-    apply (simp add: Hopcroft_map_state_\<alpha>_def Hopcroft_map_state_invar_def
+    apply (simp add: in_br_conv Hopcroft_map_state_\<alpha>_def Hopcroft_map_state_invar_def
                      partition_map_init_correct[OF NFA_axioms] partition_map_init___index_le)
     apply (rule set_eqI)
     apply (simp add: image_iff partition_map_init___index_0)
@@ -4331,7 +4331,7 @@ next
   assume "(PL, PL') \<in> Hopcroft_map_state_rel"
   thus "(snd PL \<noteq> {}) = Hopcroft_abstract_b PL'"
      unfolding Hopcroft_abstract_b_def Hopcroft_map_state_rel_def
-     by (cases PL, simp add: Hopcroft_map_state_\<alpha>_def)
+     by (cases PL, simp add: Hopcroft_map_state_\<alpha>_def in_br_conv)
 next
   fix PL and PL' :: "('q set set) \<times> ('a \<times> ('q set)) set"
   assume "(PL, PL') \<in> Hopcroft_map_state_rel"
@@ -4340,15 +4340,15 @@ next
 next
   fix P L P' and L' :: "('a \<times> ('q set)) set"
   assume "((P, L), (P', L')) \<in> Hopcroft_map_state_rel"
-  thus "P' = partition_map_\<alpha> P \<and> partition_map_invar P" 
+  thus "P' = partition_map_\<alpha> P \<and> partition_map_invar P"
     by (simp add: Hopcroft_map_state_rel_def Hopcroft_map_state_\<alpha>_def
-                  Hopcroft_map_state_invar_def)
+                  Hopcroft_map_state_invar_def in_br_conv)
 next
   fix PL :: "(((nat \<Rightarrow> ('q set) option) \<times> ('q \<Rightarrow> nat option) \<times> nat) \<times> ('a \<times> nat) set)"
   fix PL' :: "(('q set) set) \<times> (('a \<times> ('q set)) set)"
   assume "(PL, PL') \<in> Hopcroft_map_state_rel"
   thus "Hopcroft_map_state_invar PL"
-    unfolding Hopcroft_map_state_rel_def by simp
+    unfolding Hopcroft_map_state_rel_def by (simp add: in_br_conv)
 qed
 
 lemma (in DFA) Hopcroft_map_correct_full :
@@ -4358,7 +4358,7 @@ lemma (in DFA) Hopcroft_map_correct_full :
 proof -
   note Hopcroft_map_correct 
   also note Hopcroft_abstract_correct 
-  finally show ?thesis by (simp add: pw_le_iff refine_pw_simps)
+  finally show ?thesis by (simp add: pw_le_iff refine_pw_simps in_br_conv)
 qed
 
 text \<open> Using this encoding of the partition, it's even easier to construct a rename function \<close>
@@ -4502,7 +4502,7 @@ qed
 
 
 definition partition_map2_\<alpha>_im :: "'q class_map \<Rightarrow> _ \<Rightarrow> _" where
-  "partition_map2_\<alpha>_im cm im = (\<lambda>i. Option.map (class_map_\<alpha> cm) (im i))"
+  "partition_map2_\<alpha>_im cm im = (\<lambda>i. map_option (class_map_\<alpha> cm) (im i))"
 
 definition partition_map2_\<alpha> :: "'q class_map \<Rightarrow> 'q partition_map2 \<Rightarrow> 'q partition_map" where
   "partition_map2_\<alpha> cm = (\<lambda>(im, sm, n). (partition_map2_\<alpha>_im cm im, sm, n))"
@@ -4529,7 +4529,7 @@ definition Hopcroft_map2_state_rel_full where
 lemma Hopcroft_map2_state_rel_sv[refine] :
 "single_valued (Hopcroft_map2_state_rel Q cm)"
 unfolding Hopcroft_map2_state_rel_def
-by (rule br_single_valued)
+by (rule br_sv)
 
 definition partition_index_map2_full :: "'q class_map \<Rightarrow> 'q partition_map2 \<Rightarrow> (nat \<Rightarrow> 'q set)" where
   "partition_index_map2_full cm P i = class_map_\<alpha> cm (partition_index_map P i)"
@@ -4612,7 +4612,7 @@ defer
 defer
   apply (rule RELATESI_refspec [where R = "(br (\<lambda>(iM, _). dom iM) (\<lambda>(iM, cm'). Hopcroft_map2_step___iM_props \<A> cm pre P iM cm'))"])
   apply (simp add: RELATES_def)
-  apply (intro RES_refine_sv br_single_valued)
+  apply (intro RES_refine_sv br_sv)
   apply (simp, clarify)+
   apply (rename_tac iM pm pim)
   apply (simp add: Ball_def)
@@ -4622,24 +4622,24 @@ defer
   apply (subgoal_tac "inj_on fst {(p', s). aa p' = Some s}")
   apply assumption
   apply (simp add: inj_on_def)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (auto simp add: image_iff) []
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (subgoal_tac "((P, L - {(a, p)}), P', L - {(a, p)}) \<in> Hopcroft_map2_state_rel (snd x) (\<Q> \<A>)")
   apply assumption
   apply (insert PL_OK) []
   apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_invar_def
                    Hopcroft_map2_state_\<alpha>_def Hopcroft_map2_step___iM_props_def
                    partition_map2_invar_def)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (simp, clarify)+
   apply (insert PL_OK) []
   apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def
                    Hopcroft_map2_step_invar_def Hopcroft_map2_step___iM_props_def)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (auto simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def
                         partition_map2_\<alpha>_def partition_map2_\<alpha>_im_def)[]
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (simp split: prod.splits add: Let_def, clarify)+
   apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def 
                    Hopcroft_map2_state_invar_def partition_map2_\<alpha>_def partition_index_map_def)
@@ -4648,14 +4648,14 @@ defer
   apply (rename_tac iM pm pim it im'' sm' n' L' l s u i s' pp)
 defer
   apply (simp)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (simp)
 
   apply (simp split: prod.splits add: Let_def, clarify)+
   apply (simp add: partition_index_map_def Hopcroft_map2_state_rel_def
                    Hopcroft_map2_state_\<alpha>_def partition_map2_\<alpha>_def)
   apply auto[]
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (simp split: prod.splits add: Let_def, clarify)+
   apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def 
                    Hopcroft_map2_state_invar_def partition_map2_\<alpha>_def partition_index_map_def
@@ -4669,9 +4669,9 @@ defer
 defer
   apply (simp add: Hopcroft_map2_state_rel_def single_valued_def) 
   apply (metis fst_conv snd_conv)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply simp
--- "goal solved"
+\<comment>\<open>goal solved\<close>
 using [[goals_limit = 10]]
 proof -
   obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
