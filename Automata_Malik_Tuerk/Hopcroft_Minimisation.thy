@@ -4529,7 +4529,7 @@ definition Hopcroft_map2_state_rel_full where
 lemma Hopcroft_map2_state_rel_sv[refine] :
 "single_valued (Hopcroft_map2_state_rel Q cm)"
 unfolding Hopcroft_map2_state_rel_def
-by (rule br_sv)
+  by (rule br_sv)
 
 definition partition_index_map2_full :: "'q class_map \<Rightarrow> 'q partition_map2 \<Rightarrow> (nat \<Rightarrow> 'q set)" where
   "partition_index_map2_full cm P i = class_map_\<alpha> cm (partition_index_map P i)"
@@ -4603,6 +4603,335 @@ assumes PL_OK: "((P,L), (P', L)) \<in> Hopcroft_map2_state_rel cm (\<Q> \<A>)"
 shows "Hopcroft_map2_step \<A> p a pre P L cm \<le> \<Down> {(((P, L), cm), (P', L')).
       ((P, L), (P', L')) \<in> Hopcroft_map2_state_rel cm (\<Q> \<A>)} 
       (Hopcroft_map_step \<A> p a pre' P' L')"
+unfolding Hopcroft_map2_step_def Hopcroft_map_step_def pre'_OK L'_OK
+using [[goals_limit = 14]]
+apply refine_rcg
+  apply (erule conjE)
+defer
+  apply (erule conjE)
+defer
+  apply (rule RELATESI_refspec [where R = "(br (\<lambda>(iM, _). dom iM) (\<lambda>(iM, cm'). Hopcroft_map2_step___iM_props \<A> cm pre P iM cm'))"])
+  apply (simp add: RELATES_def)
+  apply (intro RES_refine_sv br_sv)
+  apply (simp, clarify)+
+  apply (rename_tac iM pm pim)
+  apply (simp add: Ball_def in_br_conv)
+  apply (intro conjI allI impI)
+defer
+defer
+  apply (subgoal_tac "inj_on fst {(p', s). x1 p' = Some s}")
+  apply assumption
+  apply (simp add: inj_on_def)
+\<comment>\<open>goal solved\<close>
+  apply (auto simp add: image_iff in_br_conv) []
+\<comment>\<open>goal solved\<close>
+  apply (subgoal_tac "((P, L - {(a, p)}), P', L - {(a, p)}) \<in> Hopcroft_map2_state_rel (snd x) (\<Q> \<A>)")
+  apply assumption
+  apply (insert PL_OK) []
+  apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_invar_def
+                   Hopcroft_map2_state_\<alpha>_def Hopcroft_map2_step___iM_props_def
+                   partition_map2_invar_def in_br_conv)
+\<comment>\<open>goal solved\<close>
+  apply (simp add: in_br_conv, clarify)+
+  apply (insert PL_OK) []
+  apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def
+                   Hopcroft_map2_step_invar_def Hopcroft_map2_step___iM_props_def in_br_conv)
+\<comment>\<open>goal solved\<close>
+  apply (simp add: in_br_conv)
+  apply (auto simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def
+                        partition_map2_\<alpha>_def partition_map2_\<alpha>_im_def in_br_conv)[]
+\<comment>\<open>goal solved\<close>
+  prefer 2
+  apply (simp split: prod.splits add: Let_def in_br_conv, clarify)+
+  apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def 
+                   Hopcroft_map2_state_invar_def partition_map2_\<alpha>_def partition_index_map_def in_br_conv)
+  apply clarify
+  apply (simp add: in_br_conv)
+  apply (rename_tac iM pm pim it im'' sm' n' L' l s u i s' pp)
+defer
+  apply (simp add: in_br_conv)
+\<comment>\<open>goal solved\<close>
+  prefer 3
+  apply (simp add: in_br_conv)
+
+  apply (simp split: prod.splits add: Let_def, clarify)+
+  apply (simp add: partition_index_map_def Hopcroft_map2_state_rel_def
+                   Hopcroft_map2_state_\<alpha>_def partition_map2_\<alpha>_def in_br_conv)
+  apply auto[]
+\<comment>\<open>goal solved\<close>
+  apply (simp split: prod.splits add: Let_def in_br_conv, clarify)+
+  apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def 
+                   Hopcroft_map2_state_invar_def partition_map2_\<alpha>_def partition_index_map_def in_br_conv
+              cong: if_cong)
+  apply clarify
+  apply (simp)
+  apply (rename_tac iM pm pim it im'' sm' n' L' l s u pmin pmax pmin_l pmin_u pmax_l pmax_u i s' pp)
+  apply (intro conjI)
+defer
+defer
+defer
+(*  apply (simp add: Hopcroft_map2_state_rel_def single_valued_def Hopcroft_map2_state_\<alpha>_def 
+                   Hopcroft_map2_state_invar_def partition_map2_\<alpha>_def partition_index_map_def in_br_conv
+              split: prod.splits)
+        apply auto[]
+  apply (metis fst_conv snd_conv)
+\<comment>\<open>goal solved\<close>
+  apply simp
+\<comment>\<open>goal solved\<close> *)
+using [[goals_limit = 10]]
+proof -
+  obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
+  define im' where "im' \<equiv> partition_map2_\<alpha>_im cm im"
+
+  have dom_im'_eq: "dom im' = dom im" unfolding im'_def dom_def partition_map2_\<alpha>_im_def by simp 
+
+  from PL_OK have P'_eq[simp]: "P' = (im', sm, n)" and
+                  im_props: "\<And>i l u. im i = Some (l, u) \<Longrightarrow> l \<le> u \<and> u < card (\<Q> \<A>)" and
+                  invar_cm: "class_map_invar (\<Q> \<A>) cm" 
+    by (simp_all add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def im'_def
+                      Hopcroft_map2_state_invar_def partition_map2_\<alpha>_def partition_map2_invar_def in_br_conv)
+
+  assume "pre \<subseteq> dom (fst (snd P'))" "dom (fst (snd P')) \<subseteq> \<Q> \<A>"
+  hence pre_subset: "pre \<subseteq> dom sm" "dom sm \<subseteq> \<Q> \<A>" by simp_all
+  thus "pre \<subseteq> dom (fst (snd P))" "dom (fst (snd P)) \<subseteq> \<Q> \<A>"  by simp_all
+
+  fix iM pm pim
+  assume iM_props : "Hopcroft_map2_step___iM_props \<A> cm pre P iM (pm, pim)"
+
+  from iM_props have invar_pm_pim: "class_map_invar (\<Q> \<A>) (pm, pim)"
+                 and map2_\<alpha>_pm_pim_P: "partition_map2_\<alpha> (pm, pim) P = partition_map2_\<alpha> cm P"
+                 and pim_pre_prop: "\<And>i u s l n q. \<lbrakk>iM i = Some s; im i = Some (l, u); 
+                                                   l \<le> n; n \<le> u; pim n = Some q\<rbrakk> \<Longrightarrow>
+                                                   (q \<in> pre) = (n < s)"
+                 and iM_prop: "\<And>i u s l. \<lbrakk>iM i = Some s; im i = Some (l, u)\<rbrakk> \<Longrightarrow> (l < s) \<and> (s \<le> Suc u)"
+    unfolding Hopcroft_map2_step___iM_props_def by (simp_all add: in_br_conv)
+  
+  from map2_\<alpha>_pm_pim_P have class_map_pm_pim_eq: "\<And>lu i. im i = Some lu \<Longrightarrow>
+    class_map_\<alpha> cm lu = class_map_\<alpha> (pm, pim) lu" unfolding partition_map2_\<alpha>_def partition_map2_\<alpha>_im_def
+    apply (auto simp add: fun_eq_iff split: option.splits)
+    apply (metis option.inject option.simps)+
+    done
+
+  { assume dom_subset: "dom iM \<subseteq> partition_state_map P ` pre"
+
+    from dom_subset
+    show "dom iM \<subseteq> partition_state_map P' ` pre"
+      by (simp add: partition_state_map_def[abs_def])
+
+    fix q 
+    assume q_in_pre: "q \<in> pre"
+       and equiv_pred_P': "split_language_equiv_partition_pred \<A>
+        (partition_index_map P' (partition_state_map P' q)) a
+        (partition_index_map P' p)"
+
+    from q_in_pre pre_subset have "q \<in> dom sm" by blast
+    then obtain qi where sm_q_eq[simp]: "sm q = Some qi" by blast
+
+    from invar_P' have "qi \<in> dom im'" unfolding dom_def by simp (metis sm_q_eq)
+    hence "qi \<in> dom im" by (simp add: dom_im'_eq)
+    then obtain q_u q_l where im_q_eq[simp]: "im qi = Some (q_l, q_u)" by auto
+
+    from p_le invar_P' have "p \<in> dom im'" by simp
+    hence "p \<in> dom im" by (simp add: dom_im'_eq)
+    then obtain p_u p_l where im_p_eq[simp]: "im p = Some (p_l, p_u)" by auto
+
+    assume "\<forall>q. q \<in> pre \<longrightarrow>
+           split_language_equiv_partition_pred \<A>
+            (partition_index_map2_full (pm, pim) P (partition_state_map P q)) a
+            (partition_index_map2_full (pm, pim) P p) \<longrightarrow>
+           partition_state_map P q \<in> dom iM"
+    with q_in_pre have
+      "split_language_equiv_partition_pred \<A>
+         (partition_index_map2_full (pm, pim) P (partition_state_map P q)) a
+         (partition_index_map2_full (pm, pim) P p) \<Longrightarrow>
+       partition_state_map P q \<in> dom iM" by simp
+    with equiv_pred_P' class_map_pm_pim_eq[OF im_q_eq] 
+         class_map_pm_pim_eq[OF im_p_eq] 
+    have "partition_state_map P q \<in> dom iM"
+      by (simp add: partition_index_map2_full_def partition_index_map_def partition_state_map_def
+                       im'_def partition_map2_\<alpha>_im_def)
+
+    thus "partition_state_map P' q \<in> dom iM"
+      by (simp add: partition_state_map_def)
+  }
+
+
+  fix it i s im'' pp l u sm' n' L'
+  assume it_subset: "it \<subseteq> {(p', s). iM p' = Some s}"
+  assume is_in: "(i, s) \<in> it"
+  assume "partition_map2_\<alpha>_im (pm, pim) im'' i = Some pp"
+  assume im''_i_eq[simp]: "im'' i = Some (l, u)"
+  assume invar_pm_pim: "class_map_invar (\<Q> \<A>) (pm, pim)"
+  assume step_invar: "Hopcroft_map_step_invar \<A> p a P' L (fst ` it) ((partition_map2_\<alpha>_im (pm, pim) im'', sm', n'), L')"
+  assume step_invar2: "Hopcroft_map2_step_invar \<A> p a P L (pm, pim) it ((im'', sm', n'), L')"
+  assume invar2_cm'_P'': "partition_map2_invar (card (\<Q> \<A>)) (im'', sm', n')"
+  assume "snd (snd P') \<le> n'" hence n_le_n': "n \<le> n'" by simp
+
+  from invar_pm_pim have dom_pim: "dom pim = {i. i < card (\<Q> \<A>)}" 
+    unfolding class_map_invar_def by simp
+
+  from `partition_map2_\<alpha>_im (pm, pim) im'' i = Some pp` 
+  have pp_eq: "class_map_\<alpha> (pm, pim) (l, u) = pp"
+    by (simp add: partition_map2_\<alpha>_im_def)
+
+  from invar2_cm'_P'' have lu_OK: "l \<le> u \<and> u < card (\<Q> \<A>)"
+    unfolding partition_map2_invar_def by simp (metis im''_i_eq)
+
+  assume "fst P' i = Some pp"
+  hence im'_i_eq[simp]: "im' i = Some pp" by simp
+  
+  hence "i \<in> dom im'" by blast
+  with invar_P' n_le_n' have i_le_n': "i < n'" by simp
+
+  have im_i_eq[simp]: "im i = Some (l, u)"
+  proof -
+    from im'_i_eq
+    obtain l' u' where 
+      im_i_eq: "im i = Some (l', u')" and
+      pp_eq2: "class_map_\<alpha> cm (l', u') = pp"  
+      unfolding im'_def partition_map2_\<alpha>_def partition_map2_\<alpha>_im_def
+    by auto
+    from im_props[OF im_i_eq] have lu'_OK: "l' \<le> u' \<and> u' < card (\<Q> \<A>)" .
+
+    from pp_eq2 class_map_pm_pim_eq[OF im_i_eq]
+    have pp_eq3: "class_map_\<alpha> (pm, pim) (l', u') = pp" by simp
+
+    from dom_pim class_map_invar___pim_inj[OF invar_pm_pim]
+    have pim_inj_on': "inj_on (\<lambda>i. the (pim i)) {i . i < card (\<Q> \<A>)}"
+      unfolding inj_on_def dom_def set_eq_iff 
+      by auto (metis option.sel)
+    have pim_inj_on: "inj_on (\<lambda>i. the (pim i)) ({i . l \<le> i \<and> i \<le> u} \<union> {i . l' \<le> i \<and> i \<le> u'})" 
+      using lu_OK lu'_OK
+      apply (rule_tac subset_inj_on[OF pim_inj_on'])
+      apply (simp add: subset_iff)
+    done
+
+    have "class_map_\<alpha> (pm, pim) (l', u') = class_map_\<alpha> (pm, pim) (l, u)" 
+      using pp_eq pp_eq3 by simp
+    hence "{i |i. l \<le> i \<and> i \<le> u} = {i |i. l' \<le> i \<and> i \<le> u'}"
+      unfolding class_map_\<alpha>_alt_def 
+      using inj_on_Un_image_eq_iff[OF pim_inj_on]
+      by simp
+    hence "l = l' \<and> u = u'" 
+      apply (simp add: set_eq_iff) 
+      apply (metis im_i_eq im_props le_trans linorder_linear order_antisym)
+    done
+
+    thus ?thesis by (simp add: im_i_eq)   
+  qed
+
+  from is_in it_subset have iM_i_eq[simp]: "iM i = Some s" by (simp add: subset_iff)
+  from iM_prop [of i s l u] have s_OK: "l < s \<and> s \<le> Suc u" by simp
+
+  { fix l' u'
+    assume u'_le: "u' < card (\<Q> \<A>)" 
+
+    with invar_pm_pim have subset_dom: "{i |i. l' \<le> i \<and> i \<le> u'} \<subseteq> dom pim" 
+      by (simp add: class_map_invar_def subset_iff)
+
+    have "card (class_map_\<alpha> (pm, pim) (l', u')) = card {i |i. l' \<le> i \<and> i \<le> u'}"
+      apply (simp add: class_map_\<alpha>_alt_def)
+      apply (intro card_image inj_onI class_map_invar___pim_inj [OF invar_pm_pim])
+      apply (insert subset_dom)
+      apply (auto simp add: subset_iff dom_def)
+    done
+    hence "card (class_map_\<alpha> (pm, pim) (l', u')) = Suc u' - l'"
+      using card_nat_segment[of l' u'] by simp
+  } note card_class_map = this
+  
+  have pim_pre_prop': "\<And>n. l \<le> n \<Longrightarrow> n \<le> u \<Longrightarrow> (the (pim n) \<in> pre) = (n < s)"  
+  proof -
+    fix n
+    assume n_props: "l \<le> n" "n \<le> u"
+
+    with dom_pim lu_OK have "n \<in> dom pim" by auto
+    then obtain q where pim_n_eq: "pim n = Some q" by blast
+
+    from pim_pre_prop[of i s l u n q] pim_n_eq n_props 
+    show "(the (pim n) \<in> pre) = (n < s)" by simp
+  qed
+
+  from s_OK obtain s_pre where s_pre_intro: "s = Suc s_pre" 
+    by (cases s) auto
+
+  have pp_in_pre_eq: "{q \<in> pp. q \<in> pre} = class_map_\<alpha> (pm, pim) (l, s - Suc 0)" 
+  proof -
+    { fix x i
+      from pim_pre_prop'[of i] s_OK
+      have "(x = the (pim i) \<and> l \<le> i \<and> i \<le> u \<and> x \<in> pre) =
+            (x = the (pim i) \<and> l \<le> i \<and> i < s)"
+         by auto
+    }
+    with s_OK show ?thesis
+      unfolding pp_eq[symmetric]
+      apply (simp del: ex_simps add: s_pre_intro set_eq_iff class_map_\<alpha>_def ex_simps[symmetric])
+      apply auto
+    done
+  qed
+
+  have pp_nin_pre_eq: "{q \<in> pp. q \<notin> pre} = class_map_\<alpha> (pm, pim) (s, u)" 
+  proof -
+    { fix x i
+      from pim_pre_prop'[of i] s_OK 
+      have "(x = the (pim i) \<and> l \<le> i \<and> i \<le> u \<and> x \<notin> pre) =
+            (x = the (pim i) \<and> s \<le> i \<and> i \<le> u)"
+         by auto
+    }
+    thus ?thesis
+      unfolding pp_eq[symmetric]
+      by (simp del: ex_simps add: set_eq_iff class_map_\<alpha>_def ex_simps[symmetric])
+  qed
+
+  show "(Suc u \<le> s) = (card {q \<in> pp. q \<notin> pre} = 0)" 
+    using card_class_map [of u s] s_OK lu_OK
+    unfolding pp_nin_pre_eq by simp
+
+  fix pmin pmax pmin_l pmin_u pmax_l pmax_u
+  assume pminmax_eq: "(if card {q \<in> pp. q \<notin> pre} < card {q \<in> pp. q \<in> pre}
+            then ({q \<in> pp. q \<notin> pre}, {q \<in> pp. q \<in> pre})
+            else ({q \<in> pp. q \<in> pre}, {q \<in> pp. q \<notin> pre})) =
+           (pmin, pmax)"
+  assume pminmax_lu_eq:
+    "(if Suc u - s < s - l then ((s, u), l, s - Suc 0) else ((l, s - Suc 0), s, u)) =
+     ((pmin_l, pmin_u), (pmax_l, pmax_u))"
+  assume "s < Suc u" hence s_le_u: "s \<le> u" by simp
+
+  from card_class_map [of u s] card_class_map [of "s - Suc 0" l] s_OK lu_OK
+  have card_eval: "card (class_map_\<alpha> (pm, pim) (s, u)) = Suc u - s"
+                  "card (class_map_\<alpha> (pm, pim) (l, s - Suc 0)) = s - l" by auto
+
+  from pminmax_eq have "pmin \<union> pmax = pp" by (auto split: if_splits)
+  hence class_lu_minmax: "class_map_\<alpha> (pm, pim) (l, u) = pmin \<union> pmax" unfolding pp_eq by simp
+
+  from pminmax_eq pminmax_lu_eq
+  have pmin_eq: "class_map_\<alpha> (pm, pim) (pmin_l, pmin_u) = pmin" and
+       pmax_eq: "class_map_\<alpha> (pm, pim) (pmax_l, pmax_u) = pmax"
+      unfolding pp_in_pre_eq pp_nin_pre_eq card_eval
+      by (auto split: if_splits)
+
+  show "partition_map2_\<alpha>_im (pm, pim) im''(i \<mapsto> pmax, n' \<mapsto> pmin) =
+        partition_map2_\<alpha>_im (pm, pim) (im''(i \<mapsto> (pmax_l, pmax_u), n' \<mapsto> (pmin_l, pmin_u)))"
+    by (simp add: partition_map2_\<alpha>_im_def pmin_eq fun_eq_iff pmax_eq)
+
+  show "(\<lambda>q. if q \<in> pmin then Some n' else sm' q) =
+        (\<lambda>q. if q \<in> class_map_\<alpha> (pm, pim) (pmin_l, pmin_u) then Some n' else sm' q)"
+    unfolding pmin_eq ..
+ 
+  from pminmax_lu_eq[symmetric] lu_OK s_OK s_le_u have 
+    pmin_lu_OK: "pmin_l \<le> pmin_u \<and> pmin_u < card (\<Q> \<A>)" and
+    pmax_lu_OK: "pmax_l \<le> pmax_u \<and> pmax_u < card (\<Q> \<A>)"
+    by (simp_all split: if_splits add: s_pre_intro)
+
+  from invar2_cm'_P'' i_le_n'
+  show "partition_map2_invar (card (\<Q> \<A>)) 
+            (im''(i \<mapsto> (pmax_l, pmax_u), n' \<mapsto> (pmin_l, pmin_u)),
+             \<lambda>q. if q \<in> class_map_\<alpha> (pm, pim) (pmin_l, pmin_u) then Some n'
+                 else sm' q, Suc n')" 
+    unfolding partition_map2_invar_def 
+    by (simp add: pmin_lu_OK pmax_lu_OK)
+qed
+
+(* -- OLD PROOF --
 unfolding Hopcroft_map2_step_def Hopcroft_map_step_def pre'_OK L'_OK
 using [[goals_limit = 1]]
 apply refine_rcg
@@ -4924,6 +5253,9 @@ proof -
     by (simp add: pmin_lu_OK pmax_lu_OK)
 qed
 
+*)
+
+
 definition Hopcroft_map2_step_compute_iM_invar where
   "Hopcroft_map2_step_compute_iM_invar \<A> cm pre P pre' = (\<lambda>(iM, cm').
    Hopcroft_map2_step___iM_props \<A> cm (pre - pre') P iM cm' \<and>
@@ -4942,7 +5274,7 @@ definition Hopcroft_map2_step_compute_iM where
    let pm' = pm (q \<mapsto> s) (qs \<mapsto> iq);
    let pim' = pim (s \<mapsto> q) (iq \<mapsto> qs);
    RETURN (iM (i \<mapsto> (Suc s)), (pm', pim'))
- }) (empty, cm)"
+ }) (Map.empty, cm)"
 
 lemma Hopcroft_map2_step_compute_iM_correct :
 assumes pre_subset: "pre \<subseteq> dom (fst (snd P))" "pre \<subseteq> \<Q> \<A>"
