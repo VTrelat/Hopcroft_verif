@@ -17,13 +17,19 @@
     -   I have started to understand the refinement framework.
     -   reading and understanding the theory `Hopcroft_Minimisation.thy`
     -   those old theories needed to be updated to the current Isabelle version. I fixed all import related issues and syntax issues and got them to work again.
-    -   :white_check_mark: proof of lemma `Hopcroft_precompute_step_correct` is ~~broken~~ **repaired**:
+    -   :white_check_mark: repaired proof of lemma `Hopcroft_precompute_step_correct` ~~is broken~~:
         -   use of rule `inj_on_id` that I do not understand
         -   I found another way to fix the first subgoals ~~but one is remaining that I cannot fix~~
         -   for the last subgoal, I found an explicit way to prove it but ~~am not sure if it is the shortest way to do it~~ Peter Lammich helped me to find a shorter proof
-    -   :white_check_mark: proof of lemma `Hopcroft_map_step_correct` is repaired:
+    -   :white_check_mark: repaired proof of lemma `Hopcroft_map_step_correct`:
         -   slightly modified the structure of the proof because rule `FOREACHi_refine` could not be applied anymore
         -   structural modifications created a new subgoal but it was easily proved
+    -   Added missing lemma `RES_refine_sv` to `Refine_Basic.thy`
+    -   :white_check_mark: repaired proof of lemma `Hopcroft_map2_step_correct`:
+        -   some subgoals needed to be reordered
+        -   lemma `in_br_conv` needed to be added to a lot of subgoals
+    -   :white_check_mark: repaired proof of lemma `Hopcroft_map2_step_compute_iM_correct`:
+        -   only syntax issues and fixing old names of rules
 
 -   #### Remarks
 
