@@ -5712,7 +5712,7 @@ definition Hopcroft_map2_step_compute_iM_swap_check where
      let pim' = pim (s \<mapsto> q) (iq \<mapsto> qs);
      RETURN (iM (i \<mapsto> (Suc s)), (pm', pim'))
    }
- }) (empty, cm)"
+ }) (Map.empty, cm)"
 
 lemma Hopcroft_map2_step_compute_iM_swap_check_correct :
 assumes invar_cm: "class_map_invar (\<Q> \<A>) cm"
@@ -5810,8 +5810,8 @@ qed
 
 text \<open> A version with caching and processing the elements in order. This does not really lead
  to an improvement, unluckily. It trades map lookup and updates with sorting a list. In OCaml
- code using red-black-trees this leads to a slight improvement, while it leads to a slight
- disadvantage in PolyML. In the end, it is probably not worth the efford, but it is currently
+ code using red-black-trees, this leads to a slight improvement, while it leads to a slight
+ disadvantage in PolyML. In the end, it is probably not worth the effort, but it is currently
  kept, but deactivated. It needs further investigation. \<close>
 
 definition Hopcroft_map2_step_compute_iM_cache___init_cache where
@@ -5830,7 +5830,7 @@ lemma Hopcroft_map2_step_compute_iM_cache___invar_cache_I :
 "Hopcroft_map2_step_compute_iM_cache___invar_cache P it None"
 "\<lbrakk>(fst P) i = Some (l, u); l \<le> s; \<And>q iq. (q, iq) \<in> it \<Longrightarrow> s \<le> iq\<rbrakk> \<Longrightarrow>
   Hopcroft_map2_step_compute_iM_cache___invar_cache P it (Some (i, l, u, s))"
-using assms by simp_all
+  by simp_all
 
 
 fun Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache where
@@ -5882,7 +5882,7 @@ definition Hopcroft_map2_step_compute_iM_update_cache where
 
 definition Hopcroft_map2_step_compute_iM_cache_swap_check_loop where
 "Hopcroft_map2_step_compute_iM_cache_swap_check_loop \<A> (cm::'q class_map) (pre::'q set) P =
-    FOREACHoi (Hopcroft_map2_step_compute_iM_invar_cache \<A> cm pre P) 
+    FOREACHoi (Hopcroft_map2_step_compute_iM_invar_cache \<A> cm pre P)
       ((\<lambda>q. (q, the ((fst cm) q))) ` pre) (\<lambda>(q,iq) (q', iq'). iq \<le> iq')  
       (\<lambda>(q,iq) (iM, cache, (pm, pim)). 
       do {
@@ -5896,7 +5896,7 @@ definition Hopcroft_map2_step_compute_iM_cache_swap_check_loop where
           let pim' = pim (s \<mapsto> q) (iq \<mapsto> qs);
           RETURN (iM, Some (i, l, u, Suc s), (pm', pim'))
         }
-      }) (empty, None, cm)"
+      }) (Map.empty, None, cm)"
 
 definition Hopcroft_map2_step_compute_iM_cache_swap_check where
 "Hopcroft_map2_step_compute_iM_cache_swap_check \<A> (cm::'q class_map) (pre::'q set) P = 
