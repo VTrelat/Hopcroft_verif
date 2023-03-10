@@ -980,6 +980,11 @@ lemma RES_refine:
   "\<lbrakk> \<And>s. s\<in>S \<Longrightarrow> \<exists>s'\<in>S'. (s,s')\<in>R\<rbrakk> \<Longrightarrow> RES S \<le> \<Down>R (RES S')" 
   by (auto simp: conc_fun_RES)
 
+lemma RES_refine_sv: 
+  "\<lbrakk>single_valued R; 
+    \<And>s. s\<in>S \<Longrightarrow> \<exists>s'\<in>S'. (s,s')\<in>R\<rbrakk> \<Longrightarrow> RES S \<le> \<Down>R (RES S')" 
+  by (auto simp: conc_fun_RES dest: single_valuedD)
+
 lemma SPEC_refine: 
   assumes "S \<le> SPEC (\<lambda>x. \<exists>x'. (x,x')\<in>R \<and> \<Phi> x')"
   shows "S \<le> \<Down>R (SPEC \<Phi>)"
