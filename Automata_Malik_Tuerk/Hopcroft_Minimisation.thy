@@ -4526,6 +4526,10 @@ definition Hopcroft_map2_state_rel_full where
   "Hopcroft_map2_state_rel_full Q = build_rel (\<lambda>(PL, cm). Hopcroft_map2_state_\<alpha> cm PL) 
                                             (\<lambda>(PL, cm). Hopcroft_map2_state_invar Q cm PL)"
 
+lemma Hopcroft_map2_state_rel_full_rewrite:"Hopcroft_map2_state_rel_full Q = {(((P, L), cm), P', L'). ((P, L), P', L') \<in> Hopcroft_map2_state_rel cm Q}"
+  unfolding Hopcroft_map2_state_rel_full_def
+   by (auto simp add: Hopcroft_map2_state_rel_def in_br_conv)
+
 lemma Hopcroft_map2_state_rel_sv[refine] :
 "single_valued (Hopcroft_map2_state_rel Q cm)"
 unfolding Hopcroft_map2_state_rel_def
@@ -6386,7 +6390,7 @@ prefer 6
 apply (simp add: subset_iff)
 proof -
   obtain im sm n where P_eq[simp]: "P = (im, sm, n)" by (metis prod.exhaust)
-  def im' \<equiv> "partition_map2_\<alpha>_im cm im"
+  define im' where "im' \<equiv> partition_map2_\<alpha>_im cm im"
 
   have dom_im'_eq: "dom im' = dom im" unfolding im'_def dom_def partition_map2_\<alpha>_im_def by simp 
 
@@ -6394,7 +6398,7 @@ proof -
                   map2_invar_P: "partition_map2_invar (card (\<Q> \<A>)) P" and
                   invar_cm: "class_map_invar (\<Q> \<A>) cm" 
     by (simp_all add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def im'_def
-                      Hopcroft_map2_state_invar_def partition_map2_\<alpha>_def)
+                      Hopcroft_map2_state_invar_def partition_map2_\<alpha>_def in_br_conv)
 
   from invar_cm show "class_map_invar (\<Q> \<A>) cm" .
   from map2_invar_P show "partition_map2_invar (card (\<Q> \<A>)) P" .
@@ -6420,7 +6424,7 @@ definition Hopcroft_map2_f where
      })"
 
 
-lemma (in DFA) Hopcroft_map2_f_correct :
+lemma (in DFA) Hopcroft_map2_f_correct:
 assumes PL_OK: "(PLc, PL') \<in> Hopcroft_map2_state_rel_full (\<Q> \<A>)"
     and invar_P': "partition_map_invar (fst PL')"
 shows "Hopcroft_map2_f \<A> PLc \<le> \<Down>(Hopcroft_map2_state_rel_full (\<Q> \<A>)) (Hopcroft_map_f \<A> PL')"
@@ -6433,7 +6437,7 @@ proof -
     PL_\<alpha>: "Hopcroft_map2_state_\<alpha> cm (P, L) = (P', L')" and
     PL_invar: "Hopcroft_map2_state_invar (\<Q> \<A>) cm (P, L)"
     unfolding Hopcroft_map2_state_rel_full_def
-    by simp_all
+    by (simp_all add: in_br_conv)
 
   from PL_\<alpha> have L'_eq: "L' = L" and
                  P'_eq: "P' = partition_map2_\<alpha> cm P"
@@ -6444,58 +6448,54 @@ proof -
      conc_trans_additional(2) [OF Hopcroft_map2_step_no_spec_correct Hopcroft_map2_step_correct]
 
   show ?thesis
-    using [[goals_limit = 1]]
+    (* using [[goals_limit = 1]] *)
     unfolding Hopcroft_map_f_def Hopcroft_map2_f_def
     apply simp
     apply (refine_rcg)
-    -- "process goals"
+    \<comment>\<open>process goals\<close>
       apply (simp only: PL_\<alpha>)
-    -- "goal solved"
+    \<comment>\<open>goal solved\<close>
       apply (simp add: L'_eq)
-    -- "goal solved"
+    \<comment>\<open>goal solved\<close>
       apply (subgoal_tac "RES L \<le> \<Down> Id (RES L')")
       apply assumption
       apply (simp add: L'_eq)
-    -- "goal solved"
+    \<comment>\<open>goal solved\<close>
       apply simp apply clarify
       apply (simp add: P'_eq P_eq partition_map2_\<alpha>_def partition_map2_\<alpha>_im_def)
       apply metis
-    -- "goal solved"
+    \<comment>\<open>goal solved\<close>
       apply simp
       apply clarify
       apply simp
       apply (rename_tac a i p l u)
+      apply (simp only: Hopcroft_map2_state_rel_full_rewrite)
       apply (rule_tac Hopcroft_map2_step_no_spec_correct_full)
-    -- "new subgoals"
+    \<comment>\<open>new subgoals\<close>
       apply (simp add: NFA_axioms)
-    -- "goal solved"    
-      apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def P'_eq PL_invar)
-    -- "goal solved"
+    \<comment>\<open>goal solved\<close>
+      apply (simp add: Hopcroft_map2_state_rel_def Hopcroft_map2_state_\<alpha>_def P'_eq PL_invar in_br_conv)
+    \<comment>\<open>goal solved\<close>
       apply (insert invar_P')[]
       apply (simp add: P'_eq P_eq partition_map2_\<alpha>_def)
-    -- "goal solved"
+    \<comment>\<open>goal solved\<close>
       apply (simp add: Hopcroft_abstract_invar_def Hopcroft_map_state_\<alpha>_def
                        is_weak_language_equiv_partition_def P_eq Hopcroft_map2_state_\<alpha>_def)
-    -- "goal solved"    
+    \<comment>\<open>goal solved\<close>
       apply (insert PL_OK)[]
-      apply (simp add: Hopcroft_map2_state_rel_full_def Hopcroft_map2_state_rel_def L'_eq)
-    -- "goal solved"
+      apply (simp add: Hopcroft_map2_state_rel_full_def Hopcroft_map2_state_rel_def L'_eq in_br_conv)
+    \<comment>\<open>goal solved\<close>
       apply (insert invar_P') []
       apply (simp add: P_eq P'_eq partition_map2_\<alpha>_def partition_map2_\<alpha>_im_def dom_def)
       apply auto[]
-    -- "goal solved"   
+    \<comment>\<open>goal solved\<close>   
       apply (insert invar_P') []
       apply simp
-    -- "goal solved"   
+    \<comment>\<open>goal solved\<close>   
       apply (simp add: P_eq P'_eq partition_index_map_def partition_map2_\<alpha>_def
                        partition_map2_\<alpha>_im_def)
-    -- "goal solved"
-      apply (simp add: L'_eq)    
-    -- "goal solved"
-      apply (unfold Hopcroft_map2_state_rel_full_def)
-      apply (rule br_single_valued)
-    -- "goal solved"
-      apply (simp add: Hopcroft_map2_state_rel_def)
+    \<comment>\<open>goal solved\<close>
+      apply (simp add: L'_eq)
   done
 qed
 
