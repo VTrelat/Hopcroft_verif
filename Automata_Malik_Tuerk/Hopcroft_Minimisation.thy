@@ -6536,7 +6536,6 @@ apply (simp add: fin_S)
 apply (simp add: m_eq invar_cm)
 defer
 apply (simp, clarify)+
-apply simp
 apply (rename_tac q S' pm' pim')
 apply (intro conjI)
 proof -
@@ -6592,7 +6591,7 @@ qed
 
 definition class_map_init_pred_compute where
   "class_map_init_pred_compute QF F = do {
-    (cm, s) \<leftarrow> class_map_add_set {} (empty, empty) 0 QF;
+    (cm, s) \<leftarrow> class_map_add_set {} (Map.empty, Map.empty) 0 QF;
     (cm', m) \<leftarrow> class_map_add_set QF cm s F;
     RETURN (cm', s, m)
   }"
@@ -6656,7 +6655,7 @@ proof -
       apply (intro set_eqI iffI)
       apply auto[]
       apply (simp add: image_iff Bex_def dom_def)
-      apply (metis the.simps)
+      apply (metis option.sel)
     done
 
     from pm_pim_connected[symmetric] dom_pm_eq
@@ -6680,13 +6679,13 @@ proof -
     from card_Diff_subset[OF finite_\<F> \<F>_consistent]
     have card_QF_le: "card (\<Q> \<A> - \<F> \<A>) \<le> card (\<Q> \<A>)" by simp
 
-    def new_is \<equiv> "{i. card (\<Q> \<A> - \<F> \<A>) \<le> i \<and> i \<le> card (\<Q> \<A>) - Suc 0}"
+    define new_is where "new_is \<equiv> {i. card (\<Q> \<A> - \<F> \<A>) \<le> i \<and> i \<le> card (\<Q> \<A>) - Suc 0}"
 
     from dom_pim'_eq less_card have step1:
         "(\<lambda>i. the (pim' i)) ` new_is = {q . \<exists>i \<in> new_is. pim' i = Some q}"
       unfolding new_is_def 
       apply (simp add: set_eq_iff dom_def image_iff less_eq_pre_card)
-      apply (metis the.simps)
+      apply (metis option.sel)
     done
 
     have new_is_F_connection: "\<And>q i. pm' q = Some i \<Longrightarrow> (i \<in> new_is \<longleftrightarrow> q \<in> \<F> \<A>)"
@@ -6760,7 +6759,7 @@ definition partition_map2_init where
    (if (s = 0) then
       (partition_map_sing (0, m - 1) (\<Q> \<A>))
     else 
-      (empty (0 \<mapsto> (s, m - 1)) (1 \<mapsto> (0, s - 1)),
+      (Map.empty (0 \<mapsto> (s, m - 1)) (1 \<mapsto> (0, s - 1)),
        (\<lambda>q. if (q \<in> \<F> \<A>) then Some 0 else
             if (q \<in> \<Q> \<A> - \<F> \<A>) then Some (1::nat) else None),
        (2::nat)))"
@@ -6788,26 +6787,27 @@ definition Hopcroft_map2 where
 lemma (in DFA) Hopcroft_map2_correct :
 shows  "Hopcroft_map2 \<A> \<le> \<Down>(br (\<lambda>(P, cm). partition_map2_\<alpha> cm P)
                                     (\<lambda>(P, cm). partition_map2_invar (card (\<Q> \<A>)) P)) (Hopcroft_map \<A>)"
+using [[goals_limit = 11]]
 unfolding Hopcroft_map_def Hopcroft_map2_def
 apply (rule pw_bind_leI)
 apply simp
 apply refine_rcg
 apply (simp_all del: br_def)
-prefer 10
+prefer 9
 apply (rule Hopcroft_map2_f_correct)
-prefer 8
+prefer 1
 apply (unfold Hopcroft_map2_state_rel_full_def)
-apply (rule br_single_valued)
-apply simp_all
+apply (simp_all add: br_sv)
+
 
 apply (simp_all split: prod.splits add: Hopcroft_map2_state_rel_full_def Hopcroft_map2_state_\<alpha>_def
                 Hopcroft_map2_state_invar_def del: br_def)
--- "process subgaols"
+\<comment>\<open>process subgoals\<close>
    apply clarify
    apply (simp add: Hopcroft_map_state_invar_def)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
    apply (simp add: class_map_init_pred_def finite_\<Q>)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
 defer
    apply (clarify, simp)
    apply (rename_tac pm pim s m)
@@ -6815,9 +6815,15 @@ defer
    apply (clarify, simp)
    apply (rename_tac pm pim m)
 defer
-   apply (clarify, simp)
+   apply (clarify, simp add: in_br_conv)
+   apply (simp add: prod.splits)
+   apply (rule allI)+
+   apply (rule impI)
    apply (rename_tac pm pim s m sm im n L pm' pim')
 defer
+   apply (clarify, simp)
+   apply (rename_tac pm pim s m sm im n L pm' pim')
+apply (simp_all add: in_br_conv)
 proof -
   fix cm :: "'q class_map"
   show "partition_map_empty = partition_map2_\<alpha> cm partition_map_empty \<and>
