@@ -2,7 +2,7 @@ section \<open>\isaheader{Implementation of Priority Queues by Skew Binomial Hea
 
 theory SkewPrioImpl
 imports 
-  "Binomial-Heaps.SkewBinomialHeap" 
+  "../../../Binomial-Heaps/SkewBinomialHeap" 
   "../spec/PrioSpec"
   "../tools/Record_Intf"
   "../tools/Locale_Code"

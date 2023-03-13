@@ -5,7 +5,7 @@
 section \<open>\isaheader{Implementation of a trie with explicit invariants}\<close>
 theory Trie_Impl imports
   "../../Lib/Assoc_List"
-  "~~/src/Doc/Tutorial/Trie/Trie"
+  Trie
 begin
 
 subsection \<open>Interuptible iterator\<close>

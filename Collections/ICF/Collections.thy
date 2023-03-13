@@ -5,10 +5,9 @@
 section \<open>\isaheader{Standard Collections}\<close>
 theory Collections
   imports
-(*
   ICF_Impl
   ICF_Refine_Monadic
-  ICF_Autoref *)
+  ICF_Autoref
 (* Miscellanneous*)
   DatRef
 begin

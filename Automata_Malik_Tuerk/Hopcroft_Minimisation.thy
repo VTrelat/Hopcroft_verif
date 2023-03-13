@@ -7,7 +7,7 @@ section\<open>Hopcroft's Minimisation Algorithm\<close>
 
 theory Hopcroft_Minimisation
   imports Main DFA
-        "../Collections/ICF/Collections"
+        "../Collections/ICF/CollectionsV1"
         "../Nested_Multisets_Ordinals/Multiset_More"
         "../Partition"
 
@@ -6966,7 +6966,7 @@ proof -
   note Hopcroft_map2_correct 
   also note Hopcroft_map_correct 
   also note Hopcroft_abstract_correct 
-  finally show ?thesis by (simp add: pw_le_iff refine_pw_simps)
+  finally show ?thesis by (simp add: pw_le_iff refine_pw_simps in_br_conv)
 qed
 
 
@@ -7037,6 +7037,7 @@ lemma im_RELEATES[refine_dref_RELATES]:
 lemma [simp]: "single_valued im_rel" unfolding im_rel_def by blast
 
 definition "part_rel \<equiv> rprod im_rel (rprod sm_rel (Id::(nat \<times> nat) set))"
+
 lemma part_rel_RELEATES[refine_dref_RELATES]: 
   "RELATES part_rel" by (simp add: RELATES_def)
 lemma [simp]: "single_valued part_rel" unfolding part_rel_def 
