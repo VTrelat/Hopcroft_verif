@@ -5882,8 +5882,8 @@ definition Hopcroft_map2_step_compute_iM_update_cache where
 
 definition Hopcroft_map2_step_compute_iM_cache_swap_check_loop where
 "Hopcroft_map2_step_compute_iM_cache_swap_check_loop \<A> (cm::'q class_map) (pre::'q set) P =
-    FOREACHoi (Hopcroft_map2_step_compute_iM_invar_cache \<A> cm pre P)
-      ((\<lambda>q. (q, the ((fst cm) q))) ` pre) (\<lambda>(q,iq) (q', iq'). iq \<le> iq')  
+    FOREACHoi (\<lambda>(q,iq) (q', iq'). iq \<le> iq') (Hopcroft_map2_step_compute_iM_invar_cache \<A> cm pre P)
+      ((\<lambda>q. (q, the ((fst cm) q))) ` pre)
       (\<lambda>(q,iq) (iM, cache, (pm, pim)). 
       do {
         ASSERT (q \<in> dom pm \<and> q \<in> dom (fst (snd P)));
@@ -5919,28 +5919,26 @@ shows "Hopcroft_map2_step_compute_iM_cache_swap_check_loop \<A> cm pre P \<le> \
 unfolding Hopcroft_map2_step_compute_iM_swap_check_def 
           Hopcroft_map2_step_compute_iM_cache_swap_check_loop_def
           FOREACHoi_def FOREACHi_def FOREACHci_def
-using [[goals_limit = 1]]
+(* using [[goals_limit = 1]] *)
 apply (rule FOREACHoci_refine [where \<Phi>'' = "
   \<lambda>it cache _ _. Hopcroft_map2_step_compute_iM_invar_cache_add \<A> cm pre P it cache"])
--- "process subgoals"
+\<comment>\<open>process subgoals\<close>
   apply (subgoal_tac "inj_on fst ((\<lambda>q. (q, the (fst cm q))) ` pre)")
   apply assumption
 defer
   apply (auto simp add: image_iff) []
--- "goal solved" 
+\<comment>\<open>goal solved\<close>
   apply (simp add: R_def)
--- "goal solved" 
+\<comment>\<open>goal solved\<close> 
   apply (simp add: R_def single_valued_def)
--- "goal solved" 
+\<comment>\<open>goal solved\<close>
+  apply (simp add: Hopcroft_map2_step_compute_iM_invar_cache_add_def image_image)
+\<comment>\<open>goal solved\<close> 
   apply simp
--- "goal solved" 
-  apply (simp add:  Hopcroft_map2_step_compute_iM_invar_cache_add_def image_image)
--- "goal solved" 
-  apply simp
--- "goal solved" 
+\<comment>\<open>goal solved\<close>
   apply (simp add: Hopcroft_map2_step_compute_iM_invar_cache_def R_def)
   apply clarify
--- "goal solved" 
+\<comment>\<open>goal solved\<close> 
   apply (clarify)
   apply (rule refine)+
   apply (simp add: R_def)
@@ -5961,20 +5959,23 @@ proof -
     using class_map_invar___pm_inj[OF invar_cm[unfolded cm_eq]]
     by (simp add: cm_eq inj_on_def)
 next
-  case goal2
-  def it' \<equiv> "fst ` it"
+  fix iq it iM cache pm pim q iq' iq'' i iM' i' l' u' s'
+  assume asm: "\<forall>x\<in>it - {(q, iq)}. case x of (q', x) \<Rightarrow> iq \<le> x" "(q, iq) \<in> it" "it \<subseteq> (\<lambda>q. (q, the (fst cm q))) ` pre" "fst ` it \<subseteq> pre" "Hopcroft_map2_step_compute_iM_invar_cache \<A> cm pre P it (iM, cache, pm, pim)"
+    "Hopcroft_map2_step_compute_iM_invar \<A> cm pre P (fst ` it) (Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache iM cache, pm, pim)" "Hopcroft_map2_step_compute_iM_invar_cache_add \<A> cm pre P it (iM, cache, pm, pim)"
+    "(q, iq') \<in> it" "pm q = Some iq''" "fst (snd P) q = Some i" "Hopcroft_map2_step_compute_iM_update_cache P q iq iM cache = (iM', i', l', u', s')"
+  define it' where "it' \<equiv> fst ` it"
   obtain im sm n where P_eq: "P = (im, sm, n)" by (metis prod.exhaust)
-  from goal2(1) have iq_le: "\<And>q' iq'. (q', iq') \<in> it \<Longrightarrow> iq \<le> iq'" by auto
-  note q_iq_in = goal2(2)
-  note it_subset = goal2(3)
-  note it'_subset = goal2(4)[folded it'_def]
-  note invar = goal2(6)
-  note invar_cache_add = goal2(7)
-  note pm_q_eq = goal2(9)
-  from goal2(10) have sm_q_eq: "sm q = Some i" by (simp add: P_eq)
+  from asm(1) have iq_le: "\<And>q' iq'. (q', iq') \<in> it \<Longrightarrow> iq \<le> iq'" by auto
+  note q_iq_in = asm(2)
+  note it_subset = asm(3)
+  note it'_subset = asm(4)[folded it'_def]
+  note invar = asm(6)
+  note invar_cache_add = asm(7)
+  note pm_q_eq = asm(9)
+  from asm(10) have sm_q_eq: "sm q = Some i" by (simp add: P_eq)
   have part_state_map_q_eq[simp]: "partition_state_map P q = i" 
     unfolding partition_state_map_def P_eq by (simp add: sm_q_eq)
-  note iM_cache'_eq = goal2(11)
+  note iM_cache'_eq = asm(11)
   
   from invar have map2_\<alpha>_eq: "partition_map2_\<alpha> cm (im, sm, n) = partition_map2_\<alpha> (pm, pim) (im, sm, n)"
          and invar_pm_pim: "class_map_invar (\<Q> \<A>) (pm, pim)"
@@ -6037,7 +6038,7 @@ next
   } note iq_in_class = this
 
   from q_iq_in have "q \<in> it'" unfolding it'_def by (auto simp add: Bex_def image_iff)
-  def s \<equiv> "(case Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache
+  define s where "s \<equiv> (case Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache
                iM cache i of None \<Rightarrow> let (l, u) = partition_index_map P i in l
          | Some s \<Rightarrow> s)"
 
@@ -6225,27 +6226,32 @@ next
     qed
   qed
 
-  show ?case
+  show "(iq = s' \<longrightarrow>
+             ASSERT (s' \<in> dom pim) \<bind> (\<lambda>_. RETURN (iM', Some (i', l', u', Suc s'), pm, pim))
+             \<le> \<Down> {(\<sigma>, \<sigma>'). (case \<sigma> of (iM, cache, cm) \<Rightarrow> \<lambda>(iM', cm'). cm' = cm \<and> iM' = Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache iM cache) \<sigma>' \<and> Hopcroft_map2_step_compute_iM_invar_cache_add \<A> cm pre P (it - {(q, s')}) \<sigma>}
+                 (let s = case Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache iM cache i of None \<Rightarrow> let (l, u) = partition_index_map P i in l | Some s \<Rightarrow> s
+                  in ASSERT (q \<in> dom pm \<and> s \<in> dom pim) \<bind>
+                     (\<lambda>_. if iq'' = s then RETURN (Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache iM cache(i \<mapsto> Suc s), pm, pim)
+                           else let qs = the (pim s); pm' = pm(q \<mapsto> s, qs \<mapsto> iq''); pim' = pim(s \<mapsto> q, iq'' \<mapsto> qs) in RETURN (Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache iM cache(i \<mapsto> Suc s), pm', pim')))) \<and>
+            (iq \<noteq> s' \<longrightarrow>
+             ASSERT (s' \<in> dom pim) \<bind> (\<lambda>_. let qs = the (pim s') in RETURN (iM', Some (i', l', u', Suc s'), pm(q \<mapsto> s', qs \<mapsto> iq), pim(s' \<mapsto> q, iq \<mapsto> qs)))
+             \<le> \<Down> {(\<sigma>, \<sigma>'). (case \<sigma> of (iM, cache, cm) \<Rightarrow> \<lambda>(iM', cm'). cm' = cm \<and> iM' = Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache iM cache) \<sigma>' \<and> Hopcroft_map2_step_compute_iM_invar_cache_add \<A> cm pre P (it - {(q, iq)}) \<sigma>}
+                 (let s = case Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache iM cache i of None \<Rightarrow> let (l, u) = partition_index_map P i in l | Some s \<Rightarrow> s
+                  in ASSERT (q \<in> dom pm \<and> s \<in> dom pim) \<bind>
+                     (\<lambda>_. if iq'' = s then RETURN (Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache iM cache(i \<mapsto> Suc s), pm, pim)
+                           else let qs = the (pim s); pm' = pm(q \<mapsto> s, qs \<mapsto> iq''); pim' = pim(s \<mapsto> q, iq'' \<mapsto> qs) in RETURN (Hopcroft_map2_step_compute_iM_cache___\<alpha>_cache iM cache(i \<mapsto> Suc s), pm', pim'))))"
     unfolding s_def[symmetric]
     apply (simp add: invar_cache')
     apply (refine_rcg)
-    -- "process subgoals"
+    \<comment>\<open>process subgoals\<close>
       apply (simp)
-    -- "goal solved"
-      apply simp
-    -- "goal solved"
-      apply (simp add: single_valued_def)
-    -- "goal solved"
-      apply (insert invar_cache') []
-      apply (simp)
-    -- "goal solved"
-      apply simp
-    -- "goal solved"
-      apply simp
-    -- "goal solved"
-      apply (simp add: single_valued_def)
-    -- "goal solved"
-      apply (simp)
+    \<comment>\<open>goal solved\<close>
+    using invar_cache' apply simp
+    \<comment>\<open>goal solved\<close>
+    apply simp
+    \<comment>\<open>goal solved\<close>
+    apply (simp add: single_valued_def)
+    apply (insert invar_cache') []
   proof -
 
     { fix q'
@@ -6299,7 +6305,7 @@ proof -
      [OF invar_cm pre_subset invar_P invar_P']
 
   have "Hopcroft_map2_step_compute_iM_cache_swap_check \<A> cm pre P \<le> \<Down>Id  
-      ((Hopcroft_map2_step_compute_iM_swap_check \<A> cm pre P) \<guillemotright>= RETURN)"
+      ((Hopcroft_map2_step_compute_iM_swap_check \<A> cm pre P) \<bind> RETURN)"
     unfolding Hopcroft_map2_step_compute_iM_cache_swap_check_def
     apply (rule bind_refine)
     apply (rule loop_OK)
