@@ -7036,12 +7036,12 @@ lemma im_RELEATES[refine_dref_RELATES]:
   "RELATES im_rel" by (simp add: RELATES_def)
 lemma [simp]: "single_valued im_rel" unfolding im_rel_def by blast
 
-definition "part_rel \<equiv> rprod im_rel (rprod sm_rel (Id::(nat \<times> nat) set))"
+definition "part_rel \<equiv> im_rel \<times>\<^sub>r (sm_rel \<times>\<^sub>r (Id::(nat \<times> nat) set))"
 
 lemma part_rel_RELEATES[refine_dref_RELATES]: 
   "RELATES part_rel" by (simp add: RELATES_def)
-lemma [simp]: "single_valued part_rel" unfolding part_rel_def 
-by (intro rprod_sv) (simp_all)
+lemma [simp]: "single_valued part_rel" unfolding part_rel_def
+  by (intro prod_rel_sv) (simp_all)
 
 definition partition_impl_empty where
   "partition_impl_empty = (\<lambda>_::unit. (im.empty(), sm.empty(), 0::nat))"
@@ -7049,7 +7049,7 @@ definition partition_impl_empty where
 lemma partition_impl_empty_correct [refine] :
  "(partition_impl_empty (), partition_map_empty) \<in> part_rel"
   unfolding partition_impl_empty_def partition_map_empty_def part_rel_def
-  by (simp add: sm.correct im.correct im_rel_def sm_rel_def refine_hsimp)
+  by (simp add: sm.correct im.correct im_rel_def sm_rel_def refine_hsimp in_br_conv)
 
 
 definition sm_update_init where
@@ -7062,9 +7062,9 @@ assumes sm_OK: "(sm, sm') \<in> sm_rel"
 shows "(sm_update_init Q n sm, \<lambda>q. if (q \<in> Q') then Some n' else sm' q) \<in> sm_rel"
 unfolding sm_update_init_def sm_rel_def 
 using assms
-apply simp
+apply (simp add: in_br_conv)
 apply (rule_tac sm_it.iteratei_rule_insert_P [where I = "\<lambda>Q \<sigma>.  sm.invar \<sigma> \<and> sm.\<alpha> \<sigma> = (\<lambda>q. if q \<in> Q then Some n else sm.\<alpha> sm q)"])
-apply (auto simp add: sm.correct s_rel_def sm_rel_def)
+apply (auto simp add: sm.correct s_rel_def sm_rel_def in_br_conv)
 done
 
 fun sm_update where
@@ -7087,7 +7087,7 @@ proof (induct "(Suc u) - l" arbitrary: l sm)
 
   from m_eq
   show ?case
-    apply (simp add: invar_sm class_map_\<alpha>_def sm_rel_def)
+    apply (simp add: invar_sm class_map_\<alpha>_def sm_rel_def in_br_conv)
     apply (rule ext)
     apply auto
   done
@@ -7099,7 +7099,7 @@ next
   note ind_hyp = Suc(1)[OF m_eq]
   note invar_sm = Suc(3)
 
-  def sm' \<equiv> "sm.update (the (pim.lookup l pim)) n sm"
+  define sm' where "sm' \<equiv> sm.update (the (pim.lookup l pim)) n sm"
   from invar_sm have invar_sm': "sm.invar sm'" unfolding sm'_def by (simp add: sm.correct)  
 
   { fix q
@@ -7155,15 +7155,15 @@ definition class_map_add_set_impl ::
 lemma class_map_add_set_impl_correct [refine] :
 assumes "m' = m"
     and "(S, S') \<in> s_rel"
-    and "(cm, cm') \<in> rprod pm_rel pim_rel"
-shows "class_map_add_set_impl cm m S \<le> \<Down> (rprod (rprod pm_rel pim_rel) Id) (class_map_add_set Q cm' m' S')"
+    and "(cm, cm') \<in> pm_rel \<times>\<^sub>r pim_rel"
+shows "class_map_add_set_impl cm m S \<le> \<Down> ((pm_rel \<times>\<^sub>r pim_rel) \<times>\<^sub>r Id) (class_map_add_set Q cm' m' S')"
 unfolding class_map_add_set_impl_def class_map_add_set_def
 using assms
   apply (refine_rcg)
   apply (rule inj_on_id)
   apply (simp_all split: prod.splits)
   apply (simp_all add: 
-    s_rel_def pm_rel_def pim_rel_def pim.correct pm.correct refine_hsimp)
+    s_rel_def pm_rel_def pim_rel_def pim.correct pm.correct refine_hsimp in_br_conv)
 done
 
 definition class_map_init_pred_impl where
@@ -7178,13 +7178,13 @@ definition class_map_init_pred_impl where
 lemma class_map_init_pred_impl_correct :
 assumes "(QF, QF') \<in> s_rel"
     and "(F, F') \<in> s_rel"
-shows "class_map_init_pred_impl QF F \<le> \<Down> (rprod (rprod pm_rel pim_rel) (rprod Id Id)) (class_map_init_pred_compute QF' F')"
+shows "class_map_init_pred_impl QF F \<le> \<Down> ((pm_rel \<times>\<^sub>r pim_rel) \<times>\<^sub>r (Id \<times>\<^sub>r Id)) (class_map_init_pred_compute QF' F')"
 unfolding class_map_init_pred_impl_def class_map_init_pred_compute_def
 using assms
   apply (refine_rcg)
   apply (simp_all split: prod.splits)
   apply (simp_all add: pm_rel_def pim_rel_def s_rel_def 
-    pim.correct pm.correct s.correct refine_hsimp)
+    pim.correct pm.correct s.correct refine_hsimp in_br_conv)
 done
 
 definition partition_impl_sing :: "nat \<times> nat \<Rightarrow> 'q_set \<Rightarrow> ('im \<times> 'sm \<times> nat)" where
@@ -7196,7 +7196,7 @@ shows "(partition_impl_sing lu Q, partition_map_sing lu QQ) \<in> part_rel"
 using assms  sm_update_init_correct [of "sm.empty ()" Map.empty Q QQ 0]
 by (simp add: partition_impl_sing_def partition_map_sing_def part_rel_def
               s_rel_def sm.correct im_rel_def im.correct sm_rel_def
-              refine_hsimp
+              refine_hsimp in_br_conv
          cong: if_cong)
 
 definition partition_impl_init where
@@ -7212,11 +7212,11 @@ assumes QF_in_rel: "(QF, \<Q> \<A> - \<F> \<A>) \<in> s_rel"
 shows "(partition_impl_init Q QF F s m, partition_map2_init \<A> s m) \<in> part_rel"
 using partition_impl_sing_correct [OF Q_in_rel] Q_in_rel F_in_rel QF_in_rel
   apply (simp add: partition_impl_init_def Let_def s.correct partition_map2_init_def)
-  apply (simp add: part_rel_def im_rel_def im.correct refine_hsimp)
+  apply (simp add: part_rel_def im_rel_def im.correct refine_hsimp in_br_conv)
   apply (rule impI)
   apply (rule_tac sm_update_init_correct)
   apply (rule_tac sm_update_init_correct)
-  apply (simp_all add: s_rel_def sm_rel_def sm.correct)
+  apply (simp_all add: s_rel_def sm_rel_def sm.correct in_br_conv)
 done
 
 lemma partition_impl_init_correctI [refine] :
@@ -7250,9 +7250,9 @@ lemma Hopcroft_impl_step_compute_iM_swap_check_correct :
 assumes pre_OK: "(pre, pre') \<in> s2_rel"
     and im_OK: "(im, im') \<in> im_rel"
     and sm_OK: "(sm, sm') \<in> sm_rel"
-    and cm_OK: "(cm, cm') \<in> (rprod pm_rel pim_rel)"
+    and cm_OK: "(cm, cm') \<in> (pm_rel \<times>\<^sub>r pim_rel)"
     and n_OK: "n' = n"
-shows "Hopcroft_impl_step_compute_iM_swap_check cm pre (im, sm, n) \<le> \<Down> (rprod iM_rel (rprod pm_rel pim_rel))
+shows "Hopcroft_impl_step_compute_iM_swap_check cm pre (im, sm, n) \<le> \<Down> (iM_rel \<times>\<^sub>r (pm_rel \<times>\<^sub>r pim_rel))
       (Hopcroft_map2_step_compute_iM_swap_check \<A> cm' pre' (im', sm', n'))"
 unfolding Hopcroft_map2_step_compute_iM_swap_check_def
           Hopcroft_impl_step_compute_iM_swap_check_def
@@ -7260,12 +7260,12 @@ unfolding Hopcroft_map2_step_compute_iM_swap_check_def
 using [[goals_limit = 1]]
 using assms
 apply refine_rcg
-apply (simp add: s2_rel_def)
+apply (simp add: s2_rel_def in_br_conv)
 apply (rule inj_on_id)
 apply (simp_all add: refine_hsimp)
 apply (simp_all add: s2_rel_def iM_rel_def im_rel_def sm_rel_def pm_rel_def pim_rel_def
                      s.correct iM.correct im.correct sm.correct pm.correct pim.correct
-                     partition_index_map_def
+                     partition_index_map_def in_br_conv
                 split: option.split)
 done
 
@@ -7285,12 +7285,12 @@ definition Hopcroft_impl_step_compute_iM_update_cache where
    (case cache of None \<Rightarrow> (iM, Hopcroft_impl_step_compute_iM_cache___init_cache im sm q)
        | Some (i, l, u, s) \<Rightarrow> if (iq \<le> u) then (iM, (i, l, u, s)) else 
               (iM.update i s iM, Hopcroft_impl_step_compute_iM_cache___init_cache im sm q))"
-
+term FOREACHoi
 definition Hopcroft_impl_step_compute_iM_cache_swap_check where
 "Hopcroft_impl_step_compute_iM_cache_swap_check cm pre = (\<lambda>(im, sm, n). 
  do {
    ASSERT (s2_invar pre);
-   (iM, cache, cm) \<leftarrow> FOREACHoi (\<lambda>_ _. True) ((\<lambda>q. (q, the (pm.lookup q (fst cm)))) ` s2_\<alpha> pre) (\<lambda>(q,iq) (q', iq'). iq \<le> iq') 
+   (iM, cache, cm) \<leftarrow> FOREACHoi (\<lambda>(q,iq) (q', iq'). iq \<le> iq') (\<lambda>_ _. True) ((\<lambda>q. (q, the (pm.lookup q (fst cm)))) ` s2_\<alpha> pre)
      (\<lambda>(q,iq) (iM, cache, (pm, pim)). do {
      let (iM', (i, l, u, s)) = Hopcroft_impl_step_compute_iM_update_cache im sm q iq iM cache;
      if (iq = s) then RETURN (iM', Some (i, l, u, Suc s), (pm, pim)) else
@@ -7321,14 +7321,19 @@ apply (simp add: Hopcroft_map2_step_compute_iM_cache___init_cache_def
                  Let_def partition_index_map_def partition_state_map_def 
                  sm_rel_def sm.correct im_rel_def im.correct)
 apply (simp split: prod.splits)
-apply (case_tac "iq \<le> ac")
-apply (simp)
+apply (simp add: im.lookup_correct in_br_conv sm.lookup_correct)
+apply (simp add: in_br_conv)
+apply (simp add: Hopcroft_map2_step_compute_iM_cache___init_cache_def
+                 Hopcroft_impl_step_compute_iM_cache___init_cache_def
+                 Let_def partition_index_map_def partition_state_map_def 
+                 sm_rel_def sm.correct im_rel_def im.correct in_br_conv)
+apply clarify
+apply (simp add: iM_rel_def iM.correct in_br_conv split: if_splits)
 apply (simp add: Hopcroft_map2_step_compute_iM_cache___init_cache_def
                  Hopcroft_impl_step_compute_iM_cache___init_cache_def
                  Let_def partition_index_map_def partition_state_map_def 
                  sm_rel_def sm.correct im_rel_def im.correct)
-apply clarify
-apply (simp add: iM_rel_def iM.correct)
+apply (auto simp add: iM.update_correct)
 done
 
 
@@ -7336,19 +7341,19 @@ lemma Hopcroft_impl_step_compute_iM_cache_swap_check_correct :
 assumes pre_OK: "(pre, pre') \<in> s2_rel"
     and im_OK: "(im, im') \<in> im_rel"
     and sm_OK: "(sm, sm') \<in> sm_rel"
-    and cm_OK: "(cm, cm') \<in> (rprod pm_rel pim_rel)"
+    and cm_OK: "(cm, cm') \<in> (pm_rel \<times>\<^sub>r pim_rel)"
     and n_OK: "n' = n"
   notes refine_hsimp[simp]
-shows "Hopcroft_impl_step_compute_iM_cache_swap_check cm pre (im, sm, n) \<le> \<Down> (rprod iM_rel (rprod pm_rel pim_rel))
+shows "Hopcroft_impl_step_compute_iM_cache_swap_check cm pre (im, sm, n) \<le> \<Down> (iM_rel \<times>\<^sub>r (pm_rel \<times>\<^sub>r pim_rel))
       (Hopcroft_map2_step_compute_iM_cache_swap_check \<A> cm' pre' (im', sm', n'))"
 unfolding Hopcroft_map2_step_compute_iM_cache_swap_check_def
           Hopcroft_impl_step_compute_iM_cache_swap_check_def
           Hopcroft_map2_step_compute_iM_cache_swap_check_loop_def
-using [[goals_limit = 1]]
+(* using [[goals_limit = 1]] *)
 using assms
-apply (simp del: rprod_def)
+apply (simp del: prod_rel_def)
 apply (rule_tac refine)
-  apply (simp add: s2_rel_def)
+  apply (simp add: s2_rel_def in_br_conv)
 apply (rule_tac refine)
 apply (rule_tac refine)
   apply (rule inj_on_id)
@@ -7356,35 +7361,29 @@ apply (rule_tac refine)
     refine_rel_defs)
 
   apply (subgoal_tac "((map_op_empty iM_ops (), None, cm), 
-                      (Map.empty, None, cm')) \<in> rprod iM_rel (rprod Id (rprod pm_rel pim_rel))")
+                      (Map.empty, None, cm')) \<in> iM_rel \<times>\<^sub>r (Id \<times>\<^sub>r (pm_rel \<times>\<^sub>r pim_rel))")
   apply assumption
-  apply (simp add: iM_rel_def iM.correct)
+  apply (simp add: iM_rel_def iM.correct in_br_conv)
 
-  apply simp
-
-  apply (intro rprod_sv)
-  apply simp_all[4]
-
-  apply simp
-
+  apply (simp, blast)
 defer
   apply (refine_rcg)
-  apply (simp_all ) [4]
-  apply (simp add: Hopcroft_impl_step_compute_iM_cache___\<alpha>_cache_def iM_rel_def iM.correct
+  apply (simp_all add: in_br_conv)
+  apply (simp add: Hopcroft_impl_step_compute_iM_cache___\<alpha>_cache_def iM_rel_def iM.correct in_br_conv
               split: option.splits)
 
-
-  apply (simp del: rprod_def)
   apply clarify
-  apply (simp del: rprod_def)
+  apply (simp del: prod_rel_def)
 
-  apply (rename_tac q iq it iM cache pm pim iM' cache' pm' pim')
-proof -
-  case goal1
- 
-  from goal1(11) have cache'_eq: "cache' = cache" and 
+  apply (rename_tac q iq it iM cache pm pim iM' pm' pim')
+proof-
+  fix q iq it iM cache pm pim iM' pm' pim'
+  assume asm:"(pre, pre') \<in> s2_rel" "(im, im') \<in> im_rel" "(sm, sm') \<in> sm_rel" "(cm, cm') \<in> pm_rel \<times>\<^sub>r pim_rel" "n' = n" "s2_invar pre" "\<forall>(q', y)\<in>it - {(q, iq)}. iq \<le> y" "(q, iq) \<in> it" "it \<subseteq> (\<lambda>q. (q, the (pm.lookup q (fst cm)))) ` s2_\<alpha> pre"
+    "it \<subseteq> (\<lambda>q. (q, the (fst cm' q))) ` pre'" "Hopcroft_map2_step_compute_iM_invar_cache \<A> cm' pre' (im', sm', n) it (iM', cache, pm', pim')" "(iM, iM') \<in> iM_rel \<and> (pm, pm') \<in> pm_rel \<and> (pim, pim') \<in> pim_rel"
+
+  from asm have (* cache'_eq: "cache' = cache" and *) 
     pm_OK: "(pm, pm') \<in> pm_rel" and pim_OK: "(pim, pim') \<in> pim_rel" and
-    iM_OK: "(iM, iM') \<in> iM_rel" by (simp_all)
+    iM_OK: "(iM, iM') \<in> iM_rel" by simp+
 
   obtain iM_new i l u s where 
      impl_eq: "Hopcroft_impl_step_compute_iM_update_cache im sm q iq iM cache = (iM_new, i, l, u, s)"
@@ -7398,13 +7397,22 @@ proof -
   have cache_eq: "i' = i" "l' = l" "u' = u" "s'=s" and iM_new_OK: "(iM_new, iM_new') \<in> iM_rel" 
     by simp_all
 
-  show ?case 
-    unfolding impl_eq map2_eq cache'_eq cache_eq
-    apply (simp del: rprod_def)
+  show "(case Hopcroft_impl_step_compute_iM_update_cache im sm q iq iM cache of
+             (iM', i, l, u, s) \<Rightarrow>
+               if iq = s then RETURN (iM', Some (i, l, u, Suc s), pm, pim)
+               else let qs = the (pim.lookup s pim); pm' = pm.update qs iq (pm.update q s pm); pim' = pim.update iq qs (pim.update s q pim) in RETURN (iM', Some (i, l, u, Suc s), pm', pim'))
+            \<le> \<Down> (iM_rel \<times>\<^sub>r Id \<times>\<^sub>r pm_rel \<times>\<^sub>r pim_rel)
+                (ASSERT (q \<in> dom pm' \<and> q \<in> dom sm') \<bind>
+                 (\<lambda>_. case Hopcroft_map2_step_compute_iM_update_cache (im', sm', n) q iq iM' cache of
+                       (iM, i, l, u, s) \<Rightarrow>
+                         ASSERT (s \<in> dom pim') \<bind>
+                         (\<lambda>_. if iq = s then RETURN (iM, Some (i, l, u, Suc s), pm', pim') else let qs = the (pim' s); pm' = pm'(q \<mapsto> s, qs \<mapsto> iq); pim' = pim'(s \<mapsto> q, iq \<mapsto> qs) in RETURN (iM, Some (i, l, u, Suc s), pm', pim'))))"
+    unfolding impl_eq map2_eq cache_eq
+    apply (simp del: prod_rel_def)
     apply (refine_rcg)
     apply (simp_all)
     apply (insert pm_OK pim_OK iM_new_OK)
-    apply (simp_all add: pm_rel_def pm.correct pim_rel_def pim.correct)
+    apply (simp_all add: pm_rel_def pm.correct pim_rel_def pim.correct in_br_conv)
   done
 qed
 
@@ -7414,12 +7422,12 @@ definition partition_impl_split where
     sm_update n sm pim pmin_l (Suc pmin_u - pmin_l),
     Suc n))"
 
-schematic_lemma partition_impl_split_correct :
+schematic_goal partition_impl_split_correct :
 assumes P_OK: "(P, P') \<in> part_rel"
     and i_OK: "i' = i"
     and pmin_OK: "pmin' = pmin"
     and pmax_OK: "pmax' = pmax"
-    and cm_OK: "(cm, cm') \<in> rprod pm_rel pim_rel"
+    and cm_OK: "(cm, cm') \<in> pm_rel \<times>\<^sub>r pim_rel"
 shows "(partition_impl_split cm P i pmin pmax, partition_map2_split cm' P' i' pmin' pmax') \<in>  part_rel"
 using assms
   apply (cases pmin)
@@ -7431,7 +7439,7 @@ using assms
   apply clarify
   apply (simp add: refine_rel_defs)
   apply (rule_tac sm_update_correctI)
-  apply (simp_all add: sm_rel_def pim_rel_def)
+  apply (simp_all add: sm_rel_def pim_rel_def in_br_conv)
   apply blast
 done
    
@@ -7461,7 +7469,7 @@ next
   from L_OK dist_L dist_a_as
   have L2_OK: "(?L2, ?L2') \<in> L_rel" and dist_L2': "\<And>a. a \<in> set as \<Longrightarrow>(a, i) \<notin> ?L2'" and
        dist_as: "distinct as"
-    by (auto simp add: L_rel_def)
+    by (auto simp add: L_rel_def in_br_conv)
 
   from ind_hyp[OF dist_L2' dist_as L2_OK]
   show ?case by (auto simp add: L_rel_def)
@@ -7475,7 +7483,7 @@ assumes dist_L: "\<And>a. a \<in> set aL \<Longrightarrow> (a, i) \<notin> set L
     and L''_eq: "L'' = {(a, i) | a. a \<in> set aL} \<union> set L"
 shows "(L_insert_impl i L aL, L'') \<in> L_rel"
 using L_insert_impl_correct[OF dist_L dist_aL, of L] distinct_L
-unfolding L''_eq by (simp add: L_rel_def)
+unfolding L''_eq by (simp add: L_rel_def in_br_conv)
 
 definition Hopcroft_impl_step where
 "Hopcroft_impl_step aL pre P L cm =
@@ -7498,55 +7506,80 @@ definition Hopcroft_impl_step where
      })"
 
 
-schematic_lemma Hopcroft_impl_step_correct :
+schematic_goal Hopcroft_impl_step_correct :
 assumes PL_OK: "(P, P') \<in> part_rel"
     and L_OK: "(L, L' - {(a, p)}) \<in> L_rel"
     and AL_OK: "distinct aL" "set aL = \<Sigma> \<A>"
     and pre_OK: "(pre, pre') \<in> s2_rel"
-    and cm_OK: "(cm, cm') \<in> rprod pm_rel pim_rel"
+    and cm_OK: "(cm, cm') \<in> pm_rel \<times>\<^sub>r pim_rel"
     and [refine_dref_RELATES]: "RELATES L_rel"
 notes refine_hsimp[simp]
 shows "Hopcroft_impl_step aL pre P L cm  \<le> \<Down>?R
        (Hopcroft_map2_step_no_spec \<A> p a pre' P' L' cm')"
 unfolding Hopcroft_impl_step_def Hopcroft_map2_step_no_spec_def
-using [[goals_limit = 1]] assms
+  using assms
 apply (cases P)
 apply (cases P')
 apply (simp add: part_rel_def iM_rel_def iM.correct s_rel_def s.correct im_rel_def im.correct
                      pm_rel_def pm.correct pim_rel_def pim.correct L_rel_def
-                     partition_index_map_def
+                     partition_index_map_def in_br_conv
             split: prod.splits)
 apply clarify
 apply refine_rcg
 apply (refine_dref_type)
 apply (rule Hopcroft_impl_step_compute_iM_swap_check_correct)
 apply (simp_all)
-apply (simp_all add: s_rel_def im_rel_def sm_rel_def split: prod.splits)
+apply (simp_all add: s_rel_def im_rel_def sm_rel_def in_br_conv split: prod.splits)
 
 apply (simp add: pim_rel_def pm_rel_def)
-apply (simp add: iM_rel_def)
-apply (rule inj_on_id) apply (simp)
-apply (simp add: iM.correct iM_rel_def map_to_set_def)
-apply (simp add: L_rel_def part_rel_def im_rel_def sm_rel_def)
+apply (simp add: iM_rel_def in_br_conv)
+apply (rule inj_on_id)
+apply (simp add: iM.correct iM_rel_def map_to_set_def in_br_conv)
 
-apply (simp, clarify)
-apply (simp add: im.correct im_rel_def part_rel_def)
+apply (simp add: L_rel_def part_rel_def im_rel_def sm_rel_def in_br_conv, clarify)
+apply (simp add: im.correct im_rel_def part_rel_def part_rel_def partition_impl_split_def in_br_conv)
 
 apply clarify
-apply (simp add: im_rel_def im.correct part_rel_def partition_impl_split_def)
-apply (clarify, simp)+
-apply (rule conjI)
+  apply (simp add: im_rel_def im.correct in_br_conv prod_rel_def)
+  thm sm_update_correctI
+apply (clarify, simp add: part_rel_def prod_rel_def in_br_conv)
+apply (unfold iM_rel_def L_rel_def pm_rel_def pim_rel_def s2_rel_def im_rel_def partition_impl_split_def)
+apply (simp add: in_br_conv)
+  apply (simp split: prod.split if_splits)
+   apply (rule conjI)
+    apply (clarify)
+    apply (simp)
   apply (rule sm_update_correctI)
-  apply (simp add: sm_rel_def)
-  apply (simp add: pim_rel_def)
-  apply (simp add: pim_rel_def sm_rel_def) apply metis
+  apply (unfold sm_rel_def)
+      apply (simp add: in_br_conv)
+     apply blast
+    apply (simp)
+    apply (intro exI allI)
+    apply (intro conjI impI)
+      apply (simp add: in_br_conv class_map_\<alpha>_def)
+     apply (simp add: in_br_conv class_map_\<alpha>_def)
+     apply blast
+    apply (simp add: in_br_conv class_map_\<alpha>_def)
 
-  apply (rule L_insert_impl_correctI)
-  apply (auto simp add: Ball_def L_rel_def)[]
-  apply (simp add: AL_OK)
-  apply (simp add: L_rel_def)
-  apply (simp add: L_rel_def)
-done
+   apply (clarify, simp)
+   apply (intro L_insert_impl_correctI[simplified L_rel_def in_br_conv])
+      apply (simp add: in_br_conv)
+      apply fastforce
+     apply blast
+    apply simp
+   apply simp
+
+  apply (simp add: in_br_conv)
+  apply (rule triple_conjI)
+  apply (intro sm_update_correctI[simplified sm_rel_def in_br_conv])
+     apply blast
+  apply blast
+   apply blast
+  apply (clarify, simp)
+  apply (intro L_insert_impl_correctI[simplified L_rel_def in_br_conv])
+     apply fastforce
+    apply blast+
+  done
 
 definition Hopcroft_impl_f where
 "Hopcroft_impl_f pre_fun aL = (\<lambda>((P, L), (pm, pim)).

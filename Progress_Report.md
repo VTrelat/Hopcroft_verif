@@ -18,7 +18,9 @@
         -   added lemma `Hopcroft_map2_state_rel_full_rewrite` to be able to apply rule `Hopcroft_map2_step_no_spec_correct_full`
     -   :white_check_mark: repaired proof of lemma `Hopcroft_map2_correct`
         -   Modified some applications of rules because subgoals were slightly different
-    -   :x: proof of lemma `Hopcroft_impl_step_correct` is broken
+    -   :white_check_mark: repaired proof of lemma `Hopcroft_impl_step_correct` ~~is broken~~
+        -   the proof in apply-style is quite long and can probably be shortened
+        -   the previous proof was way shorter but some rules could not be applied
 
 ## 01.03.2023 - 12.03.2023
 
