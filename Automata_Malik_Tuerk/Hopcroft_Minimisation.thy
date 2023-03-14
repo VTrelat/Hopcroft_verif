@@ -7705,15 +7705,23 @@ qed
 
 subsection \<open> Remove Monad \<close>
 
+find_theorems set_iterator cm_it
+
+find_theorems s.iteratei set_iterator
+
+declare cm_it.iteratei_rule[refine_transfer]
+declare s.iteratei_correct[refine_transfer del]
+
+
 schematic_goal class_map_init_pred_code_correct_aux :
 shows "RETURN ?code \<le> class_map_init_pred_impl QF F"
 unfolding class_map_init_pred_impl_def class_map_add_set_impl_def 
 apply (simp add: split_def)
 apply (rule refine_transfer)+
-apply (simp)
-apply (rule_tac refine_transfer)+
 apply simp
-apply (rule_tac refine_transfer)+
+apply (rule refine_transfer)+
+apply simp
+apply (rule refine_transfer)+
 done
 
 definition class_map_init_pred_code where
@@ -7731,10 +7739,10 @@ definition class_map_init_pred_code where
 
 lemma class_map_init_pred_code_correct [refine_transfer] :
 shows "RETURN (class_map_init_pred_code QF F) \<le> class_map_init_pred_impl QF F"
-unfolding class_map_init_pred_code_def 
+  unfolding class_map_init_pred_code_def 
   apply (rule order_trans [OF _ class_map_init_pred_code_correct_aux])
-  apply (simp add: class_map_init_pred_code_def split_def)
-  sorry
+  apply (simp add: split_def)
+  done
 
 (* -- OLD PROOF --
   unfolding class_map_add_set_impl_def
@@ -7928,6 +7936,30 @@ proof -
 qed
 
 end 
+
+find_consts name: lss
+
+term lss_\<alpha> term lss_invar
+
+term iam_ops
+
+setup Locale_Code.open_block
+
+interpretation hop_impl: Hopcroft_impl_locale "rs_ops :: (nat, (nat, unit) RBT.rbt) oset_ops" lss_\<alpha> lss_invar 
+  iam_ops iam_ops iam_ops iam_ops rm_ops rs_iteratei rs_iteratei lss_iteratei lss_iteratei rm_iteratei
+  by unfold_locales
+
+setup Locale_Code.close_block
+print_theorems
+
+definition "my_hop \<equiv> hop_impl.Hopcroft_code_rename_map"
+
+declare [[show_abbrevs = false]]
+term hop_impl.Hopcroft_code_rename_map
+
+
+export_code my_hop in SML
+
 
 end
 
