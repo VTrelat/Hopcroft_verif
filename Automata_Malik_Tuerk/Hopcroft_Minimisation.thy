@@ -7593,41 +7593,42 @@ definition Hopcroft_impl_f where
 lemma Hopcroft_impl_f_correct :
 assumes P_OK: "(P, P') \<in> part_rel"
     and L_OK: "(L, L') \<in> L_rel"
-    and cm_OK: "(cm, cm') \<in> (rprod pm_rel pim_rel)"
+    and cm_OK: "(cm, cm') \<in> (pm_rel \<times>\<^sub>r pim_rel)"
     and AL_OK: "distinct AL" "set AL = \<Sigma> \<A>"
     and pre_fun_OK: "\<And>a pim u l. 
                       (s2_invar (pre_fun a pim (l, u)) \<and> (s2_\<alpha> (pre_fun a pim (l, u)) = 
                          {q . \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> {the (pim.lookup i pim) |i. l \<le> i \<and> i \<le> u}}))"
 notes refine_hsimp[simp]
-shows "(Hopcroft_impl_f pre_fun AL ((P,L), cm))  \<le> \<Down>(rprod (rprod part_rel L_rel) (rprod pm_rel pim_rel))
+shows "(Hopcroft_impl_f pre_fun AL ((P,L), cm))  \<le> \<Down>((part_rel \<times>\<^sub>r L_rel) \<times>\<^sub>r (pm_rel \<times>\<^sub>r pim_rel))
        (Hopcroft_map2_f \<A> ((P', L'), cm'))"
 unfolding Hopcroft_impl_f_def Hopcroft_map2_f_def
-using [[goals_limit = 1]]
+(* using [[goals_limit = 1]] *)
 apply (refine_rcg)
--- "preprocess goals"
+\<comment>\<open>preprocess goals\<close>
   apply (insert L_OK)[]
-  apply (simp add: L_rel_def)
--- "goal solved"
+  apply (simp add: L_rel_def in_br_conv)
+\<comment>\<open>goal solved\<close>
   apply (insert P_OK L_OK cm_OK)[]
-  apply (clarify, simp)+
+  apply (clarify, simp add: in_br_conv)+
+thm Hopcroft_impl_step_correct
   apply (rule Hopcroft_impl_step_correct)
   apply (simp_all add: AL_OK RELATES_def)
-  -- "process subgoals"
+  \<comment>\<open>process subgoals\<close>
     apply (cases L)
-    apply (simp_all add: L_rel_def)
+    apply (simp_all add: L_rel_def in_br_conv)
 
     apply (simp add: s2_rel_def pre_fun_OK part_rel_def im_rel_def im.correct
-                     partition_index_map_def class_map_\<alpha>_def pim.correct pim_rel_def)
-    apply auto[]
+                     partition_index_map_def class_map_\<alpha>_def pim.correct pim_rel_def in_br_conv)
+    apply blast
 done
 
 lemma Hopcroft_impl_f_correct'[refine] :
-assumes X_OK: "(X, X') \<in> rprod (rprod part_rel L_rel) (rprod pm_rel pim_rel)"
+assumes X_OK: "(X, X') \<in> (part_rel \<times>\<^sub>r L_rel) \<times>\<^sub>r (pm_rel \<times>\<^sub>r pim_rel)"
     and AL_OK: "distinct AL" "set AL = \<Sigma> \<A>"
     and pre_fun_OK: "\<And>a pim u l. 
                       (s2_invar (pre_fun a pim (l, u)) \<and> (s2_\<alpha> (pre_fun a pim (l, u)) = 
                          {q . \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> {the (pim.lookup i pim) |i. l \<le> i \<and> i \<le> u}}))"
-shows "(Hopcroft_impl_f pre_fun AL X)  \<le> \<Down>(rprod (rprod part_rel L_rel) (rprod pm_rel pim_rel))
+shows "(Hopcroft_impl_f pre_fun AL X)  \<le> \<Down>((part_rel \<times>\<^sub>r L_rel) \<times>\<^sub>r (pm_rel \<times>\<^sub>r pim_rel))
        (Hopcroft_map2_f \<A> X')"
 using Hopcroft_impl_f_correct[of "fst (fst X)" "fst (fst X')" 
                                  "snd (fst X)" "snd (fst X')"
@@ -7661,13 +7662,13 @@ assumes Q_in_rel: "(Q, \<Q> \<A>) \<in> s_rel"
                       (s2_invar (pre_fun a pim (l, u)) \<and> (s2_\<alpha> (pre_fun a pim (l, u)) = 
                          {q . \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> {the (pim.lookup i pim) |i. l \<le> i \<and> i \<le> u}}))"
 notes refine_rel_defs[simp]
-shows "Hopcroft_impl Q F AL pre_fun \<le> \<Down>(rprod part_rel (rprod pm_rel pim_rel)) (Hopcroft_map2 \<A>)"
+shows "Hopcroft_impl Q F AL pre_fun \<le> \<Down>(part_rel \<times>\<^sub>r (pm_rel \<times>\<^sub>r pim_rel)) (Hopcroft_map2 \<A>)"
 unfolding Hopcroft_impl_def Hopcroft_map2_def
 using [[goals_limit = 1]]
 apply (simp only: Let_def)
 apply (refine_rcg)
 apply (refine_dref_type)
--- "preprocess goals"
+\<comment>\<open>preprocess goals\<close>
   apply (rule_tac conc_trans_additional(1))
   apply (rule_tac class_map_init_pred_impl_correct)
   prefer 3
@@ -7676,10 +7677,10 @@ apply (refine_dref_type)
   apply (insert Q_in_rel F_in_rel)
   apply (simp_all add: AL_OK s_rel_def s.correct partition_impl_empty_correct
                   split: prod.splits)
--- "remaining goals"
+\<comment>\<open>remaining solved\<close>
   apply (rule partition_impl_sing_correct)
   apply (simp add: s_rel_def)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (simp add: Hopcroft_map2_init_def refine_rel_defs)
   apply clarify apply simp
   apply (intro conjI)
@@ -7690,9 +7691,9 @@ apply (refine_dref_type)
     apply simp
 defer
   apply (simp add: L_rel_def)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (simp add: pre_fun_OK)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (simp add: pre_fun_OK )
 proof -
   from L_insert_impl_correct[of "AL" 0 "{}" "[]"] AL_OK
@@ -7704,15 +7705,13 @@ qed
 
 subsection \<open> Remove Monad \<close>
 
-schematic_lemma class_map_init_pred_code_correct_aux :
+schematic_goal class_map_init_pred_code_correct_aux :
 shows "RETURN ?code \<le> class_map_init_pred_impl QF F"
 unfolding class_map_init_pred_impl_def class_map_add_set_impl_def 
 apply (simp add: split_def)
 apply (rule refine_transfer)+
-apply (rule cm_it.iteratei_rule)
 apply (simp)
 apply (rule_tac refine_transfer)+
-apply (rule cm_it.iteratei_rule)
 apply simp
 apply (rule_tac refine_transfer)+
 done
@@ -7732,12 +7731,19 @@ definition class_map_init_pred_code where
 
 lemma class_map_init_pred_code_correct [refine_transfer] :
 shows "RETURN (class_map_init_pred_code QF F) \<le> class_map_init_pred_impl QF F"
-unfolding class_map_add_set_impl_def 
-apply (rule order_trans [OF _ class_map_init_pred_code_correct_aux])
-apply (simp add: class_map_init_pred_code_def split_def)
-done
+unfolding class_map_init_pred_code_def 
+  apply (rule order_trans [OF _ class_map_init_pred_code_correct_aux])
+  apply (simp add: class_map_init_pred_code_def split_def)
+  sorry
 
-schematic_lemma Hopcroft_code_step_compute_iM_swap_check_correct_aux :
+(* -- OLD PROOF --
+  unfolding class_map_add_set_impl_def
+  apply (rule order_trans [OF _ class_map_init_pred_code_correct_aux])
+  apply (simp add: class_map_init_pred_code_def split_def)
+  done
+*)
+
+schematic_goal Hopcroft_code_step_compute_iM_swap_check_correct_aux :
 shows "RETURN ?code \<le> Hopcroft_impl_step_compute_iM_swap_check cm pre P"
 unfolding Hopcroft_impl_step_compute_iM_swap_check_def
 apply (rule refine_transfer)+
@@ -7801,7 +7807,7 @@ proof -
 qed
 
 
-schematic_lemma Hopcroft_code_step_compute_iM_cache_swap_check_correct_aux :
+schematic_goal Hopcroft_code_step_compute_iM_cache_swap_check_correct_aux :
 shows "RETURN (?code cm pre P) \<le> Hopcroft_impl_step_compute_iM_cache_swap_check cm pre P"
 unfolding Hopcroft_impl_step_compute_iM_cache_swap_check_def
           Hopcroft_impl_step_compute_iM_update_cache_def
@@ -7812,19 +7818,20 @@ by (refine_transfer)
 
 concrete_definition Hopcroft_code_step_compute_iM_cache_swap_check for cm pre P uses Hopcroft_code_step_compute_iM_cache_swap_check_correct_aux
 
-schematic_lemma Hopcroft_code_step_correct_aux :
+schematic_goal Hopcroft_code_step_correct_aux :
 shows "RETURN (?code aL pre P L cm) \<le> Hopcroft_impl_step aL pre P (L::('a \<times> nat) list) cm"
 unfolding Hopcroft_impl_step_def partition_impl_split_def
 by (refine_transfer Hopcroft_code_step_compute_iM_swap_check iM_it.iteratei_rule)
 
 concrete_definition Hopcroft_code_step for aL pre P L cm uses Hopcroft_code_step_correct_aux
 
-schematic_lemma Hopcroft_code_correct_aux :
-shows "RETURN (?code Q F AL pre_fun) \<le> Hopcroft_impl Q F AL pre_fun"
+schematic_goal Hopcroft_code_correct_aux :
+  shows "RETURN (?code Q F AL pre_fun) \<le> Hopcroft_impl Q F AL pre_fun"
 unfolding Hopcroft_impl_def partition_impl_empty_def
           partition_impl_sing_def partition_impl_init_def 
           Hopcroft_impl_f_def sm_update_init_def
-by (refine_transfer Hopcroft_code_step.refine)
+  by (refine_transfer Hopcroft_code_step.refine)
+  
 
 concrete_definition Hopcroft_code for Q F AL pre_fun uses Hopcroft_code_correct_aux
 
@@ -7850,11 +7857,11 @@ shows "map_op_invar im_ops im \<and>
          (partition_map2_\<alpha>_im (map_op_\<alpha> pm_ops pm, map_op_\<alpha> pim_ops pim)
           (map_op_\<alpha> im_ops im), map_op_\<alpha> sm_ops sm, n)"
 proof -
-  def RR \<equiv> "(rprod part_rel (rprod pm_rel pim_rel))"
-  def result \<equiv> "((im, sm, n), (pm, pim))"
+  define RR where "RR \<equiv> (part_rel \<times>\<^sub>r (pm_rel \<times>\<^sub>r pim_rel))"
+  define result where "result \<equiv> ((im, sm, n), (pm, pim))"
 
   have RR_sv: "single_valued RR" unfolding RR_def
-    by (intro rprod_sv, simp_all)
+    by (intro prod_rel_sv, simp_all)
 
   note Hopcroft_code.refine
   also note Hopcroft_impl_correct[OF Q_in_rel F_in_rel wf_A AL_OK pre_fun_OK]
@@ -7867,9 +7874,9 @@ proof -
   by (simp add: RR_def rs_eq result_def)
 
   thus ?thesis
-    apply (simp add: pw_le_iff refine_pw_simps RR_sv refine_hsimp
+    apply (simp add: pw_le_iff refine_pw_simps RR_sv refine_hsimp in_br_conv
                 del: partition_map_\<alpha>.simps partition_map_invar.simps)
-    apply (simp add: RR_def part_rel_def im_rel_def sm_rel_def pm_rel_def
+    apply (simp add: RR_def part_rel_def im_rel_def sm_rel_def pm_rel_def in_br_conv
                      pim_rel_def result_def  refine_hsimp
                 del: partition_map_\<alpha>.simps partition_map_invar.simps)
     apply (simp add: partition_map2_\<alpha>_def refine_hsimp
@@ -7901,7 +7908,7 @@ proof -
    obtain im n sm' pm pim where rs_eq: "Hopcroft_code Q F AL pre_fun = ((im, sm', n), (pm, pim))"  by (metis prod.exhaust)
     from rs_eq sm_def have sm'_eq: "sm' = sm"  unfolding Hopcroft_code_rename_map_def by simp
 
-  def P' \<equiv> "(partition_map2_\<alpha>_im (map_op_\<alpha> pm_ops pm, map_op_\<alpha> pim_ops pim)
+    define P' where "P' \<equiv> (partition_map2_\<alpha>_im (map_op_\<alpha> pm_ops pm, map_op_\<alpha> pim_ops pim)
              (map_op_\<alpha> im_ops im), map_op_\<alpha> sm_ops sm, n)"
 
   from Hopcroft_code_correct_full [OF Q_in_rel F_in_rel wf_A AL_OK pre_fun_OK rs_eq] sm'_eq
