@@ -18,4 +18,7 @@ lemma multiset_of_append [simp]:
   "multiset_of (xs @ ys) = multiset_of xs + multiset_of ys"
   by (induct xs arbitrary: ys) (auto simp: add_ac)
 
+lemma triple_conjI:
+  "\<lbrakk>P \<and> Q; R\<rbrakk> \<Longrightarrow> P \<and> Q \<and> R"
+  by simp
 end
