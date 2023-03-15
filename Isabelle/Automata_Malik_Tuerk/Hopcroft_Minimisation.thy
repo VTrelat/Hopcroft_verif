@@ -7958,7 +7958,7 @@ declare [[show_abbrevs = false]]
 term hop_impl.Hopcroft_code_rename_map
 
 
-export_code my_hop in SML
+export_code my_hop in OCaml
 
 
 end
