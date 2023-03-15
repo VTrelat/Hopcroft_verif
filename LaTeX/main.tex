@@ -1,0 +1,85 @@
+\documentclass[12pt, a4 paper]{article}
+\usepackage{babel}
+\usepackage{graphicx, hyperref, xcolor, fancyhdr, amssymb, amsmath, pifont}
+\usepackage{mathrsfs}
+\usepackage[acronym, toc]{glossaries}
+\usepackage{pdfpages}
+\usepackage{svg}
+% \usepackage{times}
+
+\hypersetup{
+    colorlinks,
+    linkcolor={red!60!black},
+    citecolor={blue!80!black},
+    urlcolor={blue!80!black}
+}
+
+% \pagestyle{fancy}
+% \renewcommand\headrulewidth{.5pt}
+% \fancyhead[L]{
+%     V. Trélat
+% }
+
+% \fancyhead[C]{
+%     \textbf{Verification in Isabelle/HOL of Hopcroft's algorithm for minimizing DFAs including runtime analysis}
+% }
+
+% \fancyhead[R]{
+%     % Current section
+%     \ifnum\c@secnumdepth>0
+%         \thesection
+% }
+
+
+% Glossary
+
+\makeglossaries
+
+% \newacronym{tiaa}{TIAA}{This Is An Acronym}
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vfill
+        \includegraphics[height=1.5cm]{img/logoTUM.png}
+        \hfill
+        \includegraphics[height=1.5cm]{img/logoartem.png}
+        \hfill
+        \includegraphics[height=1.5cm]{img/logoisabelle.png}
+        \vfill
+    \end{center}
+    \begin{center}
+        
+        \textbf{Rapport de stage PFE}
+        \vfill
+
+        \large{\textbf{Verification in Isabelle/HOL of Hopcroft's algorithm for minimizing DFAs including runtime analysis}}
+    \end{center}
+    
+    \vfill
+    
+    \begin{center}
+        \textbf{Vincent Trélat}\\
+        \vspace{1cm}
+        \textit{\today}
+    \end{center}
+    \vfill
+    \begin{center}
+        \includegraphics[height=1.2cm]{img/logoGE.png}
+        \hfill
+        \includegraphics[height=1.2cm]{img/logoUL.png}
+    \end{center}
+\end{titlepage}
+
+\tableofcontents
+
+\pagebreak
+
+
+% \printglossary[type=\acronymtype]
+
+% \addcontentsline{toc}{section}{CV}
+% \includepdf{cv.pdf}
+
+\end{document}
