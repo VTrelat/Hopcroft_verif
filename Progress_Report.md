@@ -12,6 +12,7 @@
 ## 13.03.2023 - 26.03.2023
 
 -   #### Notes
+
     -   :white_check_mark: repaired proof of lemma `Hopcroft_map2_step_compute_iM_cache_swap_check_loop_correct`
         -   definition `Hopcroft_map2_step_compute_iM_cache_swap_check_loop` was broken: two arguments of `FOREACHoi` were swapped
     -   :white_check_mark: repaired proof of lemma `Hopcroft_map2_f_correct`
@@ -19,8 +20,26 @@
     -   :white_check_mark: repaired proof of lemma `Hopcroft_map2_correct`
         -   Modified some applications of rules because subgoals were slightly different
     -   :white_check_mark: repaired proof of lemma `Hopcroft_impl_step_correct` ~~is broken~~
+
         -   the proof in apply-style is quite long and can probably be shortened
         -   the previous proof was way shorter but some rules could not be applied
+
+    -   :white_check_mark: repaired proof of lemma `class_map_init_pred_code_correct`
+        -   unprovable subgoal due to application of the method `refine_transfer` which was mistakenly applying wrong rules. Surprisingly, the proof was still converging for some subgoals but made others unprovable.
+        -   Peter Lammich found a way to fix this issue with the following trick:
+            ```
+            declare cm_it.iteratei_rule[refine_transfer]
+            declare s.iteratei_correct[refine_transfer del]
+            ```
+    -   added code generation with the help of Peter Lammich and the following trick:
+        ```
+        setup Locale_Code.open_block
+        interpretation hop_impl ...
+        setup Locale_Code.close_block
+        ```
+    -   :white_check_mark: **theory `Hopcroft_Minimisation` is fully repaired**
+
+---
 
 ## 01.03.2023 - 12.03.2023
 
