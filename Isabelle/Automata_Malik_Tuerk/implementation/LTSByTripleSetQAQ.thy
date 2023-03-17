@@ -1,4 +1,4 @@
-header "Implementing Labelled Transition Systems by a TripleSet"
+section "Implementing Labelled Transition Systems by a TripleSet"
 theory LTSByTripleSetQAQ
 imports TripleSetSpec LTSSpec LTSGA
 begin

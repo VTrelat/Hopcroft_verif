@@ -1,10 +1,10 @@
-header {* NFA by RBTs *}
+section \<open> NFA by RBTs \<close>
 theory RBT_NFAImpl 
 imports "../../NFAByLTS" "../../NFAGA" RBT_LTS_DLTS_LTSImpl  
-        "~~/src/HOL/Library/Efficient_Nat"
+        (* "HOL-Library.Efficient_Nat" *)
 begin
 
-subsection {* NFAs *}
+subsection \<open> NFAs \<close>
 
 interpretation rs_nfa_defs!: nfa_by_lts_defs "rs_ops :: (nat, (nat, unit) RBT.rbt) oset_ops" 
   rs_ops rs_lts_dlts_ops  
@@ -74,7 +74,7 @@ definition "rs_nfa_language_is_subset \<equiv>
 definition "rs_nfa_language_is_eq \<equiv> NFAGA.NFAGA_language_is_eq rs_nfa_language_is_subset"
 
 
-text {* Prepare lts for Hopcroft *}
+text \<open> Prepare lts for Hopcroft \<close>
 
 definition lsnd_lss_copy where
   "lsnd_lss_copy = mergesort"

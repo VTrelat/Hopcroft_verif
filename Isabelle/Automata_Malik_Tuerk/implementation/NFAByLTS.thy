@@ -1,14 +1,14 @@
-*** TODO: Port to new Collection Framework
-header "Implementing Finite Automata using Labelled Transition Systems"
+(* TODO: Port to new Collection Framework *)
+section "Implementing Finite Automata using Labelled Transition Systems"
 theory NFAByLTS
-imports "../../Libs/Collections/Collections"
-        "../../General/Accessible_Impl"
+imports "../../Collections/ICF/Collections"
+        "../../Accessible_Impl"
         "../Hopcroft_Minimisation"
         "../NFAConstruct"
   LTSSpec LTSGA NFASpec LTS_Impl TripleSetByMap LTSByTripleSetAQQ NFAGA
 begin
 
-subsection {* Locales for NFAs, DFAs *}
+subsection \<open> Locales for NFAs, DFAs \<close>
 
 record nfa_props =
   nfa_prop_is_complete_deterministic :: bool
@@ -23,9 +23,9 @@ type_synonym ('q_set, 'a_set, 'd) NFA_impl =
    "'q_set \<times> 'a_set \<times> 'd \<times> 'q_set \<times> 'q_set \<times> nfa_props"
 
 locale nfa_by_lts_defs = 
-  s!: StdSet s_ops (* Set operations on states *) +
-  l!: StdSet l_ops (* Set operations on labels *) +
-  d!: StdLTS d_ops (* An LTS *) 
+  s: StdSet s_ops (* Set operations on states *) +
+  l: StdSet l_ops (* Set operations on labels *) +
+  d: StdLTS d_ops (* An LTS *) 
   for s_ops::"('q::{automaton_states},'q_set,_) set_ops_scheme"
   and l_ops::"('a,'a_set,_) set_ops_scheme"
   and d_ops::"('q,'a,'d,_) lts_ops_scheme"
@@ -137,7 +137,7 @@ lemma nfa_by_lts_correct [simp]:
     unfolding nfa_def nfa_invar_alt_def
     by simp
 
-subsection {* Constructing Automata *}
+subsection \<open> Constructing Automata \<close>
 definition nfa_construct_aux ::
   "('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> 'q \<times> 'a list \<times> 'q \<Rightarrow> 
    ('q_set, 'a_set, 'd) NFA_impl" where 
@@ -270,7 +270,7 @@ proof -
 qed
 
 
-subsection {* Destructing Automata *}
+subsection \<open> Destructing Automata \<close>
 
 fun nfa_destruct :: "('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> _" where
    "nfa_destruct (Q, A, D, I, F, p) =
@@ -331,7 +331,7 @@ proof (intro nfa_to_list_simple.intro nfa_by_lts_correct nfa_to_list_simple_axio
   done
 qed
 
-subsection {* Computing Statistics *}
+subsection \<open> Computing Statistics \<close>
 
   fun nfa_states_no :: "('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> _" where
      "nfa_states_no (Q, A, D, I, F, p) = s.size Q"
@@ -361,7 +361,7 @@ subsection {* Computing Statistics *}
                     nfa_invar_full_def)
   qed
 
-subsection {* Acceptance *}
+subsection \<open> Acceptance \<close>
 
 definition accept_nfa_impl :: "_ \<Rightarrow> _ \<Rightarrow> ('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> 'a list \<Rightarrow> _" where
    "accept_nfa_impl s_it succ_it A w = 
@@ -473,7 +473,7 @@ qed
 
 
 
-subsection {* Remove states *}
+subsection \<open> Remove states \<close>
 
 fun remove_states_impl :: "('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> 'q_set \<Rightarrow> ('q_set, 'a_set, 'd) NFA_impl" where
   "remove_states_impl (Q, A, D, I, F, p) S =
@@ -508,7 +508,7 @@ proof (intro nfa_remove_states.intro nfa_remove_states_axioms.intro nfa_by_lts_c
 qed
 
 
-subsection {* Rename states *}
+subsection \<open> Rename states \<close>
 
 fun rename_states_fixed_impl :: "_ \<Rightarrow> _ \<Rightarrow> bool \<Rightarrow> ('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> ('q_set2, 'a_set, 'd2) NFA_impl" where
   "rename_states_fixed_impl im im2 det (Q, A, D, I, F, p) = 
@@ -692,7 +692,7 @@ apply (rule rename_states_impl_correct_dfa)
 apply (simp_all add: nfa_by_lts_defs_axioms im_OK d.lts_image_axioms dlts_image_sublocale)
 done
 
-subsection {* Rename labels *}
+subsection \<open> Rename labels \<close>
 
 fun rename_labels_fixed_impl :: "_ \<Rightarrow> bool \<Rightarrow> ('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> _ \<Rightarrow> ('q_set, 'a2_set, 'd) NFA_impl" where
   "rename_labels_fixed_impl im det (Q, A, D, I, F, p) A' = 
@@ -839,11 +839,11 @@ by (fact rename_labels_impl_correct [OF nfa_by_lts_defs_axioms d.lts_image_axiom
 
 end 
 
-subsection {* construct reachable NFA *}
+subsection \<open> construct reachable NFA \<close>
 
 locale NFA_construct_reachable_locale = 
   nfa_by_lts_defs s_ops l_ops d_ops +
-  qm!: StdMap qm_ops (* The index max *) 
+  qm: StdMap qm_ops (* The index max *) 
   for s_ops::"('q::{automaton_states},'q_set,_) set_ops_scheme"
   and l_ops::"('a,'a_set,_) set_ops_scheme"
   and d_ops::"('q,'a,'d,_) lts_ops_scheme"
@@ -1938,7 +1938,7 @@ lemma NFA_construct_reachable_impl_code_correct_no_enc:
 by (intro NFAGA.nfa_dfa_construct_no_enc_default NFA_construct_reachable_impl_code_correct d_add_OK qm_OK)
 
 
-subsection {* normalise *}
+subsection \<open> normalise \<close>
 
 definition nfa_normalise_impl where
   "nfa_normalise_impl d_add qm_ops sl_it = (\<lambda>(Q::'q_set, A::'a_set, D::'d, I::'q_set, F::'q_set, p).
@@ -1998,7 +1998,7 @@ proof (intro nfa_normalise.intro nfa_normalise_axioms.intro nfa_by_lts_correct)
 qed 
  
 
-subsection {* Reverse *}
+subsection \<open> Reverse \<close>
 
 definition nfa_reverse_impl :: "_ \<Rightarrow> ('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> ('q_set, 'a_set, 'd) NFA_impl" where
   "nfa_reverse_impl rf = (\<lambda>(Q, A, D, I, F, p). (Q, A, rf D, F, I, nfa_props_trivial))"
@@ -2052,7 +2052,7 @@ proof (intro nfa_reverse.intro nfa_reverse_axioms.intro
 qed
 
 
-subsection {* Complement *}
+subsection \<open> Complement \<close>
 
 definition nfa_complement_impl :: "('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> ('q_set, 'a_set, 'd) NFA_impl"  where
   "nfa_complement_impl = (\<lambda>(Q, A, D, I, F, p). (Q, A, D, I, s.diff Q F, p))"
@@ -2091,7 +2091,7 @@ proof (intro nfa_complement.intro nfa_complement_axioms.intro)
 qed
 
 
-subsection {* boolean combinations *}
+subsection \<open> boolean combinations \<close>
 
 definition product_iterator where
   "product_iterator (it_1::'q1 \<Rightarrow> ('a \<times> 'q1, '\<sigma>) set_iterator)
@@ -2361,7 +2361,7 @@ proof (intro nfa_bool_comb_same.intro nfa_bool_comb.intro nfa_by_lts_correct
 qed
 
 
-subsection {* right quotient *}
+subsection \<open> right quotient \<close>
 
 definition right_quotient_map_lookup where
   "right_quotient_map_lookup m_ops m q =
@@ -2566,7 +2566,7 @@ qed
 
 end
 
-subsection {* determinise *}
+subsection \<open> determinise \<close>
 
 definition determinise_next_state :: 
   "('q, 'q_set, _) set_ops_scheme \<Rightarrow> ('q,'q_set) set_iterator \<Rightarrow> 
@@ -2981,7 +2981,7 @@ proof (intro nfa_determinise.intro nfa_by_lts_correct
   qed
 qed
 
-subsection {* Emptyness Check *}
+subsection \<open> Emptyness Check \<close>
 
 definition language_is_empty_impl ::
    "(('q_set, 'a_set, 'd) NFA_impl \<Rightarrow> ('q_set, 'a_set, 'd) NFA_impl) \<Rightarrow> 
@@ -3024,7 +3024,7 @@ proof (intro nfa_language_is_empty.intro
   done
 qed
 
-subsection {* Hopcroft *}
+subsection \<open> Hopcroft \<close>
 
 definition (in -) Hopcroft_class_map_\<alpha>_impl where
   "Hopcroft_class_map_\<alpha>_impl pim l u =
@@ -3193,17 +3193,17 @@ qed
 
 end
 
-text {* It remains to implement the operations for the reversed transition system *}
+text \<open> It remains to implement the operations for the reversed transition system \<close>
 locale Hopcroft_lts =
-  m!: StdMap m_ops + 
-  m2!: StdMap m2_ops + 
-  s!: StdSet s_ops +
-  s2!: StdSet s2_ops +
-  mm!: StdMap mm_ops + 
-  un!: set_union_list "set_op_\<alpha> s2_ops" "set_op_invar s2_ops" "set_op_\<alpha> s2_ops" "set_op_invar s2_ops" un_list +
-  cp!: set_copy "set_op_\<alpha> s_ops" "set_op_invar s_ops" "set_op_\<alpha> s2_ops" "set_op_invar s2_ops" copy +
-  m_it!: map_iteratei "map_op_\<alpha> m_ops" "map_op_invar m_ops" m_it +
-  mm_it!: map_iteratei "map_op_\<alpha> mm_ops" "map_op_invar mm_ops" mm_it
+  m: StdMap m_ops + 
+  m2: StdMap m2_ops + 
+  s: StdSet s_ops +
+  s2: StdSet s2_ops +
+  mm: StdMap mm_ops + 
+  un: set_union_list "set_op_\<alpha> s2_ops" "set_op_invar s2_ops" "set_op_\<alpha> s2_ops" "set_op_invar s2_ops" un_list +
+  cp: set_copy "set_op_\<alpha> s_ops" "set_op_invar s_ops" "set_op_\<alpha> s2_ops" "set_op_invar s2_ops" copy +
+  m_it: map_iteratei "map_op_\<alpha> m_ops" "map_op_invar m_ops" m_it +
+  mm_it: map_iteratei "map_op_\<alpha> mm_ops" "map_op_invar mm_ops" mm_it
   for m_ops::"('q,'mm,'m1,_) map_ops_scheme"
   and m2_ops::"('q,'s2 option array,'m2,_) map_ops_scheme"
   and mm_ops::"(nat,'s, 'mm,_) map_ops_scheme"

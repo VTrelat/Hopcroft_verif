@@ -2,7 +2,7 @@ theory TripleSetGA
 imports TripleSetSpec TripleSetByMap
 begin
 
-subsection{* finite *}
+subsection\<open> finite \<close>
 
   lemma tsga_it_implies_finite :
     "triple_set_iterator \<alpha> invar it \<Longrightarrow>
@@ -10,7 +10,7 @@ subsection{* finite *}
     unfolding finite_triple_set_def triple_set_iterator_def
     by (metis set_iterator_finite)
 
-subsection{* connection to lists *}
+subsection\<open> connection to lists \<close>
 
   definition tsga_from_list_aux :: 
     "'T \<Rightarrow> ('A,'B,'C,'T) triple_set_add \<Rightarrow> ('A,'B,'C,'T) triple_set_from_list"
@@ -58,7 +58,7 @@ subsection{* connection to lists *}
     where "tsga_to_list it \<equiv> iterate_to_list \<circ> it"
 
   lemma tsga_to_list_alt_def :
-   "tsga_to_list = (\<lambda>it x. it x (\<lambda>_. True) op # [])"
+   "tsga_to_list = (\<lambda>it x. it x (\<lambda>_. True) (#) [])"
   unfolding tsga_to_list_def[abs_def] iterate_to_list_def[abs_def] o_def by simp
 
   lemma tsga_to_list_correct:
@@ -74,7 +74,7 @@ subsection{* connection to lists *}
   qed
 
 
-subsection{* image and filter *}
+subsection\<open> image and filter \<close>
 
   definition tsga_image_filter where
     "tsga_image_filter e a it f P_a P_b P_c P t =       
@@ -139,7 +139,7 @@ subsection{* image and filter *}
   unfolding triple_set_image_filter_def triple_set_image_def tsga_image_def by simp
 
 
-subsection {* Building the record *}
+subsection \<open> Building the record \<close>
 
 context tsbm_defs
 begin

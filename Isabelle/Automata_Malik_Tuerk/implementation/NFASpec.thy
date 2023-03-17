@@ -1,5 +1,5 @@
-*** TODO: Port to new Collection Framework
-header "Interface for NFAs and DFAs"
+(* TODO: Port to new Collection Framework *)
+section "Interface for NFAs and DFAs"
 theory NFASpec
 imports Main "../../Collections/ICF/Collections"
   "../../Collections/Iterator/SetAbstractionIterator"

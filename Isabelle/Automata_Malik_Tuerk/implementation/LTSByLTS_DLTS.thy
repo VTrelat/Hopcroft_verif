@@ -1,10 +1,12 @@
-header "Implementing Labelled Transition Systems using a deterministic and a nondetermistic
+section "Implementing Labelled Transition Systems using a deterministic and a nondeterministic
   datastructure and choosing the right one automatically"
 theory LTSByLTS_DLTS
 imports LTSSpec LTSGA
 begin
 
 datatype ('a, 'b) LTS_choice = LTS 'a | DLTS 'b
+
+find_consts name: LTS_choice
 
 locale ltsbc_defs = 
   l: lts l_\<alpha> l_invar +
@@ -15,10 +17,10 @@ locale ltsbc_defs =
 begin
 
   definition ltsbc_\<alpha> :: "('Q,'A,('lts,'dlts) LTS_choice) lts_\<alpha>" where
-     "ltsbc_\<alpha> =  LTS_choice_case l_\<alpha> d_\<alpha>"
+     "ltsbc_\<alpha> =  case_LTS_choice l_\<alpha> d_\<alpha>"
 
   definition ltsbc_invar where
-     "ltsbc_invar =  LTS_choice_case l_invar d_invar"
+     "ltsbc_invar =  case_LTS_choice l_invar d_invar"
 
   definition (in -) ltsbc_emp_lts where
     "ltsbc_emp_lts l_emp = (\<lambda>_::unit. LTS (l_emp ()))"
@@ -41,7 +43,7 @@ begin
   lemma ltsbc_memb_correct:
     "lts_memb l_\<alpha> l_invar l_memb \<Longrightarrow>
      lts_memb d_\<alpha> d_invar d_memb \<Longrightarrow>
-     lts_memb ltsbc_\<alpha> ltsbc_invar (LTS_choice_case l_memb d_memb)"
+     lts_memb ltsbc_\<alpha> ltsbc_invar (case_LTS_choice l_memb d_memb)"
   unfolding lts_memb_def ltsbc_invar_def ltsbc_\<alpha>_def 
   by (simp add: image_iff Bex_def split: LTS_choice.split)
 
@@ -191,7 +193,7 @@ begin
   lemma ltsbc_succ_it_correct :
     assumes "lts_succ_it l_\<alpha> l_invar l_it"
         and "lts_succ_it d_\<alpha> d_invar d_it"
-    shows "lts_succ_it ltsbc_\<alpha> ltsbc_invar (LTS_choice_case l_it d_it)"
+    shows "lts_succ_it ltsbc_\<alpha> ltsbc_invar (case_LTS_choice l_it d_it)"
   using assms
   unfolding lts_succ_it_def ltsbc_invar_def ltsbc_\<alpha>_def
   by (simp split: LTS_choice.split)
@@ -199,7 +201,7 @@ begin
   lemma ltsbc_succ_label_it_correct :
     assumes "lts_succ_label_it l_\<alpha> l_invar l_it"
     assumes "lts_succ_label_it d_\<alpha> d_invar d_it"
-    shows "lts_succ_label_it ltsbc_\<alpha> ltsbc_invar (LTS_choice_case l_it d_it)"
+    shows "lts_succ_label_it ltsbc_\<alpha> ltsbc_invar (case_LTS_choice l_it d_it)"
   using assms
   unfolding lts_succ_label_it_def ltsbc_invar_def ltsbc_\<alpha>_def
   by (simp split: LTS_choice.split)
@@ -220,7 +222,7 @@ begin
   lemma ltsbc_it_correct :
     assumes "lts_iterator l_\<alpha> l_invar l_it"
         and "lts_iterator d_\<alpha> d_invar d_it"
-    shows "lts_iterator ltsbc_\<alpha> ltsbc_invar (LTS_choice_case l_it d_it)"
+    shows "lts_iterator ltsbc_\<alpha> ltsbc_invar (case_LTS_choice l_it d_it)"
     using assms
     unfolding lts_iterator_def ltsbc_filter_it_def ltsbc_invar_def ltsbc_\<alpha>_def
     by (simp split: LTS_choice.split)
@@ -228,7 +230,7 @@ begin
   lemma ltsbc_pre_it_correct :
     assumes "lts_pre_it l_\<alpha> l_invar l_it"
         and "lts_pre_it d_\<alpha> d_invar d_it"
-    shows "lts_pre_it ltsbc_\<alpha> ltsbc_invar (LTS_choice_case l_it d_it)"
+    shows "lts_pre_it ltsbc_\<alpha> ltsbc_invar (case_LTS_choice l_it d_it)"
   using assms
   unfolding lts_pre_it_def ltsbc_invar_def ltsbc_\<alpha>_def
   by (simp split: LTS_choice.split)
@@ -236,7 +238,7 @@ begin
   lemma ltsbc_pre_label_it_correct :
     assumes "lts_pre_label_it l_\<alpha> l_invar l_it"
     assumes "lts_pre_label_it d_\<alpha> d_invar d_it"
-    shows "lts_pre_label_it ltsbc_\<alpha> ltsbc_invar (LTS_choice_case l_it d_it)"
+    shows "lts_pre_label_it ltsbc_\<alpha> ltsbc_invar (case_LTS_choice l_it d_it)"
   using assms
   unfolding lts_pre_label_it_def ltsbc_invar_def ltsbc_\<alpha>_def
   by (simp split: LTS_choice.split)

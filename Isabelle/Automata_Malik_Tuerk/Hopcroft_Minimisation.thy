@@ -7960,14 +7960,22 @@ term hop_impl.Hopcroft_code_rename_map
 export_code hopcroft_impl in OCaml
 
 
-definition a_impl_invar where   \<comment>\<open>data structure invariants of automata implementation\<close>
-  "a_impl_invar \<equiv> undefined"
 
-fun a_impl_\<alpha> where              \<comment>\<open>abstraction function from automata implementation to automata\<close>
+
+
+fun a_impl_\<alpha> :: "(nat, unit) RBT.rbt \<Rightarrow> ('q, 'a, 'X) NFA_rec_scheme" where
+\<comment>\<open>abstraction function from automata implementation to automata\<close>
   "a_impl_\<alpha> \<A>\<^sub>i = undefined"
+
+definition a_impl_invar :: "(nat, unit) RBT.rbt \<Rightarrow> bool" where
+\<comment>\<open>data structure invariants of automata implementation\<close>
+  "a_impl_invar \<equiv> undefined"
 
 (* Now, we would like to write such a theorem: *)
 
+(* hopcroft_impl returns a
+((nat \<times> nat) option array \<times> nat option array \<times> nat) \<times> nat option array \<times> nat option array
+*)
 theorem Hopcroft_impl_valid_minimal:
   assumes "a_impl_invar \<A>\<^sub>i"
   defines "\<A>\<^sub>i' \<equiv> hopcroft_impl \<A>\<^sub>i"

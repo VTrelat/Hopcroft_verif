@@ -1,11 +1,11 @@
-header {* LTS by Hashmaps *}
+section \<open> LTS by Hashmaps \<close>
 theory RBT_DLTSImpl
 imports "../../LTS_Impl" "../../DLTSByMap"
 begin
 
 
-subsection {*DLTS*}
-interpretation rs_dlts_defs!: dltsbm_defs rm_ops rm_ops  
+subsection \<open>DLTS\<close>
+interpretation rs_dlts_defs: dltsbm_defs rm_ops rm_ops  
   apply intro_locales
 done
 
@@ -98,123 +98,123 @@ lemmas rs_dlts_defs =
 lemmas [code] = rs_dlts_defs[unfolded rs_dlts_defs_raw, simplified]
 
 lemmas rs_dlts_is_dlts_impl = rs_dlts_defs.dlts_correct[folded rs_dlts_defs]
-interpretation rs_dlts!: dlts rs_dlts_\<alpha> rs_dlts_invar  
+interpretation rs_dlts: dlts rs_dlts_\<alpha> rs_dlts_invar  
   using rs_dlts_is_dlts_impl .
 lemmas rs_dlts_empty_impl = rs_dlts_defs.dltsbm_empty_correct[folded rs_dlts_defs]
-interpretation rs_dlts!: lts_empty rs_dlts_\<alpha> rs_dlts_invar rs_dlts_empty 
+interpretation rs_dlts: lts_empty rs_dlts_\<alpha> rs_dlts_invar rs_dlts_empty 
   using rs_dlts_empty_impl .
 lemmas rs_dlts_memb_impl = rs_dlts_defs.dltsbm_memb_correct[folded rs_dlts_defs]
-interpretation rs_dlts!: lts_memb rs_dlts_\<alpha> rs_dlts_invar rs_dlts_memb
+interpretation rs_dlts: lts_memb rs_dlts_\<alpha> rs_dlts_invar rs_dlts_memb
   using rs_dlts_memb_impl .
 lemmas rs_dlts_add_impl = rs_dlts_defs.dltsbm_add_correct[folded rs_dlts_defs]
-interpretation rs_dlts!: dlts_add rs_dlts_\<alpha> rs_dlts_invar rs_dlts_add
+interpretation rs_dlts: dlts_add rs_dlts_\<alpha> rs_dlts_invar rs_dlts_add
   using rs_dlts_add_impl .
 lemmas rs_dlts_succ_impl = rs_dlts_defs.dltsbm_succ_correct[folded rs_dlts_defs]
-interpretation rs_dlts!: dlts_succ rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ
+interpretation rs_dlts: dlts_succ rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ
   using rs_dlts_succ_impl .
 lemmas rs_dlts_add_succs_impl = rs_dlts_defs.dltsbm_add_succs_correct[folded rs_dlts_defs]
-interpretation rs_dlts!: dlts_add_succs rs_dlts_\<alpha> rs_dlts_invar rs_dlts_add_succs
+interpretation rs_dlts: dlts_add_succs rs_dlts_\<alpha> rs_dlts_invar rs_dlts_add_succs
   using rs_dlts_add_succs_impl .
 lemmas rs_dlts_delete_impl = rs_dlts_defs.dltsbm_delete_correct[folded rs_dlts_defs]
-interpretation rs_dlts!: lts_delete rs_dlts_\<alpha> rs_dlts_invar rs_dlts_delete 
+interpretation rs_dlts: lts_delete rs_dlts_\<alpha> rs_dlts_invar rs_dlts_delete 
   using rs_dlts_delete_impl .
 
 lemmas rs_dlts_from_list_impl = 
   dltsga_from_list_correct [OF rs_dlts_empty_impl rs_dlts_add_impl, folded rs_dlts_defs]
-interpretation rs_dlts!: dlts_from_list rs_dlts_\<alpha> rs_dlts_invar rs_dlts_from_list 
+interpretation rs_dlts: dlts_from_list rs_dlts_\<alpha> rs_dlts_invar rs_dlts_from_list 
   using rs_dlts_from_list_impl .
 lemmas rs_dlts_from_collect_list_impl = 
   dltsga_from_collect_list_correct [OF rs_dlts_empty_impl rs_dlts_add_impl, folded rs_dlts_defs]
-interpretation rs_dlts!: dlts_from_collect_list rs_dlts_\<alpha> rs_dlts_invar rs_dlts_from_collect_list 
+interpretation rs_dlts: dlts_from_collect_list rs_dlts_\<alpha> rs_dlts_invar rs_dlts_from_collect_list 
   using rs_dlts_from_collect_list_impl .
 
 lemmas rs_dlts_it_impl = rs_dlts_defs.dltsbm_it_correct[folded rs_dlts_defs, 
   simplified, 
   OF rm.v1_iteratei_impl rm.v1_iteratei_impl,
   folded rs_dlts_defs]
-interpretation rs_dlts!: lts_iterator rs_dlts_\<alpha> rs_dlts_invar rs_dlts_it 
+interpretation rs_dlts: lts_iterator rs_dlts_\<alpha> rs_dlts_invar rs_dlts_it 
   using rs_dlts_it_impl .
 
-interpretation rs_dlts!: finite_lts rs_dlts_\<alpha> rs_dlts_invar  
+interpretation rs_dlts: finite_lts rs_dlts_\<alpha> rs_dlts_invar  
   using ltsga_it_implies_finite[OF rs_dlts_it_impl] .
 
 lemmas rs_dlts_filter_it_impl = rs_dlts_defs.dltsbm_filter_it_correct[folded rs_dlts_defs, 
   simplified, 
   OF rm.v1_iteratei_impl rm.v1_iteratei_impl,
   folded rs_dlts_defs]
-interpretation rs_dlts!: lts_filter_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_filter_it 
+interpretation rs_dlts: lts_filter_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_filter_it 
   using rs_dlts_filter_it_impl .
 
 lemmas rs_dlts_succ_it_impl = rs_dlts_defs.dltsbm_succ_it_correct[folded rs_dlts_defs,
   simplified, 
   folded rm_ops_def rs_ops_def rs_dlts_defs]
-interpretation rs_dlts!: lts_succ_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ_it 
+interpretation rs_dlts: lts_succ_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ_it 
   using rs_dlts_succ_it_impl .
 
 lemmas rs_dlts_succ_label_it_impl = rs_dlts_defs.dltsbm_succ_label_it_correct[folded rs_dlts_defs,
   simplified, 
   OF rm.v1_iteratei_impl,
   folded rm_ops_def rs_ops_def rs_dlts_defs]
-interpretation rs_dlts!: lts_succ_label_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ_label_it 
+interpretation rs_dlts: lts_succ_label_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ_label_it 
   using rs_dlts_succ_label_it_impl .
 
 lemmas rs_dlts_pre_it_impl = rs_dlts_defs.dltsbm_pre_it_correct[folded rs_dlts_defs,
   simplified, 
   OF rm.v1_iteratei_impl,
   folded rm_ops_def rs_ops_def rs_dlts_defs]
-interpretation rs_dlts!: lts_pre_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_pre_it 
+interpretation rs_dlts: lts_pre_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_pre_it 
   using rs_dlts_pre_it_impl .
 
 lemmas rs_dlts_pre_label_it_impl = rs_dlts_defs.dltsbm_pre_label_it_correct[folded rs_dlts_defs,
   simplified, 
   OF rm.v1_iteratei_impl rm.v1_iteratei_impl,
   folded rm_ops_def rs_ops_def rs_dlts_defs]
-interpretation rs_dlts!: lts_pre_label_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_pre_label_it 
+interpretation rs_dlts: lts_pre_label_it rs_dlts_\<alpha> rs_dlts_invar rs_dlts_pre_label_it 
   using rs_dlts_pre_label_it_impl .
 
 lemmas rs_dlts_to_list_impl = ltsga_to_list_correct [OF rs_dlts_it_impl, folded rs_dlts_defs]
-interpretation rs_dlts!: lts_to_list rs_dlts_\<alpha> rs_dlts_invar rs_dlts_to_list 
+interpretation rs_dlts: lts_to_list rs_dlts_\<alpha> rs_dlts_invar rs_dlts_to_list 
   using rs_dlts_to_list_impl .
 
 lemmas rs_dlts_to_collect_list_impl = ltsga_to_collect_list_correct 
   [OF rs_dlts_to_list_impl, folded rs_dlts_defs]
-interpretation rs_dlts!: lts_to_collect_list rs_dlts_\<alpha> rs_dlts_invar rs_dlts_to_collect_list 
+interpretation rs_dlts: lts_to_collect_list rs_dlts_\<alpha> rs_dlts_invar rs_dlts_to_collect_list 
   using rs_dlts_to_collect_list_impl .
 
 lemmas rs_dlts_succ_ball_impl = ltsga_succ_ball_correct [OF rs_dlts_succ_it_impl, folded rs_dlts_defs]
-interpretation rs_dlts!: lts_succ_ball rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ_ball 
+interpretation rs_dlts: lts_succ_ball rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ_ball 
   using rs_dlts_succ_ball_impl .
 
 lemmas rs_dlts_succ_bex_impl = ltsga_succ_bex_correct [OF rs_dlts_succ_it_impl, folded rs_dlts_defs]
-interpretation rs_dlts!: lts_succ_bex rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ_bex 
+interpretation rs_dlts: lts_succ_bex rs_dlts_\<alpha> rs_dlts_invar rs_dlts_succ_bex 
   using rs_dlts_succ_bex_impl .
 
 lemmas rs_dlts_pre_ball_impl = ltsga_pre_ball_correct [OF rs_dlts_pre_it_impl, folded rs_dlts_defs]
-interpretation rs_dlts!: lts_pre_ball rs_dlts_\<alpha> rs_dlts_invar rs_dlts_pre_ball 
+interpretation rs_dlts: lts_pre_ball rs_dlts_\<alpha> rs_dlts_invar rs_dlts_pre_ball 
   using rs_dlts_pre_ball_impl .
 
 lemmas rs_dlts_pre_bex_impl = ltsga_pre_bex_correct [OF rs_dlts_pre_it_impl, folded rs_dlts_defs]
-interpretation rs_dlts!: lts_pre_bex rs_dlts_\<alpha> rs_dlts_invar rs_dlts_pre_bex 
+interpretation rs_dlts: lts_pre_bex rs_dlts_\<alpha> rs_dlts_invar rs_dlts_pre_bex 
   using rs_dlts_pre_bex_impl .
 
 lemmas rs_dlts_image_filter_impl = dltsga_image_filter_correct [OF rs_dlts_empty_impl 
    rs_dlts_add_impl rs_dlts_filter_it_impl, folded rs_dlts_image_filter_def]
-interpretation rs_dlts!: dlts_image_filter rs_dlts_\<alpha> rs_dlts_invar rs_dlts_\<alpha> rs_dlts_invar rs_dlts_image_filter
+interpretation rs_dlts: dlts_image_filter rs_dlts_\<alpha> rs_dlts_invar rs_dlts_\<alpha> rs_dlts_invar rs_dlts_image_filter
   using rs_dlts_image_filter_impl .
 
 lemmas rs_dlts_inj_image_filter_impl = dltsga_inj_image_filter_correct [OF rs_dlts_empty_impl 
    rs_dlts_add_impl rs_dlts_filter_it_impl rs_dlts_is_dlts_impl, folded rs_dlts_image_filter_def]
-interpretation rs_dlts!: lts_inj_image_filter rs_dlts_\<alpha> rs_dlts_invar 
+interpretation rs_dlts: lts_inj_image_filter rs_dlts_\<alpha> rs_dlts_invar 
   rs_dlts_\<alpha> rs_dlts_invar rs_dlts_image_filter
   using rs_dlts_inj_image_filter_impl .
 
 lemmas rs_dlts_filter_impl = dltsga_filter_correct [OF rs_dlts_empty_impl 
    rs_dlts_add_impl rs_dlts_filter_it_impl rs_dlts_is_dlts_impl, folded rs_dlts_filter_def]
-interpretation rs_dlts!: lts_filter rs_dlts_\<alpha> rs_dlts_invar rs_dlts_filter
+interpretation rs_dlts: lts_filter rs_dlts_\<alpha> rs_dlts_invar rs_dlts_filter
   using rs_dlts_filter_impl .
 
 lemmas rs_dlts_image_impl = dltsga_image_correct [OF rs_dlts_image_filter_impl, folded rs_dlts_image_def]
-interpretation rs_dlts!: dlts_image rs_dlts_\<alpha> rs_dlts_invar rs_dlts_\<alpha> rs_dlts_invar rs_dlts_image
+interpretation rs_dlts: dlts_image rs_dlts_\<alpha> rs_dlts_invar rs_dlts_\<alpha> rs_dlts_invar rs_dlts_image
   using rs_dlts_image_impl .
 
 definition rs_dlts_ops :: "('V::{linorder},'E::{linorder},('V,'E) rs_dlts) lts_ops" where
@@ -268,6 +268,6 @@ lemma rs_dlts_impl: "StdDLTS rs_dlts_ops"
   apply unfold_locales
 done
 
-interpretation rs_dltsr!: StdDLTS rs_dlts_ops by (rule rs_dlts_impl)
+interpretation rs_dltsr: StdDLTS rs_dlts_ops by (rule rs_dlts_impl)
 
 end
