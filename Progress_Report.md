@@ -6,6 +6,7 @@
 
 -   [01.03.2023 - 12.03.2023](#01032023---12032023)
 -   [13.03.2023 - 26.03.2023](#13032023---26032023)
+-   [Remarks](#remarks)
 
 ---
 
@@ -40,6 +41,16 @@
     -   :white_check_mark: **theory `Hopcroft_Minimisation` is fully repaired**
     -   added $\LaTeX$ template report for the final report
     -   :x: to make it a suitable AFP entry, need to add a final explicit theorem stating that the algorithm is correct and actually minimises a DFA on the lowest level (i.e. implementation)
+        -   :x: to achieve this, we need theory `RBT_NFAImpl` and its imports to be repaired:
+            -   :white_check_mark: repaired theory `LTSByLTS_DLTS`
+            -   :white_check_mark: repaired theory `LTSGA`
+            -   :white_check_mark: repaired theory `LTSImpl`
+            -   :white_check_mark: repaired theory `TripleSetSpec`
+            -   :white_check_mark: repaired theory `DLTSByMap`
+            -   :white_check_mark: repaired theory `NFAConstruct`
+            -   :x: theory `NFASpec` is broken
+            -   :x: theory `NFAByLTS` is broken
+            -   :x: theory `AccessibleImpl` is broken
 
 ---
 
@@ -65,16 +76,18 @@
     -   :white_check_mark: repaired proof of lemma `Hopcroft_map2_step_compute_iM_correct`:
         -   only syntax issues and fixing old names of rules
 
--   #### Remarks
-    -   I think lemma `in_br_conv` should be added as a simp rule
-    -   `def` --> `define`
-    -   `guess` --> `obtain`
-    -   `PairE` --> `prod.exhaust`
-    -   `prod_case_beta` --> `case_prod_beta`
-    -   `empty` --> `Map.empty`
-    -   `the.simps` --> `option.sel`
-    -   `op f` --> `(f)` for any function `f`
-    -   `map_pair_inj_on` --> `map_prod_inj_on`
-    -   `Option.map` --> `map_option`
-    -   `br_single_valued` --> `br_sv`
-    -   `rprod` --> `prod_rel`, adjusted with `prod_rel_syn`
+## Remarks
+
+-   I think lemma `in_br_conv` should be added as a simp rule
+-   `def` --> `define`
+-   `guess` --> `obtain`
+-   `PairE` --> `prod.exhaust`
+-   `prod_case_beta` --> `case_prod_beta`
+-   `empty` --> `Map.empty`
+-   `the.simps` --> `option.sel`
+-   `op f` --> `(f)` for any function `f`
+-   `map_pair_inj_on` --> `map_prod_inj_on`
+-   `Option.map` --> `map_option`
+-   `br_single_valued` --> `br_sv`
+-   `rprod` --> `prod_rel`, adjusted with `prod_rel_syn`
+-   `pair_collapse` --> `prod.collapse`
