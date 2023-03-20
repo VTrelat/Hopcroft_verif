@@ -48,9 +48,11 @@
             -   :white_check_mark: repaired theory `TripleSetSpec`
             -   :white_check_mark: repaired theory `DLTSByMap`
             -   :white_check_mark: repaired theory `NFAConstruct`
-            -   :x: theory `NFASpec` is broken
+            -   :white_check_mark: repaired theory `NFASpec` ~~is broken~~
+            -   :white_check_mark: repaired theory `NFAGA` ~~is broken~~
             -   :x: theory `NFAByLTS` is broken
             -   :x: theory `AccessibleImpl` is broken
+        -   :x: theory `Presburger_Automata` is broken
 
 ---
 
