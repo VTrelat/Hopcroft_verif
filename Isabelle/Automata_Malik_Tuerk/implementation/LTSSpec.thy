@@ -4,7 +4,7 @@ imports
   Main 
   "../LTS"
   "../../Collections/Refine_Dflt"
-  "../..//Collections/ICF/CollectionsV1"
+  "../../Collections/ICF/CollectionsV1"
 begin
   type_synonym ('V,'W,'L) lts_\<alpha> = "'L \<Rightarrow> ('V * 'W * 'V) set"
   locale lts =
