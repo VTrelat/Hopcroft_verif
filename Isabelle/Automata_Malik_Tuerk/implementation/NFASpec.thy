@@ -276,8 +276,9 @@ begin
   type_synonym ('q2,'i,'a,'a_set,'\<sigma>,'nfa) nfa_construct = 
     "('q2 \<Rightarrow> 'i) \<Rightarrow> 'q2 list \<Rightarrow> 'a_set \<Rightarrow> ('q2 \<Rightarrow> bool) \<Rightarrow> 
      ('q2 \<Rightarrow> ('a\<times>'q2,'\<sigma>) set_iterator) \<Rightarrow> 'nfa"
-  locale nfa_dfa_construct_no_enc = nfa \<alpha> invar + set s_\<alpha> s_invar 
-    for \<alpha> invar s_\<alpha> s_invar + 
+
+  locale nfa_dfa_construct_no_enc = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
+    for \<alpha> invar s_\<alpha> s_invar +
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>"
     fixes construct :: "bool \<Rightarrow> ('q2,'i,'a,'a_set,'\<sigma>,'nfa) nfa_construct"
     assumes nfa_dfa_construct_no_enc_correct:
@@ -287,7 +288,7 @@ begin
          (invar (construct det f I A FP D_it) \<and>
           NFA_isomorphic_wf (\<alpha> (construct det f I A FP D_it)) (NFA_remove_unreachable_states \<A>))"
 
-  locale nfa_construct_no_enc = nfa \<alpha> invar + set s_\<alpha> s_invar 
+  locale nfa_construct_no_enc = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>"
     fixes construct :: "('q2,'i,'a,'a_set,'\<sigma>,'nfa) nfa_construct"
@@ -298,7 +299,7 @@ begin
          (invar (construct f I A FP D_it) \<and>
           NFA_isomorphic_wf (\<alpha> (construct f I A FP D_it)) (NFA_remove_unreachable_states \<A>))"
 
-  locale dfa_construct_no_enc = nfa \<alpha> invar + set s_\<alpha> s_invar 
+  locale dfa_construct_no_enc = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>"
     fixes construct :: "('q2,'i,'a,'a_set,'\<sigma>,'nfa) nfa_construct"
@@ -312,7 +313,7 @@ begin
   type_synonym ('q2,'i,'a,'a_set,'nfa) nfa_construct_fun = 
     "('q2 \<Rightarrow> 'i) \<Rightarrow> 'q2 \<Rightarrow> 'a_set \<Rightarrow> ('q2 \<Rightarrow> bool) \<Rightarrow> 
      ('q2 \<Rightarrow> 'a \<Rightarrow> 'q2) \<Rightarrow> 'nfa"
-  locale dfa_construct_no_enc_fun = nfa \<alpha> invar + set s_\<alpha> s_invar 
+  locale dfa_construct_no_enc_fun = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>"
     fixes construct :: "('q2,'i,'a,'a_set,'nfa) nfa_construct_fun"
@@ -357,11 +358,11 @@ begin
       apply (simp_all)
   done
 
-  text {* Sometimes, one cannot work on abstract states directly, but needs an encoding of
+  text \<open> Sometimes, one cannot work on abstract states directly, but needs an encoding of
           states. An example is the powerset construction for determinising automata. In this
           example states are sets, which one probably wants to encode using the Collection
-          framework. *}
-  locale nfa_dfa_construct = nfa \<alpha> invar + set s_\<alpha> s_invar 
+          framework. \<close>
+  locale nfa_dfa_construct = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>" 
     fixes q2_\<alpha> :: "'q2_rep \<Rightarrow> 'q2" 
@@ -378,7 +379,7 @@ begin
          (invar (construct det ff I A FP D_it) \<and>
           NFA_isomorphic_wf (\<alpha> (construct det ff I A FP D_it)) (NFA_remove_unreachable_states \<A>))"
 
-  locale nfa_construct = nfa \<alpha> invar + set s_\<alpha> s_invar 
+  locale nfa_construct = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>" 
     fixes q2_\<alpha> :: "'q2_rep \<Rightarrow> 'q2" 
@@ -395,7 +396,7 @@ begin
          (invar (construct ff I A FP D_it) \<and>
           NFA_isomorphic_wf (\<alpha> (construct ff I A FP D_it)) (NFA_remove_unreachable_states \<A>))"
 
-  locale dfa_construct = nfa \<alpha> invar + set s_\<alpha> s_invar 
+  locale dfa_construct = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>" 
     fixes q2_\<alpha> :: "'q2_rep \<Rightarrow> 'q2" 
@@ -446,7 +447,7 @@ begin
     apply (simp_all)
   done
 
-  locale dfa_construct_fun = nfa \<alpha> invar + set s_\<alpha> s_invar 
+  locale dfa_construct_fun = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>" 
     fixes q2_\<alpha> :: "'q2_rep \<Rightarrow> 'q2" 
@@ -464,7 +465,7 @@ begin
          (invar (construct ff I A FP D_fun) \<and>
           NFA_isomorphic_wf (\<alpha> (construct ff I A FP D_fun)) (NFA_remove_unreachable_states \<A>))"
 
-  locale nfa_dfa_construct_label_sets = nfa \<alpha> invar + set s_\<alpha> s_invar 
+  locale nfa_dfa_construct_label_sets = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>" 
     fixes q2_\<alpha> :: "'q2_rep \<Rightarrow> 'q2" 
@@ -486,7 +487,7 @@ begin
          (invar (construct det ff I A FP D_it) \<and>
           NFA_isomorphic_wf (\<alpha> (construct det ff I A FP D_it)) (NFA_remove_unreachable_states \<A>))"
 
-  locale nfa_construct_label_sets = nfa \<alpha> invar + set s_\<alpha> s_invar 
+  locale nfa_construct_label_sets = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>" 
     fixes q2_\<alpha> :: "'q2_rep \<Rightarrow> 'q2" 
@@ -508,7 +509,7 @@ begin
          (invar (construct ff I A FP D_it) \<and>
           NFA_isomorphic_wf (\<alpha> (construct ff I A FP D_it)) (NFA_remove_unreachable_states \<A>))"
 
-  locale dfa_construct_label_sets = nfa \<alpha> invar + set s_\<alpha> s_invar 
+  locale dfa_construct_label_sets = nfa \<alpha> invar + set "s_\<alpha>::('a, 'a_set) set_\<alpha>" "s_invar::('a, 'a_set) set_invar"
     for \<alpha> invar s_\<alpha> s_invar + 
     constrains \<alpha> :: "('q,'a,'nfa) nfa_\<alpha>" 
     fixes q2_\<alpha> :: "'q2_rep \<Rightarrow> 'q2" 
@@ -928,7 +929,7 @@ begin
     by (metis NFA_isomorphic_wf_\<L>)
   end
 
-  subsection {* Record Based Interface *}
+  subsection \<open> Record Based Interface \<close>
 
   record ('q,'a,'nfa) nfa_ops =
     nfa_op_\<alpha> :: "('q::{automaton_states},'a,'nfa) nfa_\<alpha>"
@@ -972,7 +973,7 @@ begin
     abbreviation reverse where "reverse \<equiv> nfa_op_reverse ops"
     abbreviation complement where "complement \<equiv> nfa_op_complement ops"
     abbreviation bool_comb where "bool_comb \<equiv> nfa_op_bool_comb ops"
-    abbreviation product where "product \<equiv> bool_comb op\<and>"
+    abbreviation product where "product \<equiv> bool_comb (\<and>)"
     abbreviation determinise where "determinise \<equiv> nfa_op_determinise ops"
     abbreviation minimise_Brzozowski where "minimise_Brzozowski \<equiv> nfa_op_minimise_Brzozowski ops"
     abbreviation minimise_Hopcroft where "minimise_Hopcroft \<equiv> nfa_op_minimise_Hopcroft ops"
