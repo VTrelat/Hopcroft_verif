@@ -38,7 +38,7 @@
         interpretation hop_impl ...
         setup Locale_Code.close_block
         ```
-    -   :white_check_mark: **theory `Hopcroft_Minimisation` is fully repaired**
+    -   :white_check_mark: **old theory `Hopcroft_Minimisation` is fully repaired**
     -   added $\LaTeX$ template report for the final report
     -   :x: to make it a suitable AFP entry, need to add a final explicit theorem stating that the algorithm is correct and actually minimises a DFA on the lowest level (i.e. implementation)
         -   :x: to achieve this, we need theory `RBT_NFAImpl` and its imports to be repaired:
