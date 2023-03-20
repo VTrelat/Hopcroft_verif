@@ -6,10 +6,10 @@ begin
 
 subsection \<open> NFAs \<close>
 
-interpretation rs_nfa_defs!: nfa_by_lts_defs "rs_ops :: (nat, (nat, unit) RBT.rbt) oset_ops" 
+interpretation rs_nfa_defs: nfa_by_lts_defs "rs_ops :: (nat, (nat, unit) RBT.rbt) oset_ops" 
   rs_ops rs_lts_dlts_ops  
   unfolding nfa_by_lts_defs_def
-  apply (simp add: rsr.StdSet_axioms rs_lts_dlts_impl)
+  apply (simp add: rs.StdSet_axioms rs_lts_dlts_impl)
 done
 
 type_synonym 'b rs_nfa =                  
