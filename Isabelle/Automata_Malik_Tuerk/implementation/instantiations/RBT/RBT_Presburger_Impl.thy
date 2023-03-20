@@ -2,7 +2,7 @@
     Authors:     Thomas Tuerk <tuerk@in.tum.de>
 *)
 
-header {* Presburger Automata Implementation *}
+header \<open> Presburger Automata Implementation \<close>
 
 theory RBT_Presburger_Impl
 imports Main 
