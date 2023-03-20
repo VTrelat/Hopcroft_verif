@@ -3,27 +3,27 @@
     Authors:     Thomas Tuerk <tuerk@in.tum.de>
 *)
 
-header {* Presburger Adaptation *}
+section \<open> Presburger Adaptation \<close>
 
 theory Presburger_Adapt
 imports Main NFA DFA
   "implementation/NFASpec"
-  "../Libs/Presburger-Automata/DFS"
-  "../Libs/Presburger-Automata/Presburger_Automata"
-begin
+  "../Presburger-Automata/DFS"
+  "../Presburger-Automata/Presburger_Automata"
+begin             
 
 
-text {* The translation of Presburger arithmetic to finite automata
+text \<open> The translation of Presburger arithmetic to finite automata
 defined in the AFP Library \emph{Presburger-Automata} consists of
 building finite automata for Diophantine equations and inequations as well as
 standard automata constructions. These automata constructions are
 however defined on a datastructure which is well suited for the
 specific automata used. Here, let's try to replace these specialised
-finite automata with general ones. *}
+finite automata with general ones. \<close>
 
-subsection {* DFAs for Diophantine Equations and Inequations *}
+subsection \<open> DFAs for Diophantine Equations and Inequations \<close>
 
-subsubsection {* Definition *}
+subsubsection \<open> Definition \<close>
 
 datatype pres_NFA_state =
    pres_NFA_state_error 
@@ -80,7 +80,7 @@ definition pres_DFA_eq_ineq ::
        \<F> = {pres_NFA_state_int m |m.
              dioph_is_node ks l m \<and> 0 \<le> m \<and> (ineq \<or> m = 0)} \<rparr>"
 
-subsubsection {* Properties *}
+subsubsection \<open> Properties \<close>
 lemma pres_DFA_is_node___pres_DFA_eq_ineq_trans_fun :
 assumes q_OK: "pres_DFA_is_node ks l q"
     and bs_OK: "length bs = n"
@@ -393,12 +393,12 @@ proof -
 qed
 
 
-subsubsection {* Efficiency *}
+subsubsection \<open> Efficiency \<close>
 
-subsubsection {* Implementation *}
-text {* For using these automata constructions let's replace
+subsubsection \<open> Implementation \<close>
+text \<open> For using these automata constructions let's replace
 the new datatype for states with natural numbers and consider only
-reachable states. *}
+reachable states. \<close>
 
 fun pres_NFA_state_to_nat where
   "pres_NFA_state_to_nat pres_NFA_state_error = 0"
@@ -460,7 +460,7 @@ proof -
     by simp
 qed
 
-subsection {* Existential Quantification *}
+subsection \<open> Existential Quantification \<close>
 
 type_synonym pres_NFA = "(nat, bool list) NFA_rec"
 
@@ -726,7 +726,7 @@ by (simp add: pres_DFA_exists_min_def pres_DFA_labels_tl_def NFA_minimise_spec(2
               NFA.NFA_rename_labels___is_well_formed)
 
 
-subsection {* Universal Quantification *}
+subsection \<open> Universal Quantification \<close>
 
 definition pres_DFA_forall_min where
   "pres_DFA_forall_min n \<A> = DFA_complement (pres_DFA_exists_min n (DFA_complement \<A>))"
@@ -788,7 +788,7 @@ lemma \<Sigma>_pres_DFA_forall_min :
 by (simp add: pres_DFA_forall_min_def \<Sigma>_pres_DFA_exists_min DFA_complement___is_well_formed)
 
     
-subsection {* Translation *}
+subsection \<open> Translation \<close>
  
 fun DFA_of_pf :: "nat \<Rightarrow> pf \<Rightarrow> pres_NFA" where
   Eq:     "DFA_of_pf n (Eq ks l) = efficient_pres_DFA_eq_ineq False n ks l"
@@ -854,10 +854,10 @@ next
 qed
 
 
-subsection {* Code Generation *}
+subsection \<open> Code Generation \<close>
 
-text {* The automata used for presburger arithmetic have label sets that consist of all
-bitvectors of a certain length. The following locale is used to cache these sets. *}
+text \<open> The automata used for presburger arithmetic have label sets that consist of all
+bitvectors of a certain length. The following locale is used to cache these sets. \<close>
 
 locale presburger_label_set_cache = set a_\<alpha> a_invar
     for a_\<alpha> :: "'al_set \<Rightarrow> ('a list) set" and a_invar +
