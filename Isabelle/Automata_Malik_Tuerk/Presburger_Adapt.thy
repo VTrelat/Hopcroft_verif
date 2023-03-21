@@ -98,9 +98,7 @@ next
       and m'_eq : "m' = (m - eval_dioph ks (map nat_of_bool bs)) div 2"
       and cond: "i \<or> eval_dioph ks (map nat_of_bool bs) mod 2 = m mod 2"
       apply (cases q, simp_all)
-      apply (case_tac "i \<or> eval_dioph ks (map nat_of_bool bs) mod 2 = int mod 2")
-      apply (simp_all)
-    done
+      by (metis pres_NFA_state.inject pres_NFA_state.simps(3))
 
     from q_OK q_eq have is_node_m: "dioph_is_node ks l m"
       unfolding pres_DFA_eq_ineq_def
@@ -793,9 +791,9 @@ subsection \<open> Translation \<close>
 fun DFA_of_pf :: "nat \<Rightarrow> pf \<Rightarrow> pres_NFA" where
   Eq:     "DFA_of_pf n (Eq ks l) = efficient_pres_DFA_eq_ineq False n ks l"
 | Le:     "DFA_of_pf n (Le ks l) = efficient_pres_DFA_eq_ineq True n ks l"
-| And:    "DFA_of_pf n (And p q) = NFA_bool_comb op\<and> (DFA_of_pf n p) (DFA_of_pf n q)"
-| Or:     "DFA_of_pf n (Or p q) = NFA_bool_comb op\<or> (DFA_of_pf n p) (DFA_of_pf n q)"
-| Imp:    "DFA_of_pf n (Imp p q) = NFA_bool_comb op\<longrightarrow> (DFA_of_pf n p) (DFA_of_pf n q)"
+| And:    "DFA_of_pf n (And p q) = NFA_bool_comb (\<and>) (DFA_of_pf n p) (DFA_of_pf n q)"
+| Or:     "DFA_of_pf n (Or p q) = NFA_bool_comb (\<or>) (DFA_of_pf n p) (DFA_of_pf n q)"
+| Imp:    "DFA_of_pf n (Imp p q) = NFA_bool_comb (\<longrightarrow>) (DFA_of_pf n p) (DFA_of_pf n q)"
 | Exists: "DFA_of_pf n (Exist p) = pres_DFA_exists_min n (DFA_of_pf (Suc n) p)"
 | Forall: "DFA_of_pf n (Forall p) = pres_DFA_forall_min n (DFA_of_pf (Suc n) p)"
 | Neg:    "DFA_of_pf n (Neg p) = DFA_complement (DFA_of_pf n p)"
@@ -896,28 +894,28 @@ begin
 
   lemma pres_DFA_eq_ineq_impl_correct :
   assumes A_OK: "a_invar A" "a_\<alpha> A = {bs. length bs = n}"
-  shows "invar (pres_DFA_eq_ineq_impl A ineq n ks l)"
-        "NFA_isomorphic_wf (\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
+  shows "nfa.invar (pres_DFA_eq_ineq_impl A ineq n ks l)"
+        "NFA_isomorphic_wf (nfa.\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
                            (efficient_pres_DFA_eq_ineq ineq n ks l)" 
   proof -
-    have "invar (pres_DFA_eq_ineq_impl A ineq n ks l) \<and>
-           NFA_isomorphic_wf (\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
+    have "nfa.invar (pres_DFA_eq_ineq_impl A ineq n ks l) \<and>
+           NFA_isomorphic_wf (nfa.\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
                            (NFA_remove_unreachable_states (pres_DFA_eq_ineq ineq n ks l))" 
-    unfolding pres_DFA_eq_ineq_impl_def
+      unfolding pres_DFA_eq_ineq_impl_def
       apply (rule dfa_construct_no_enc_fun_correct) 
       apply (rule pres_DFA_eq_ineq___is_well_formed)
       apply (auto simp add: pres_DFA_eq_ineq_def A_OK inj_pres_NFA_state_to_nat
                        split: pres_NFA_state.split)
     done
-    thus "invar (pres_DFA_eq_ineq_impl A ineq n ks l)"
-         "NFA_isomorphic_wf (\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
+    thus "nfa.invar (pres_DFA_eq_ineq_impl A ineq n ks l)"
+         "NFA_isomorphic_wf (nfa.\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
                            (efficient_pres_DFA_eq_ineq ineq n ks l)"
     by (simp_all add: NFA_isomorphic_wf_trans[OF _ pres_DFA_eq_ineq___isomorphic_wf])
   qed
 
   definition pres_DFA_exists_min_impl where
     "pres_DFA_exists_min_impl A AA = 
-      right_quotient_lists (list_all (\<lambda>b. \<not> b)) (minimise_Hopcroft_NFA (rename_labels_gen AA A tl))"
+      right_quotient_lists (list_all (\<lambda>b. \<not> b)) (StdNFADefs.minimise_Hopcroft_NFA (rename_labels_gen AA A tl))"
 
   lemma im_tl_eq: "tl ` {bl. length bl = Suc n} = {bl. length bl = n}"
      apply (auto simp add: image_iff length_Suc_conv)[]
