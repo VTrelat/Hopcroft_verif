@@ -35,7 +35,7 @@ setup Locale_Code.close_block
 definition rs_ops :: "('x::linorder,'x rs) oset_ops"
   where [icf_rec_def]: "rs_ops \<equiv> rs_sbm.obasic.dflt_oops"
 
-setup Locale_Code.open_block
+setup Locale_Code.open_block     
 interpretation rs: StdOSetDefs rs_ops .
 interpretation rs: StdOSet rs_ops
   unfolding rs_ops_def
@@ -64,6 +64,37 @@ interpretation
   pi_rs_o: proper_it_loc rs.iterateoi rs.iterateoi +
   pi_rs_ro: proper_it_loc rs.rev_iterateoi rs.rev_iterateoi
   by unfold_locales (rule pi_rs)+
+
+lemma rs_ops_unfold[code_unfold]:
+    "set_op_\<alpha> rs_ops = rs.\<alpha>"
+    "set_op_invar rs_ops = rs.invar"
+    "set_op_empty rs_ops = rs.empty"
+    "set_op_sng rs_ops = rs.sng"
+    "set_op_memb rs_ops = rs.memb"
+    "set_op_ins rs_ops = rs.ins"
+    "set_op_ins_dj rs_ops = rs.ins_dj"
+    "set_op_delete rs_ops = rs.delete"
+    "set_op_isEmpty rs_ops = rs.isEmpty"
+    "set_op_isSng rs_ops = rs.isSng"
+    "set_op_ball rs_ops = rs.ball"
+    "set_op_bex rs_ops = rs.bex"
+    "set_op_size rs_ops = rs.size"
+    "set_op_size_abort rs_ops = rs.size_abort"
+    "set_op_union rs_ops = rs.union"
+    "set_op_union_dj rs_ops = rs.union_dj"
+    "set_op_diff rs_ops = rs.diff"
+    "set_op_filter rs_ops = rs.filter"
+    "set_op_inter rs_ops = rs.inter"
+    "set_op_subset rs_ops = rs.subset"
+    "set_op_equal rs_ops = rs.equal"
+    "set_op_disjoint rs_ops = rs.disjoint"
+    "set_op_disjoint_witness rs_ops = rs.disjoint_witness"
+    "set_op_sel rs_ops = rs.sel"
+    "set_op_to_list rs_ops = rs.to_list"
+    (* "set_op_from_list rs_ops = list.to_rs" *)
+    "set_op_min rs_ops = rs.min"
+    "set_op_max rs_ops = rs.max"
+    by (auto simp add: rs_ops_def)
 
 definition test_codegen where "test_codegen \<equiv> (
   rs.empty,
