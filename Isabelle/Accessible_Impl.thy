@@ -223,17 +223,17 @@ by (simp add: correct accessible_restrict_def)
 
 subsection \<open>Code Generation\<close>
 
-definition "accessible_abort_code = lsr.accessible_abort_code"
+definition "accessible_abort_code = ls.accessible_abort_code"
 declare accessible_abort_code_def [symmetric, code_unfold]
-declare lsr.accessible_abort_code_def [folded accessible_abort_code_def, code]
+declare ls.accessible_abort_code_def [folded accessible_abort_code_def, code]
 
-definition "accessible_restrict_code = lsr.accessible_restrict_code"
+definition "accessible_restrict_code = ls.accessible_restrict_code"
 declare accessible_restrict_code_def [symmetric, code_unfold]
-declare lsr.accessible_restrict_code_def [folded accessible_restrict_code_def, code]
+declare ls.accessible_restrict_code_def [folded accessible_restrict_code_def, code]
 
-definition "in_accessible_restrict_code = lsr.in_accessible_restrict_code"
+definition "in_accessible_restrict_code = ls.in_accessible_restrict_code"
 declare in_accessible_restrict_code_def [symmetric, code_unfold]
-declare lsr.in_accessible_restrict_code_def [folded in_accessible_restrict_code_def, code]
+declare ls.in_accessible_restrict_code_def [folded in_accessible_restrict_code_def, code]
 
 
 export_code accessible_abort_code accessible_restrict_code in_accessible_restrict_code in SML
