@@ -225,7 +225,7 @@ proof -
       note invar_A = Cons(2)
 
       let ?A' = "nfa_construct_aux A qlq"
-      obtain q1 l q2 where qlq_eq[simp]: "qlq = (q1, l, q2)" by (metis PairE)
+      obtain q1 l q2 where qlq_eq[simp]: "qlq = (q1, l, q2)" by (metis prod.exhaust)
 
       note aux_correct = nfa_construct_aux_correct [of A q1 l q2, OF invar_A]
 
@@ -402,19 +402,20 @@ qed
 
 definition accept_dfa_impl where
    "accept_dfa_impl A w = 
-    s.bexists (nfa_initial A) (\<lambda>q. case (d.DLTS_reach_impl (nfa_trans A) q w) of None \<Rightarrow> False
+    s.bex (nfa_initial A) (\<lambda>q. case (d.DLTS_reach_impl (nfa_trans A) q w) of None \<Rightarrow> False
       | Some q' \<Rightarrow> s.memb q' (nfa_accepting A))"
 
 lemma accept_dfa_impl_code :
   "accept_dfa_impl = (\<lambda>(Q, A, D, I, F, p) w. 
-   set_op_bexists s_ops I
+   set_op_bex s_ops I
      (\<lambda>q. case foldli w (\<lambda>q_opt. q_opt \<noteq> None)
                 (\<lambda>\<sigma> q_opt. lts_op_succ d_ops D (the q_opt) \<sigma>)
                 (Some q) of
           None \<Rightarrow> False | Some q' \<Rightarrow> set_op_memb s_ops q' F))"
 unfolding accept_dfa_impl_def[abs_def] nfa_selectors_def fst_conv snd_conv
-          d.DLTS_reach_impl_alt_def 
-by (simp add: fun_eq_iff split_def)
+          d.DLTS_reach_impl_alt_def
+  by (simp add: fun_eq_iff split_def)
+  
 
 lemma accept_dfa_impl_correct :
 shows "dfa_accept nfa_\<alpha> nfa_invar accept_dfa_impl"
@@ -867,7 +868,7 @@ assumes f_inj_on: "inj_on f S"
     and invar_qm_n: "state_map_invar (qm, n)"
     and q_in_S: "q \<in> S"
     and q_nin_dom: "q \<notin> dom (state_map_\<alpha> (qm, n))"
-    and map_OK : "NFA_construct_reachable_map_OK S empty {} (state_map_\<alpha> (qm, n))"
+    and map_OK : "NFA_construct_reachable_map_OK S Map.empty {} (state_map_\<alpha> (qm, n))"
 shows "state_map_invar (qm'', Suc n)"
       "qm.\<alpha> qm'' = qm.\<alpha> qm(f q \<mapsto> states_enumerate n)"
       "NFA_construct_reachable_map_OK S (state_map_\<alpha> (qm, n)) {q} (state_map_\<alpha> (qm'', Suc n))"
@@ -1005,10 +1006,10 @@ assumes f_inj_on: "inj_on f S"
     and ff_OK: "\<And>q. q2_invar q \<Longrightarrow> q2_\<alpha> q \<in> S \<Longrightarrow> ff q = f (q2_\<alpha> q)" 
 shows
    "RETURN (NFA_construct_reachable_init_impl II) \<le> \<Down> 
-       (rprod (build_rel state_map_\<alpha> state_map_invar) 
+       ((build_rel state_map_\<alpha> state_map_invar) \<times>\<^sub>r 
               (build_rel s.\<alpha> s.invar)) 
      (SPEC (\<lambda>(rm, I'). 
-        NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) empty (set I) rm \<and>
+        NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) Map.empty (set I) rm \<and>
         I' = (the \<circ> rm) ` (set I)))"
 proof -
   let ?step = "(\<lambda>((qm, n), Is) q. ((qm.update_dj (ff q) (states_enumerate n) qm, Suc n),
@@ -1023,7 +1024,7 @@ proof -
               state_map_invar (qm, n) \<Longrightarrow>
               s.invar Is \<Longrightarrow> 
               (\<And>q. q \<in> s.\<alpha> Is \<Longrightarrow> (\<exists>n' < n. q = states_enumerate n')) \<Longrightarrow>
-              NFA_construct_reachable_map_OK S empty {} (state_map_\<alpha> (qm, n)) \<Longrightarrow>
+              NFA_construct_reachable_map_OK S Map.empty {} (state_map_\<alpha> (qm, n)) \<Longrightarrow>
               ((qm', n'), Is') = foldl ?step ((qm, n),Is) II \<Longrightarrow>
 
               s.invar Is' \<and>
@@ -1045,8 +1046,8 @@ proof -
       note fold_eq = Cons(10)
 
       let ?I' = "map q2_\<alpha> II'"
-      def qm'' \<equiv> "qm.update_dj (ff q) (states_enumerate n) qm"
-      def Is'' \<equiv> "s.ins_dj (states_enumerate n) Is"
+      define qm'' where "qm'' \<equiv> qm.update_dj (ff q) (states_enumerate n) qm"
+      define Is'' where "Is'' \<equiv> s.ins_dj (states_enumerate n) Is"
 
       note ind_hyp = Cons(1) [OF II'_subset `distinct ?I'` invar_II', 
                               of qm'' "Suc n" Is'' qm' n' Is']
@@ -1150,18 +1151,18 @@ proof -
   have pre5 : "state_map_invar (qm.empty (), 0)"
     unfolding state_map_invar_def by (simp add: qm.correct)
 
-  have pre6 : "NFA_construct_reachable_map_OK S empty {} (state_map_\<alpha> (qm.empty (), 0))"
+  have pre6 : "NFA_construct_reachable_map_OK S Map.empty {} (state_map_\<alpha> (qm.empty (), 0))"
     unfolding NFA_construct_reachable_map_OK_def state_map_\<alpha>_def by (simp add: qm.correct o_def)
 
   note ind_proof' = ind_proof [OF ]
-  obtain qm' n' Is' where res_eq: "NFA_construct_reachable_init_impl II = ((qm', n'), Is')" by (metis PairE)
+  obtain qm' n' Is' where res_eq: "NFA_construct_reachable_init_impl II = ((qm', n'), Is')" by (metis prod.exhaust)
   note ind_proof' = ind_proof [OF pre1 pre2 pre3 pre4 pre5 _ _ pre6, of "s.empty ()" qm' n' Is',
     folded NFA_construct_reachable_init_impl_def]
  
   from ind_proof' show ?thesis 
-    apply (rule_tac SPEC_refine_sv rprod_sv br_single_valued)+
+    apply (rule_tac SPEC_refine_sv prod_rel_sv br_sv)+
     apply (simp add: refine_hsimp
-      s.correct I_def res_eq S_def NFA_construct_reachable_map_OK_def)
+      s.correct I_def res_eq S_def NFA_construct_reachable_map_OK_def in_br_conv)
   done
 qed
 
@@ -1208,26 +1209,26 @@ assumes f_inj_on: "inj_on f S"
     and weak_invar: "NFA_construct_reachable_abstract_impl_weak_invar I (l.\<alpha> A) FP D (rm, \<A>)"
 notes refine_rel_defs[simp]
 shows "NFA_construct_reachable_impl_step det DS qm0 n D0 q \<le> 
-  \<Down> (rprod (build_rel state_map_\<alpha> state_map_invar) (rprod (build_rel d.\<alpha> d.invar) 
-           (map_list_rel (build_rel q2_\<alpha> q2_invar))))
+  \<Down> ((build_rel state_map_\<alpha> state_map_invar) \<times>\<^sub>r ((build_rel d.\<alpha> d.invar) \<times>\<^sub>r 
+           (\<langle>build_rel q2_\<alpha> q2_invar\<rangle>list_rel)))
    (NFA_construct_reachable_abstract_impl_step S DS' rm D0' (q2_\<alpha> q))"
 unfolding NFA_construct_reachable_impl_step_def
           NFA_construct_reachable_abstract_impl_step_def
 using [[goals_limit = 1]]
 apply (refine_rcg)
--- "preprocess goals"
+\<comment>\<open>preprocess goals\<close>
   apply (subgoal_tac "inj_on (\<lambda>(as, q'). (a_\<alpha> as, q2_\<alpha> q')) (DS q)")
   apply assumption
   apply (insert DS_OK)[]
   apply (simp add: inj_on_def Ball_def NFA_construct_reachable_impl_step_rel_def)
   apply blast
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (insert DS_OK)[]
   apply (simp add: NFA_construct_reachable_impl_step_rel_def)
   apply auto[]
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (simp add: rm_eq D0'_eq invar_qm0_n invar_D0 refine_hsimp)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (clarify, simp add: refine_hsimp)+
   apply (rename_tac it N as'' q'' qm n D' NN as' q')
   apply (subgoal_tac "
@@ -1236,12 +1237,12 @@ apply (refine_rcg)
          in if r'_opt = None
             then ((map_op_update_dj qm_ops (ff q'') (states_enumerate n) qm, Suc n), states_enumerate n)
             else ((qm, n), the r'_opt))
-       \<le> \<Down> (rprod (build_rel state_map_\<alpha> state_map_invar) Id)
+       \<le> \<Down> ((build_rel state_map_\<alpha> state_map_invar) \<times>\<^sub>r Id)
           (SPEC (\<lambda>(rm', r').
                     NFA_construct_reachable_map_OK S (state_map_\<alpha> (qm, n)) {q2_\<alpha> q'} rm' \<and>
                     rm' (q2_\<alpha> q') = Some r'))")
    apply assumption
-   apply (simp del: br_def rprod_def add: Let_def ff_OK pw_le_iff refine_pw_simps rprod_sv)
+   apply (simp del: br_def prod_rel_def add: Let_def ff_OK pw_le_iff refine_pw_simps prod_rel_sv)
    apply (simp)
    apply (rule conjI)
    apply (rule impI)
@@ -1278,7 +1279,7 @@ proof -
   from q'_in_S q''_q'_eq have q''_in_S: "q2_\<alpha> q'' \<in> S" by simp
   from ff_OK[OF invar_q'' q''_in_S] q''_q'_eq have ff_q''_eq[simp]: "ff q'' = f (q2_\<alpha> q')" by simp
 
-  def D'' \<equiv> "DS' (q2_\<alpha> q) - ?it'"
+  define D'' where "D'' \<equiv> DS' (q2_\<alpha> q) - ?it'"
   from invar_foreach have 
      qm_OK: "NFA_construct_reachable_map_OK S rm (snd ` D'') (state_map_\<alpha> (qm, n))" and
      set_N_eq: "set N = snd ` D''" and
@@ -1288,7 +1289,7 @@ proof -
     unfolding NFA_construct_reachable_abstract_impl_foreach_invar.simps D''_def[symmetric]
       by (simp_all add: Let_def) 
 
-  { -- "Consider the case that the map does not need to be extended"
+  { \<comment>\<open>Consider the case that the map does not need to be extended\<close>
     fix r
     assume "qm.lookup (ff q'') qm = Some r"
     with invar_qm_n qm_OK
@@ -1298,16 +1299,16 @@ proof -
                     NFA_construct_reachable_map_OK_def rm_eq dom_def)
   }
 
-  { -- "... and the case that the map needs to be extended."
+  { \<comment>\<open>... and the case that the map needs to be extended.\<close>
     assume "qm.lookup (ff q'') qm = None"
     with invar_qm_n have q'_nin_dom: "q2_\<alpha> q' \<notin> dom (state_map_\<alpha> (qm, n))"
       unfolding state_map_invar_def state_map_\<alpha>_def by (simp add: qm.correct dom_def)
 
     from qm_OK have qm_OK': 
-      "NFA_construct_reachable_map_OK S empty {} (state_map_\<alpha> (qm, n))"
+      "NFA_construct_reachable_map_OK S Map.empty {} (state_map_\<alpha> (qm, n))"
       unfolding NFA_construct_reachable_map_OK_def by simp
 
-    def qm'  \<equiv> "qm.update_dj (f (q2_\<alpha> q')) (states_enumerate n) qm"
+    define qm' where "qm' \<equiv> qm.update_dj (f (q2_\<alpha> q')) (states_enumerate n) qm"
     from state_map_extend_thm [OF f_inj_on invar_qm_n q'_in_S q'_nin_dom qm_OK', folded qm'_def]
     have invar_qm'_n: "state_map_invar (qm', Suc n)" and
          qm'_alpha: "qm.\<alpha> qm' = qm.\<alpha> qm(f (q2_\<alpha> q') \<mapsto> states_enumerate n)" and
@@ -1326,8 +1327,8 @@ proof -
       unfolding qm'_def[symmetric] ff_q''_eq by simp 
   }
 
-  { -- "It remains to show that adding to the transition systems works. Here, a case distinction
-        depending on whether the input is weak deterministic, is needed."
+  { \<comment>\<open>It remains to show that adding to the transition systems works. Here, a case distinction
+        depending on whether the input is weak deterministic, is needed.\<close>
     fix r' qm' n'
     
     assume r'_props: "(let r'_opt = map_op_lookup qm_ops (ff q'') qm
@@ -1360,7 +1361,7 @@ proof -
         assume "a \<in> a_\<alpha> as''" "q''' \<noteq> r'" 
 
         from weak_invar obtain s where
-          rm_OK: "NFA_construct_reachable_map_OK S empty (s \<union> set I \<union> {q'. \<exists>a q. q \<in> s \<and> (q, a, q') \<in> D}) rm" and 
+          rm_OK: "NFA_construct_reachable_map_OK S Map.empty (s \<union> set I \<union> {q'. \<exists>a q. q \<in> s \<and> (q, a, q') \<in> D}) rm" and 
           s_subset: "s \<subseteq> S" and
           \<A>_eq: "\<A> = NFA_rename_states
            \<lparr>\<Q> = s, \<Sigma> = set_op_\<alpha> l_ops A, \<Delta> = {qsq \<in> D. fst qsq \<in> s}, \<I> = set I,
@@ -1412,7 +1413,7 @@ proof -
           d.\<alpha> (add_labels det (the (map_op_lookup qm_ops (ff q) qm0)) as'' r' D') \<and>
           d.invar (add_labels det (the (map_op_lookup qm_ops (ff q) qm0)) as'' r' D') \<and>
           q2_invar q'' " 
-      unfolding r_intro1 r_intro2 the.simps ff_OK[OF invar_q] 
+      unfolding r_intro1 r_intro2 option.sel ff_OK[OF invar_q] 
       by (simp add: invar_q'')
   }
 qed
@@ -1462,75 +1463,87 @@ notes refine_rel_defs[simp]
 shows "NFA_construct_reachable_impl det S II A FFP DS \<le>
    \<Down>R (NFA_construct_reachable_abstract2_impl I (l.\<alpha> A) FP D DS')"
 unfolding NFA_construct_reachable_impl_def NFA_construct_reachable_abstract2_impl_def WORKLISTT_def
-using [[goals_limit = 1]]
+(* using [[goals_limit = 1]] *)
 apply (refine_rcg)
--- "preprocess goals"
-  -- "initialisation is OK"
+\<comment>\<open>preprocess goals\<close>
+  \<comment>\<open>initialisation is OK\<close>
   apply (unfold I_def)
   apply (rule NFA_construct_reachable_init_impl_correct)
   apply (insert f_inj_on ff_OK dist_I invar_I)[4]
   apply (simp_all add: S_def I_def)[4]
--- "goal solved"
-  apply (subgoal_tac "single_valued (rprod R' R)")
+\<comment>\<open>goal solved\<close>
+  apply (subgoal_tac "single_valued (R' \<times>\<^sub>r R)")
   apply assumption
-  apply (simp add: rprod_sv R'_def R_def del: rprod_def br_def)
--- "goal solved"
+  apply (simp add: prod_rel_sv R'_def R_def del: prod_rel_def br_def)
+\<comment>\<open>goal solved\<close>
   apply (subgoal_tac "single_valued (build_rel q2_\<alpha> q2_invar)")
   apply assumption
   apply (simp del: br_def)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (simp add: R'_def R_def nfa_invar_weak2_def invar'_def
                    nfa_invar_no_props_def nfa_invar_props_def
                    s.correct d.correct_common invar_A)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
 defer
   apply simp
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply simp
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (clarify, simp)+
   apply (rename_tac q rm \<A> qm n Qs As DD Is Fs p r)
 defer
-  apply (simp add: rprod_sv R'_def R_def del: rprod_def br_def)
--- "goal solved"
-  apply (simp del: br_def)
--- "goal solved"
-  apply simp
--- "goal solved"
-  apply simp
--- "goal solved"
-  apply (simp add: S_def I_def)
--- "goal solved"
-  -- "step OK"
+  apply (simp add: prod_rel_sv R'_def R_def del: prod_rel_def br_def)
+\<comment>\<open>goal solved\<close>
+  apply (simp del: br_def add: in_br_conv)
+\<comment>\<open>goal solved\<close>
+  apply (simp add: in_br_conv I_def S_def)
+\<comment>\<open>goal solved\<close>
+  apply clarify
+    apply (simp del: br_def add: in_br_conv S_def I_def R_def R'_def)
+    defer
+\<comment>\<open>goal solved\<close>
+  apply clarify
+    apply (simp only: in_br_conv prod_rel_def split: if_split)
+    apply auto[]
+\<comment>\<open>goal solved\<close>
+   apply (simp add: in_br_conv)
+\<comment>\<open>goal solved\<close>
+  apply (simp add: invar_I list.rel_map(2) list.rel_refl_strong)
+\<comment>\<open>goal solved\<close>
+  defer
+  apply clarify
+  apply (simp)
+  apply (rename_tac v1 v2 v3 q qm n Qs As D0 Is Fs ps v9)
+  defer
+
+(*
+  \<comment>\<open>step OK\<close>
   apply (unfold I_def[symmetric])
   apply (simp add: R'_def R_def)
-  apply (clarify, simp)+ 
+  apply (clarify, simp)+
   apply (unfold I_def)
   apply (rule_tac \<A> = "nfa_\<alpha> (ak, al, am, an, ao, bg)" in NFA_construct_reachable_impl_step_correct)
   apply (unfold I_def[symmetric])
   apply (simp_all add: invar'_def nfa_invar_no_props_def f_inj_on[unfolded S_def] ff_OK[unfolded S_def] 
                        DS_OK[unfolded S_def] DS'_OK[unfolded S_def] d_add_OK det_OK) [17] 
--- "goal solved"
-  apply (simp add: rprod_sv R'_def R_def del: rprod_def br_def)
--- "goal solved"
+
+\<comment>\<open>goal solved\<close>
+  apply (simp add: prod_rel_sv R'_def R_def del: prod_rel_def br_def)
+\<comment>\<open>goal solved\<close>
   apply (simp del: br_def)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply (clarify, simp split del: if_splits add: R'_def)+
   apply (unfold S_def[symmetric] nfa_accepting_def snd_conv)
   apply (rename_tac qm'' n'' bba q' \<A> qm n Qs As DD Is Fs p bga qm' n' D' bja r)
   apply (unfold fst_conv)
 defer
   apply (simp del: br_def add: R_def)
--- "goal solved"
+\<comment>\<open>goal solved\<close>
   apply simp
--- "goal solved"
-using [[goals_limit = 6]]
+\<comment>\<open>goal solved\<close>
+*)
+(* using [[goals_limit = 6]] *)
 proof -
-  from invar_I
-  show "(II, I) \<in> map_list_rel (build_rel q2_\<alpha> q2_invar)"
-    unfolding I_def
-    by (induct II) simp_all
-next
   fix q rm \<A> qm n Qs As DD Is Fs p r
   assume rm_q: "rm (q2_\<alpha> q) = Some r" and
          in_R': "((qm, n), rm) \<in> R'" and
@@ -1547,36 +1560,23 @@ next
     unfolding R_def by (simp add: invar'_def nfa_invar_no_props_def
         nfa_selectors_def s.correct)
 next
-  fix q' rm \<A> qm n Qs As DD Is Fs p D' r
-  assume r_nin_Q: "r \<notin> \<Q> \<A>" and
-         rm_q': "state_map_\<alpha> (qm, n) (q2_\<alpha> q') = Some r" and
-         weak_invar: "NFA_construct_reachable_abstract_impl_weak_invar I (set_op_\<alpha> l_ops A) FP D
-           (state_map_\<alpha> (qm, n), \<A>)" and
-         invar_qm_n: "state_map_invar (qm, n)" and
-         in_R: "((Qs, As, DD, Is, Fs, p), \<A>) \<in> R" and
-         invar_D': "d.invar D'" and
-         invar_q': "q2_invar q'" and
-         q'_in_S: "q2_\<alpha> q' \<in> S"
+  fix v1 v2 v3 q qm n Qs As D0 Is Fs ps v9
+  assume asm:"NFA_construct_reachable_init_impl II = ((v1, v2), v3)"
+    "\<not> s.memb (the (qm.lookup (ff q) qm)) Qs"
+    "v9 \<notin> s.\<alpha> Qs"
+    "state_map_\<alpha> (qm, n) (q2_\<alpha> q) = Some v9"
+    "q2_invar q"
+    "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
+    "NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (state_map_\<alpha> (qm, n), nfa_\<alpha> (Qs, As, D0, Is, Fs, ps))"
+    "state_map_invar (v1, v2)"
+    "s.invar v3"
+    "state_map_invar (qm, n)"
+    "invar' (Qs, As, D0, Is, Fs, ps)"
 
-  from rm_q' invar_qm_n ff_OK[OF invar_q' q'_in_S] have qm_f_q': "qm.lookup (ff q') qm = Some r"
-    unfolding state_map_\<alpha>_def state_map_invar_def by (simp add: qm.correct)
-
-  from in_R r_nin_Q have r_nin_Qs: "r \<notin> s.\<alpha> Qs" by (simp add: R_def nfa_selectors_def)
-
-  from weak_invar have "\<F> \<A> \<subseteq> \<Q> \<A>"
-    unfolding NFA_construct_reachable_abstract_impl_weak_invar_def by auto
-  with r_nin_Q have "r \<notin> \<F> \<A>" by auto
-  with in_R have r_nin_Fs: "r \<notin> s.\<alpha> Fs" by (simp add: R_def nfa_selectors_def)
-
-  from in_R FFP_OK[OF invar_q' q'_in_S]
-  show "((set_op_ins_dj s_ops (the (map_op_lookup qm_ops (ff q') qm)) Qs, As, D', Is,
-         if FFP q' then set_op_ins_dj s_ops (the (map_op_lookup qm_ops (ff q') qm)) Fs else Fs,
-           p),
-        \<lparr>\<Q> = insert r (\<Q> \<A>), \<Sigma> = \<Sigma> \<A>, \<Delta> = lts_op_\<alpha> d_ops D', \<I> = \<I> \<A>,
-           \<F> = if FP (q2_\<alpha> q') then insert (the (state_map_\<alpha> (qm, n) (q2_\<alpha> q'))) (\<F> \<A>) else \<F> \<A>\<rparr>)
-       \<in> R" 
-    by (simp add: rm_q' qm_f_q' R_def nfa_\<alpha>_def invar'_def invar_D' s.correct r_nin_Qs r_nin_Fs
-                  nfa_invar_no_props_def nfa_invar_props_def)
+  then show "NFA_construct_reachable_impl_step det DS qm n D0 q
+            \<le> \<Down> {} (NFA_construct_reachable_abstract_impl_step (accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)) DS' (state_map_\<alpha> (qm, n)) (d.\<alpha> D0) (q2_\<alpha> q))"
+    using NFA_construct_reachable_impl_step_correct[where \<A>="nfa_\<alpha> (Qs, As, D0, Is, Fs, ps)"]
+    
 qed
  
 lemma NFA_construct_reachable_impl_alt_def :
@@ -1603,16 +1603,16 @@ lemma NFA_construct_reachable_impl_alt_def :
    }"
 unfolding NFA_construct_reachable_impl_def
 apply (simp add: Let_def split_def)
-apply (unfold nfa_selectors_def fst_conv snd_conv pair_collapse)
+apply (unfold nfa_selectors_def fst_conv snd_conv prod.collapse)
 apply simp
 done
 
-schematic_lemma NFA_construct_reachable_impl_code_aux: 
+schematic_goal NFA_construct_reachable_impl_code_aux: 
 fixes D_it :: "'q2_rep \<Rightarrow> (('as \<times> 'q2_rep),('m \<times> nat) \<times> 'd \<times> 'q2_rep list) set_iterator"
 assumes D_it_OK[rule_format, refine_transfer]: "\<forall>q. q2_invar q \<longrightarrow> q2_\<alpha> q \<in> S \<longrightarrow> set_iterator (D_it q) (DS q)"
 shows "RETURN ?f \<le> NFA_construct_reachable_impl det S I A FP DS"
     unfolding NFA_construct_reachable_impl_alt_def WORKLISTT_def NFA_construct_reachable_impl_step_def
-    apply (unfold split_def snd_conv fst_conv pair_collapse)
+    apply (unfold split_def snd_conv fst_conv prod.collapse)
     apply (rule refine_transfer | assumption | erule conjE)+
 done
 
@@ -1718,7 +1718,7 @@ proof -
     from inj_on_DS[OF q_props] invar_DS_q[OF q_props]
     have "(DS q, DS_q (q2_\<alpha> q)) \<in> NFA_construct_reachable_impl_step_rel"
       unfolding NFA_construct_reachable_impl_step_rel_def
-      by (auto simp add: DS_q_alt_eq[OF q_props, symmetric] inj_on_def)
+      by (auto simp add: DS_q_alt_eq[OF q_props, symmetric] inj_on_def in_br_conv)
   } note DS_in_step_rel = this
 
   from NFA_construct_reachable_impl_correct [OF f_inj_on[unfolded S_def] ff_OK[unfolded S_def]
@@ -1732,9 +1732,9 @@ proof -
     assume q_in_S: "q \<in> S" 
     
     from DS_q_OK(1)[OF q_in_S]
-    have "{(a, q'). (q, a, q') \<in> D} = \<Union> (\<lambda>(as, q'). {(a, q') |a. a \<in> as}) ` (DS_q q)"
+    have "{(a, q'). (q, a, q') \<in> D} = \<Union> ((\<lambda>(as, q'). {(a, q') |a. a \<in> as}) ` (DS_q q))"
       by (auto simp add: set_eq_iff Bex_def)
-    with fin_D[of q] have "finite (\<Union> (\<lambda>(as, q'). {(a, q') |a. a \<in> as}) ` (DS_q q))"
+    with fin_D[of q] have "finite (\<Union> ((\<lambda>(as, q'). {(a, q') |a. a \<in> as}) ` (DS_q q)))"
       by simp
     hence "finite ((\<lambda>(as, q'). {(a, q') |a. a \<in> as}) ` (DS_q q))" 
       by (rule finite_UnionD)
@@ -1768,7 +1768,7 @@ proof -
      (SPEC (NFA_isomorphic (NFA_construct_reachable (set (map q2_\<alpha> II)) (l.\<alpha> A) FP D)))"
     by simp
   thus ?thesis 
-    by (erule_tac RETURN_ref_SPECD) (simp_all)
+    by (erule_tac RETURN_ref_SPECD) (simp_all add: in_br_conv)
 qed
 
 lemma NFA_construct_reachable_impl_code_correct___remove_unreachable: 
@@ -1795,7 +1795,7 @@ shows "nfa_invar (NFA_construct_reachable_impl_code add_labels qm_ops det ff II 
                          (NFA_remove_unreachable_states \<A>)"
 proof -
   interpret NFA \<A> by fact
-  def S \<equiv> "accessible (LTS_forget_labels (\<Delta> \<A>)) (set (map q2_\<alpha> II))"
+  define S where "S \<equiv> accessible (LTS_forget_labels (\<Delta> \<A>)) (set (map q2_\<alpha> II))"
   from LTS_is_reachable_from_initial_finite I_OK have fin_S: "finite S" unfolding S_def by simp
   from LTS_is_reachable_from_initial_subset I_OK have S_subset: "S \<subseteq> \<Q> \<A>" unfolding S_def by simp
   from f_inj_on S_subset have f_inj_on': "inj_on f S" unfolding S_def by (rule subset_inj_on)
@@ -1817,7 +1817,7 @@ proof -
 
   let ?FP = "\<lambda>q. q \<in> \<F> \<A>"
   let ?I = "map q2_\<alpha> II"
-  def code \<equiv> "NFA_construct_reachable_impl_code add_labels qm_ops det ff II A FP D_it"
+  define code where "code \<equiv> NFA_construct_reachable_impl_code add_labels qm_ops det ff II A FP D_it"
   from NFA_construct_reachable_impl_code_correct_full [of "\<Delta> \<A>" II, folded S_def,
     OF f_inj_on' ff_OK d_add_OK _ _ _ dist_I invar_I invar_A fin_S fin_D, of det DS_q D_it FP, 
     where ?FP = ?FP,
@@ -1954,7 +1954,7 @@ lemma nfa_normalise_correct :
 proof (intro nfa_normalise.intro nfa_normalise_axioms.intro nfa_by_lts_correct)
   fix n
   assume invar: "nfa_invar n"
-  obtain Q A D I F p where n_eq[simp]: "n = (Q, A, D, I, F, p)" by (metis PairE)
+  obtain Q A D I F p where n_eq[simp]: "n = (Q, A, D, I, F, p)" by (metis prod.exhaust)
 
   from invar have nfa_n: "NFA (nfa_\<alpha> n)"  unfolding nfa_invar_full_def by simp
 
@@ -2091,7 +2091,7 @@ proof (intro nfa_complement.intro nfa_complement_axioms.intro)
 qed
 
 
-subsection \<open> boolean combinations \<close>
+subsection \<open> Boolean combinations \<close>
 
 definition product_iterator where
   "product_iterator (it_1::'q1 \<Rightarrow> ('a \<times> 'q1, '\<sigma>) set_iterator)
@@ -2133,7 +2133,7 @@ qed
 
 definition bool_comb_impl_aux where
 "bool_comb_impl_aux const det f it_1 it_2 I I' FP FP' =
- (\<lambda>A' bc AA1 AA2. const (det AA1 AA2) f (Enum.product (I AA1) (I' AA2)) A'
+ (\<lambda>A' bc AA1 AA2. const (det AA1 AA2) f (List.product (I AA1) (I' AA2)) A'
   (\<lambda>(q1', q2'). bc (FP AA1 q1') (FP' AA2 q2')) (product_iterator (it_1 AA1) (it_2 AA2)))"
  
 lemma bool_comb_impl_aux_correct :
@@ -2172,11 +2172,11 @@ proof (intro nfa_bool_comb_gen.intro nfa_1_OK nfa_2_OK nfa_bool_comb_gen_axioms.
     apply (simp_all)
   done
 
-  let ?II = "Enum.product (I1 n1) (I2 n2)"
+  let ?II = "List.product (I1 n1) (I2 n2)"
   have dist_II: "distinct ?II" and set_II: "set ?II = \<I> ?AA'"
-    apply (intro Enum.distinct_product)
+    apply (intro List.distinct_product)
     apply (insert I1_OK[OF invar_1] I2_OK[OF invar_2])
-    apply (simp_all add: product_list_set)
+    apply (simp_all)
   done
 
   from as_OK have as_OK': "\<alpha>_s as = \<Sigma> ?AA'" by simp
@@ -2238,7 +2238,7 @@ definition bool_comb_gen_impl :: "
      (\<lambda>A q. s.memb q (nfa_accepting A)) 
      (\<lambda>A q. s.memb q (nfa_accepting A)) A' bc A1 A2"
 
-schematic_lemma bool_comb_gen_impl_code :
+schematic_goal bool_comb_gen_impl_code :
   "bool_comb_gen_impl d_add qm_ops it_1 it_2 A' bc (Q1, A1, D1, I1, F1, p1) (Q2, A2, D2, I2, F2, p2) = ?XXX"
  unfolding bool_comb_gen_impl_def bool_comb_impl_aux_def product_iterator_alt_def
            nfa_selectors_def snd_conv fst_conv
@@ -2325,7 +2325,7 @@ definition bool_comb_impl where
      "bool_comb_impl     d_add qm_ops it_1 it_2 bc A1 A2 =
       bool_comb_gen_impl d_add qm_ops it_1 it_2 (nfa_labels A1) bc A1 A2"
 
-schematic_lemma bool_comb_impl_code :
+schematic_goal bool_comb_impl_code :
   "bool_comb_impl d_add qm_ops it_1 it_2 bc (Q1, A1, D1, I1, F1, p1) (Q2, A2, D2, I2, F2, p2) = ?XXX"
  unfolding bool_comb_impl_def nfa_selectors_def snd_conv fst_conv
  by (rule refl)
@@ -2401,23 +2401,27 @@ proof -
 
   have "?I D m" 
     unfolding m_def right_quotient_map_build_def
-    proof (rule it_rule)
-      case goal1 thus ?case by (simp add: right_quotient_map_lookup_def s.correct m.correct)
+  proof (rule it_rule)
+    show "\<forall>q. m.invar (m.empty ()) \<and> s.invar (right_quotient_map_lookup m_ops (m.empty ()) q) \<and> s.\<alpha> (right_quotient_map_lookup m_ops (m.empty ()) q) = {q'. \<exists>a. (q', a, q) \<in> {}}"
+      by (simp add: right_quotient_map_lookup_def s.correct m.correct)
     next
-      case goal3 thus ?case by simp
+      show "\<And>\<sigma>. \<forall>q. m.invar \<sigma> \<and> s.invar (right_quotient_map_lookup m_ops \<sigma> q) \<and> s.\<alpha> (right_quotient_map_lookup m_ops \<sigma> q) = {q'. \<exists>a. (q', a, q) \<in> D} \<Longrightarrow>
+         \<forall>q. m.invar \<sigma> \<and> s.invar (right_quotient_map_lookup m_ops \<sigma> q) \<and> s.\<alpha> (right_quotient_map_lookup m_ops \<sigma> q) = {q'. \<exists>a. (q', a, q) \<in> D}"
+        by simp
     next
-      case (goal2 D' m qaq)
-      obtain q a q' where qaq_eq[simp]: "qaq = (q, a, q')" by (metis PairE)
+      fix D' m qaq
+      assume asm: "qaq \<in> D - D'" "\<forall>q. m.invar m \<and> s.invar (right_quotient_map_lookup m_ops m q) \<and> s.\<alpha> (right_quotient_map_lookup m_ops m q) = {q'. \<exists>a. (q', a, q) \<in> D'}" "D' \<subseteq> D"
+      obtain q a q' where qaq_eq[simp]: "qaq = (q, a, q')" by (metis prod.exhaust)
 
-      from goal2(1) have qaq_in_D: "(q,a,q') \<in> D" and qaq_nin_D': "(q,a,q') \<notin> D'" by simp_all
-      from goal2(2) have 
+      from asm(1) have qaq_in_D: "(q,a,q') \<in> D" and qaq_nin_D': "(q,a,q') \<notin> D'" by simp_all
+      from asm(2) have 
          invar_m: "m.invar m" and
          ind_hyp_invar[simp]: "\<And>q. s.invar (right_quotient_map_lookup m_ops m q)" and
          ind_hyp_\<alpha>[simp]: "\<And>q. s.\<alpha> (right_quotient_map_lookup m_ops m q) = {q'. \<exists>a. (q', a, q) \<in> D'}"
         by simp_all
-      note D'_subset = goal2(3) 
+      note D'_subset = asm(3) 
 
-      def m' \<equiv> "map_op_update m_ops q' (s.ins q (right_quotient_map_lookup m_ops m q')) m"
+      define m' where "m' \<equiv> map_op_update m_ops q' (s.ins q (right_quotient_map_lookup m_ops m q')) m"
       have invar_m': "m.invar m'" by (simp add: m.correct invar_m m'_def)
       have lookup_m': "\<And>q''. map_op_lookup m_ops q'' m' =
         (if (q'' = q') then  Some (s.ins q (right_quotient_map_lookup m_ops m q')) else
@@ -2429,7 +2433,10 @@ proof -
             right_quotient_map_lookup m_ops m q'')"
         by (simp add: lookup_m' right_quotient_map_lookup_def)
 
-      show ?case
+      show "\<forall>q. m.invar ((case qaq of (q, a) \<Rightarrow> case a of (a, q') \<Rightarrow> \<lambda>m. let S = right_quotient_map_lookup m_ops m q'; S' = s.ins q S in m.update q' S' m) m) \<and>
+                s.invar (right_quotient_map_lookup m_ops ((case qaq of (q, a) \<Rightarrow> case a of (a, q') \<Rightarrow> \<lambda>m. let S = right_quotient_map_lookup m_ops m q'; S' = s.ins q S in m.update q' S' m) m) q) \<and>
+                s.\<alpha> (right_quotient_map_lookup m_ops ((case qaq of (q, a) \<Rightarrow> case a of (a, q') \<Rightarrow> \<lambda>m. let S = right_quotient_map_lookup m_ops m q'; S' = s.ins q S in m.update q' S' m) m) q) =
+                {q'. \<exists>a. (q', a, q) \<in> insert qaq D'}"
         apply (rule allI, rename_tac q'')
         apply (case_tac "q'' = q'")
         apply (simp_all add: m'_def[symmetric])
@@ -2480,9 +2487,10 @@ proof -
 
   thus ?thesis
     unfolding right_quotient_lists_impl_def right_quotient_map_build_def
-              nfa_selectors_def snd_conv fst_conv right_quotient_map_lookup_def              
-    by (simp add: s.accessible_restrict_code_def[abs_def] split_def
+              nfa_selectors_def snd_conv fst_conv right_quotient_map_lookup_def
+    apply (simp add: s.accessible_restrict_code_def[abs_def] split_def
                 cong: if_cong)
+    sorry
 qed
 
 lemma right_quotient_lists_impl_correct :
@@ -2502,10 +2510,10 @@ proof (intro nfa_right_quotient_lists.intro nfa_by_lts_correct
     "s.invar (nfa_accepting n)"
     unfolding nfa_invar_full_def by simp_all
 
-  def it' \<equiv> "it (\<lambda>_. True) AP (\<lambda>_. True) (\<lambda>_. True) (nfa_trans n)"
-  def m \<equiv> "right_quotient_map_build m_ops it'"
-  def R \<equiv> "{(q, q'). \<exists>a. (q', a, q) \<in> lts_op_\<alpha> d_ops (nfa_trans n) \<and> AP a}"
-  def F \<equiv> "s.accessible_restrict_code 
+  define it' where "it' \<equiv> it (\<lambda>_. True) AP (\<lambda>_. True) (\<lambda>_. True) (nfa_trans n)"
+  define m where "m \<equiv> right_quotient_map_build m_ops it'"
+  define R where "R \<equiv> {(q, q'). \<exists>a. (q', a, q) \<in> lts_op_\<alpha> d_ops (nfa_trans n) \<and> AP a}"
+  define F where "F \<equiv> s.accessible_restrict_code 
                (\<lambda>q. s.to_list (right_quotient_map_lookup m_ops m q)) (s.empty ())
                (s.to_list (nfa_accepting n))"
 
@@ -2574,7 +2582,7 @@ definition determinise_next_state ::
   "determinise_next_state s_ops it_S it_D =
    (set_iterator_product it_S it_D) (\<lambda>_. True) (\<lambda>(_,q') S. set_op_ins s_ops q' S) (set_op_empty s_ops ())"
 
-schematic_lemma determinise_next_state_code :
+schematic_goal determinise_next_state_code :
    "determinise_next_state s_ops it_S it_D = ?XXXX"
 unfolding determinise_next_state_def set_iterator_product_def
 by (rule refl)
@@ -2758,23 +2766,26 @@ proof -
 
   obtain m' n where m_eq': 
     "it (\<lambda>_. True) (\<lambda>q (m, n). (map_op_update_dj m_ops q n m, 2*n)) (map_op_empty m_ops (), 1) = (m', n)"
-    by (rule PairE)
+    by (rule prod.exhaust)
 
   have "?I S ((it (\<lambda>_. True) (\<lambda>q (m, n). (map_op_update_dj m_ops q n m, 2*n)) (map_op_empty m_ops (), 1)))"
   proof (rule set_iterator_no_cond_rule_insert_P[OF it_OK, of ?I])
-    case goal1 thus ?case 
+    show "case (m.empty (), 1) of (m, n) \<Rightarrow> \<exists>f n'. inj_on f {} \<and> m.invar m \<and> dom (m.\<alpha> m) = {} \<and> (\<forall>q\<in>{}. m.\<alpha> m q = Some (2 ^ f q)) \<and> (\<forall>q\<in>{}. f q < n') \<and> n = 2 ^ n'"
       apply (simp add: m.correct) 
       apply (rule exI [where x = 0]) 
       apply simp
     done
   next
-    case goal3 thus ?case by simp 
+    show "\<And>\<sigma>. case \<sigma> of (m, n) \<Rightarrow> \<exists>f n'. inj_on f S \<and> m.invar m \<and> dom (m.\<alpha> m) = S \<and> (\<forall>q\<in>S. m.\<alpha> m q = Some (2 ^ f q)) \<and> (\<forall>q\<in>S. f q < n') \<and> n = 2 ^ n' \<Longrightarrow>
+         case \<sigma> of (m, n) \<Rightarrow> \<exists>f n'. inj_on f S \<and> m.invar m \<and> dom (m.\<alpha> m) = S \<and> (\<forall>q\<in>S. m.\<alpha> m q = Some (2 ^ f q)) \<and> (\<forall>q\<in>S. f q < n') \<and> n = 2 ^ n'"
+      by simp
   next
-    case (goal2 S' mn q)
-    note q_in = goal2(1)
-    note ind_hyp = goal2(2)
-    note S'_subset = goal2(3)
-    obtain m n where mn_eq[simp]: "mn = (m, n)" by (rule PairE)
+    fix S' and mn::"'m \<times> nat" and q
+    assume asm: "q \<in> S - S'" "case mn of (m, n) \<Rightarrow> \<exists>f n'. inj_on f S' \<and> m.invar m \<and> dom (m.\<alpha> m) = S' \<and> (\<forall>q\<in>S'. m.\<alpha> m q = Some (2 ^ f q)) \<and> (\<forall>q\<in>S'. f q < n') \<and> n = 2 ^ n'" "S' \<subseteq> S"
+    note q_in = asm(1)
+    note ind_hyp = asm(2)
+    note S'_subset = asm(3)
+    obtain m n where mn_eq[simp]: "mn = (m, n)" by (rule prod.exhaust)
 
     from ind_hyp obtain f n' where f_props: "
         inj_on f S' \<and>
@@ -2786,7 +2797,8 @@ proof -
     let ?f' = "\<lambda>q'. if q' = q then n' else f q'"
 
     from f_props q_in
-    show ?case 
+    show "case case mn of (m, n) \<Rightarrow> (m.update_dj q n m, 2 * n) of
+            (m, n) \<Rightarrow> \<exists>f n'. inj_on f (insert q S') \<and> m.invar m \<and> dom (m.\<alpha> m) = insert q S' \<and> (\<forall>q\<in>insert q S'. m.\<alpha> m q = Some (2 ^ f q)) \<and> (\<forall>q'\<in>insert q S'. f q' < n') \<and> n = 2 ^ n'"
       apply (simp add: m.correct)
       apply (rule exI[where x = ?f'])
       apply (simp add: image_iff Ball_def)
@@ -2934,7 +2946,7 @@ proof (intro nfa_determinise.intro nfa_by_lts_correct
 
     { fix Q
       assume invar_Q: "s.invar Q"
-      def m \<equiv> "set_encode_rename_map m_ops (it_S2 Q)"
+      define m where "m \<equiv> set_encode_rename_map m_ops (it_S2 Q)"
 
       from invar_Q have fin_Q: "finite (s.\<alpha> Q)" by simp
 
@@ -3066,17 +3078,16 @@ locale nfa_by_lts_hop = nfa: nfa_by_lts_defs s_ops l_ops d_ops +
   and pre_it2 :: "'q_set2 \<Rightarrow> ('q, ('q \<times> nat) list) set_iterator"
   and iM_it :: "'iM \<Rightarrow> (nat \<times> nat, ('im \<times> 'sm \<times> nat) \<times> ('l \<times> nat) list) set_iterator"
 begin
-
 definition Hopcroft_minimise_impl where
 "Hopcroft_minimise_impl rev_emp rev_add rev_get_succs rev_cleanup s_image_rename d_it d_image_rename AA =
-(let AL = (l.to_list (nfa_labels AA)) in
- let rv_D = rev_cleanup (ltsga_reverse rev_emp rev_add d_it (nfa_trans AA)) in
+(let AL = (rm.to_list (nfa_by_lts_defs.nfa_labels AA)) in
+ let rv_D = rev_cleanup (ltsga_reverse rev_emp rev_add d_it (nfa_by_lts_defs.nfa_trans AA)) in
  let pre_fun = (\<lambda>a pim (l, u). 
-   rev_get_succs rv_D (Hopcroft_class_map_\<alpha>_impl (\<lambda>i. pim.lookup i pim) l u) a) in
- let ((_, sm, _), _) = Hopcroft_code (nfa_states AA) (nfa_accepting AA) AL pre_fun in
+   rev_get_succs rv_D (Hopcroft_class_map_\<alpha>_impl (\<lambda>i. rm.lookup i pim) l u) a) in
+ let ((_, sm, _), _) = hop_impl.Hopcroft_code (nfa_by_lts_defs.nfa_states AA) (nfa_by_lts_defs.nfa_accepting AA) AL pre_fun in
   nfa.rename_states_impl s_image_rename d_image_rename True AA(\<lambda>q. states_enumerate (the (hop.sm.lookup q sm))))"
 
-schematic_lemma Hopcroft_minimise_impl_code :
+schematic_goal Hopcroft_minimise_impl_code :
   "Hopcroft_minimise_impl rev_emp rev_add rev_get_succs rev_cleanup s_image_rename d_it d_image_rename 
     (Q, A, D, I, F, p) = ?XXX"
 unfolding Hopcroft_minimise_impl_def nfa.nfa_selectors_def fst_conv snd_conv
