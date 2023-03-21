@@ -11,10 +11,12 @@ imports Main
         
 begin
 
+(*
 instantiation "bool" :: linorder
 begin
   instance by (intro_classes, auto)
 end
+*)
 
 definition lexord_lexord_less where
   "lexord_lexord_less (l1::('a::linorder) list) l2 = ((l1, l2) \<in> lexord {(x,y) |x y. x < y})"
@@ -48,7 +50,7 @@ qed
 lemma lexord_lexord_less_linear :
 shows "lexord_lexord_less l1 l2 \<or> (l1 = l2) \<or> lexord_lexord_less l2 l1"
 proof -
-  def R \<equiv> "{(x::('a::linorder),y::'a). x < y}"
+  define R where "R \<equiv> {(x::('a::linorder),y::'a). x < y}"
   have R_linear : "\<forall>a b. (a, b) \<in> R \<or> a = b \<or> (b, a) \<in> R"
     unfolding R_def trans_def by auto
   note this_linear = lexord_linear[OF R_linear]
@@ -115,13 +117,13 @@ begin
   qed
 end
 
-interpretation label_set!: presburger_label_set_cache_by_map_set rs_ops rm_ops rs_image
+interpretation label_set: presburger_label_set_cache_by_map_set rs_ops rm_ops rs_image
   by (simp add: presburger_label_set_cache_by_map_set_def
                 rs_ops_unfold rs_image_impl rsr.StdSet_axioms rmr.StdMap_axioms)
 
 lemmas set_cache_impl = label_set.presburger_label_set_cache_OK
 
-interpretation rs_pres! : 
+interpretation rs_pres: 
   presburger_locale rs_\<alpha> rm_invar rm_empty 
     "presburger_label_set_cache_by_map_set.c_\<alpha> rs_ops rm_ops rs_image"
     "presburger_label_set_cache_by_map_set.c_invar rs_ops rm_ops" rs_nfa_ops rs_dfa_construct_reachable_fun 
