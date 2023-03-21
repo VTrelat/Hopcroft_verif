@@ -52,7 +52,7 @@
             -   :white_check_mark: repaired theory `NFAGA` ~~is broken~~
             -   :x: theory `NFAByLTS` is broken
             -   :x: theory `AccessibleImpl` is broken
-        -   :x: theory `Presburger_Automata` is broken
+        -   :white_check_mark: repaired theory `Presburger_Automata` ~~is broken~~
 
 ---
 
@@ -93,3 +93,5 @@
 -   `br_single_valued` --> `br_sv`
 -   `rprod` --> `prod_rel`, adjusted with `prod_rel_syn`
 -   `pair_collapse` --> `prod.collapse`
+-   syntax of the form `xs[i := x]` for list updates --> `list_update xs i x`
+-   `strong_UN_cong` --> `SUP_cong_simp`
