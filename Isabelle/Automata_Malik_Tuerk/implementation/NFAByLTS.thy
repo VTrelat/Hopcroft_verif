@@ -1463,7 +1463,7 @@ notes refine_rel_defs[simp]
 shows "NFA_construct_reachable_impl det S II A FFP DS \<le>
    \<Down>R (NFA_construct_reachable_abstract2_impl I (l.\<alpha> A) FP D DS')"
 unfolding NFA_construct_reachable_impl_def NFA_construct_reachable_abstract2_impl_def WORKLISTT_def
-(* using [[goals_limit = 1]] *)
+using [[goals_limit = 14]]
 apply (refine_rcg)
 \<comment>\<open>preprocess goals\<close>
   \<comment>\<open>initialisation is OK\<close>
@@ -1484,7 +1484,8 @@ apply (refine_rcg)
                    nfa_invar_no_props_def nfa_invar_props_def
                    s.correct d.correct_common invar_A)
 \<comment>\<open>goal solved\<close>
-defer
+  using invar_I map_in_list_rel_conv apply blast
+\<comment>\<open>goal solved\<close>
   apply simp
 \<comment>\<open>goal solved\<close>
   apply simp
@@ -1502,19 +1503,17 @@ defer
     apply (simp del: br_def add: in_br_conv S_def I_def R_def R'_def)
     defer
 \<comment>\<open>goal solved\<close>
-  apply clarify
-    apply (simp only: in_br_conv prod_rel_def split: if_split)
-    apply auto[]
+     apply clarify
+     apply (simp add: in_br_conv split: if_split)
+     apply auto[]
 \<comment>\<open>goal solved\<close>
-   apply (simp add: in_br_conv)
-\<comment>\<open>goal solved\<close>
-  apply (simp add: invar_I list.rel_map(2) list.rel_refl_strong)
+  apply (simp add: in_br_conv)
 \<comment>\<open>goal solved\<close>
   defer
   apply clarify
   apply (simp)
-  apply (rename_tac v1 v2 v3 q qm n Qs As D0 Is Fs ps v9)
-  defer
+  apply (rename_tac q qm n Qs As D0 Is Fs ps r)
+
 
 (*
   \<comment>\<open>step OK\<close>
@@ -1560,25 +1559,70 @@ proof -
     unfolding R_def by (simp add: invar'_def nfa_invar_no_props_def
         nfa_selectors_def s.correct)
 next
-  fix v1 v2 v3 q qm n Qs As D0 Is Fs ps v9
-  assume asm:"NFA_construct_reachable_init_impl II = ((v1, v2), v3)"
+  fix q qm n Qs As D0 Is Fs ps r
+  assume asm:
     "\<not> s.memb (the (qm.lookup (ff q) qm)) Qs"
-    "v9 \<notin> s.\<alpha> Qs"
-    "state_map_\<alpha> (qm, n) (q2_\<alpha> q) = Some v9"
+    "r \<notin> s.\<alpha> Qs"
+    "state_map_\<alpha> (qm, n) (q2_\<alpha> q) = Some r"
     "q2_invar q"
     "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
     "NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (state_map_\<alpha> (qm, n), nfa_\<alpha> (Qs, As, D0, Is, Fs, ps))"
-    "state_map_invar (v1, v2)"
-    "s.invar v3"
     "state_map_invar (qm, n)"
     "invar' (Qs, As, D0, Is, Fs, ps)"
+  
+  have map_I:"q2_\<alpha> ` set II = set I" using I_def by simp
+  have inj_on_f:"inj_on f (accessible (LTS_forget_labels D) (set I))"
+    using S_def f_inj_on by blast
+  have q2_1:"\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (set I)\<rbrakk> \<Longrightarrow> ff q = f (q2_\<alpha> q)"
+    by (simp add: S_def ff_OK)
+  have q2_2:"\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (set I)\<rbrakk> \<Longrightarrow> q2_invar q"
+    by simp
+  have q2_3:"\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (set I)\<rbrakk> \<Longrightarrow> q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (set I)"
+    by simp
+  have add_lb:"dlts_add_label_set d.\<alpha> d.invar a_\<alpha> a_invar (add_labels True)"
+              "lts_add_label_set d.\<alpha> d.invar a_\<alpha> a_invar (add_labels False)"
+    using d_add_OK by blast+
+  have det:"det \<Longrightarrow> LTS_is_deterministic D"
+    using det_OK by blast
+  have acc:"\<And>q a q'. q \<in> accessible (LTS_forget_labels D) (set I) \<Longrightarrow> ((q, a, q') \<in> D) = (\<exists>as. a \<in> as \<and> (as, q') \<in> DS' q)"
+           "\<And>q a q'. q \<in> accessible (LTS_forget_labels D) (set I) \<Longrightarrow> q \<in> accessible (LTS_forget_labels D) (set I)"
+    by (simp add: DS'_OK S_def)
+  have invar_qm_n:"state_map_invar (qm, n)"
+    using asm(7) by blast
+  have D0_nfa: "d.\<alpha> D0 = \<Delta> (nfa_\<alpha> (Qs, As, D0, Is, Fs, ps))"
+    by simp
+  have invar_D0: "d.invar D0"
+    using asm(8) invar'_def nfa_invar_no_props_def by simp
+  note some_r=asm(4)
+  have r_not_in_Q:"r \<notin> \<Q> (nfa_\<alpha> (Qs, As, D0, Is, Fs, ps))"
+    by (simp add: asm(2))
+  have q2_acc:"q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (set I)"
+    using asm(5,6) map_I by simp
+  have nfa_construct_mem:"(DS q, DS' (q2_\<alpha> q)) \<in> NFA_construct_reachable_impl_step_rel"
+    by (simp add: DS_OK S_def q2_acc asm(4))
+  have nfa_construct_invar:"NFA_construct_reachable_abstract_impl_weak_invar I (l.\<alpha> A) FP D (state_map_\<alpha> (qm, n), nfa_\<alpha> (Qs, As, D0, Is, Fs, ps))"
+    by (simp add: I_def asm(6))
 
-  then show "NFA_construct_reachable_impl_step det DS qm n D0 q
+  from NFA_construct_reachable_impl_step_correct[of D II det DS' "state_map_\<alpha> (qm, n)" qm n "d.\<alpha> D0" D0 "nfa_\<alpha> (Qs, As, D0, Is, Fs, ps)" q r DS A FP]
+  have aux:"NFA_construct_reachable_impl_step det DS qm n D0 q
+       \<le> \<Down> (br state_map_\<alpha> state_map_invar \<times>\<^sub>r br d.\<alpha> d.invar \<times>\<^sub>r \<langle>br q2_\<alpha> q2_invar\<rangle>list_rel)
+           (NFA_construct_reachable_abstract_impl_step (accessible (LTS_forget_labels D) (set I)) DS' (state_map_\<alpha> (qm, n)) (d.\<alpha> D0) (q2_\<alpha> q))"
+    using D0_nfa DS'_OK I_def S_def asm(3) asm(6) d_add_OK(1) d_add_OK(2) det_OK f_inj_on ff_OK invar_D0 invar_qm_n nfa_construct_mem q2_acc r_not_in_Q some_r by fastforce
+
+  (* have empty:"(br state_map_\<alpha> state_map_invar \<times>\<^sub>r br d.\<alpha> d.invar \<times>\<^sub>r \<langle>br q2_\<alpha> q2_invar\<rangle>list_rel) = {}" *)
+    (* apply simp *)
+    (* apply (intro impI allI) *)
+    (* apply (unfold state_map_invar_def) *)
+    (* apply (auto) *)
+    (* sorry *)
+
+  show "NFA_construct_reachable_impl_step det DS qm n D0 q
             \<le> \<Down> {} (NFA_construct_reachable_abstract_impl_step (accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)) DS' (state_map_\<alpha> (qm, n)) (d.\<alpha> D0) (q2_\<alpha> q))"
-    using NFA_construct_reachable_impl_step_correct[where \<A>="nfa_\<alpha> (Qs, As, D0, Is, Fs, ps)"]
-    
+    apply (simp_all add: map_I)
+    using aux unfolding conc_fun_def
+    sorry
 qed
- 
+
 lemma NFA_construct_reachable_impl_alt_def :
   "NFA_construct_reachable_impl det S I A FP DS =
    do {
