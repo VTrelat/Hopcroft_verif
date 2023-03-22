@@ -51,9 +51,10 @@
             -   :white_check_mark: repaired theory `NFAConstruct`
             -   :white_check_mark: repaired theory `NFASpec` ~~is broken~~
             -   :white_check_mark: repaired theory `NFAGA` ~~is broken~~
-            -   :x: repaired theory `AccessibleImpl` ~~is broken~~
-            -   :x: theory `NFAByLTS` is broken
+            -   :white_check_mark: repaired theory `AccessibleImpl` ~~is broken~~
             -   :x: theory `RBT_Presburger_Impl` is broken
+            -   :x: theory `NFAByLTS` is broken
+                -   proof of lemma `NFA_construct_reachable_impl_correct` is broken and I cannot fix it
 
 ---
 
