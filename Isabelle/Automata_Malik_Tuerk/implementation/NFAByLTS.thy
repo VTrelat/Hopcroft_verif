@@ -3122,14 +3122,15 @@ locale nfa_by_lts_hop = nfa: nfa_by_lts_defs s_ops l_ops d_ops +
   and pre_it2 :: "'q_set2 \<Rightarrow> ('q, ('q \<times> nat) list) set_iterator"
   and iM_it :: "'iM \<Rightarrow> (nat \<times> nat, ('im \<times> 'sm \<times> nat) \<times> ('l \<times> nat) list) set_iterator"
 begin
+
 definition Hopcroft_minimise_impl where
 "Hopcroft_minimise_impl rev_emp rev_add rev_get_succs rev_cleanup s_image_rename d_it d_image_rename AA =
-(let AL = (rm.to_list (nfa_by_lts_defs.nfa_labels AA)) in
+(let AL = (nfa.l.to_list (nfa_by_lts_defs.nfa_labels AA)) in
  let rv_D = rev_cleanup (ltsga_reverse rev_emp rev_add d_it (nfa_by_lts_defs.nfa_trans AA)) in
  let pre_fun = (\<lambda>a pim (l, u). 
-   rev_get_succs rv_D (Hopcroft_class_map_\<alpha>_impl (\<lambda>i. rm.lookup i pim) l u) a) in
- let ((_, sm, _), _) = hop_impl.Hopcroft_code (nfa_by_lts_defs.nfa_states AA) (nfa_by_lts_defs.nfa_accepting AA) AL pre_fun in
-  nfa.rename_states_impl s_image_rename d_image_rename True AA(\<lambda>q. states_enumerate (the (hop.sm.lookup q sm))))"
+   rev_get_succs rv_D (Hopcroft_class_map_\<alpha>_impl (\<lambda>i. hop.pim.lookup i pim) l u) a) in
+ let ((_, sm, _), _) = hop.Hopcroft_code (nfa_by_lts_defs.nfa_states AA) (nfa_by_lts_defs.nfa_accepting AA) AL pre_fun in
+  nfa.rename_states_impl s_image_rename d_image_rename True AA (\<lambda>q. states_enumerate (the (hop.sm.lookup q sm))))"
 
 schematic_goal Hopcroft_minimise_impl_code :
   "Hopcroft_minimise_impl rev_emp rev_add rev_get_succs rev_cleanup s_image_rename d_it d_image_rename 
@@ -3142,52 +3143,54 @@ lemma Hopcroft_minimise_impl_correct :
   and succ_it :: "('q,'l,'q_set,'d'') lts_succ_it"
   and rev_cleanup :: "'lts1 \<Rightarrow> 'lts2"
 assumes wf_target: "nfa_by_lts_defs s_ops' l_ops d_ops'" 
-    and s_image_rename_OK: "set_image s.\<alpha> s.invar (set_op_\<alpha> s_ops') (set_op_invar s_ops') s_image_rename"
-    and d_image_rename_OK: "dlts_image d.\<alpha> d.invar (lts_op_\<alpha> d_ops') (lts_op_invar d_ops') d_image_rename"
-    and d_it_OK: "lts_iterator (lts_op_\<alpha> d_ops) (lts_op_invar d_ops) d_it"
+    and s_image_rename_OK: "set_image nfa.s.\<alpha> nfa.s.invar (set_op_\<alpha> s_ops') (set_op_invar s_ops') s_image_rename"
+    and d_image_rename_OK: "dlts_image nfa.d.\<alpha> nfa.d.invar (lts_op_\<alpha> d_ops') (lts_op_invar d_ops') d_image_rename"
+    and d_it_OK: "lts_iterator nfa.d.\<alpha> nfa.d.invar d_it"
     and rev_emp_OK: "lts_empty rev_\<alpha> rev_invar rev_emp"
     and rev_add_OK: "lts_add rev_\<alpha> rev_invar rev_add"
     and rev_get_succs_OK: "lts_get_succ_set rev2_\<alpha> rev2_invar s2_\<alpha> s2_invar rev_get_succs"
     and rev_cleanup_OK: "lts_copy rev_\<alpha> rev_invar rev2_\<alpha> rev2_invar rev_cleanup"
-shows "dfa_minimise nfa_\<alpha> nfa_invar            
-           (nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops') 
+  shows "dfa_minimise
+           (nfa_by_lts_defs.nfa_\<alpha> s_ops l_ops d_ops)
+           (nfa_by_lts_defs.nfa_invar s_ops l_ops d_ops)
+           (nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops')
            (nfa_by_lts_defs.nfa_invar s_ops' l_ops d_ops') 
        (Hopcroft_minimise_impl rev_emp rev_add rev_get_succs rev_cleanup s_image_rename d_it d_image_rename)"
-proof (intro dfa_minimise.intro nfa_by_lts_correct
+proof (intro dfa_minimise.intro nfa_by_lts_defs.nfa_by_lts_correct
              dfa_minimise_axioms.intro)
+  from nfa.nfa_by_lts_defs_axioms show "nfa_by_lts_defs s_ops l_ops d_ops" .
+  from wf_target show "nfa_by_lts_defs s_ops' l_ops d_ops'" .
 
-  from wf_target show "nfa (nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops')
-     (nfa_by_lts_defs.nfa_invar s_ops' l_ops d_ops')"
-     by (rule_tac nfa_by_lts_defs.nfa_by_lts_correct)
+  (* from wf_target show "nfa (nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops') *)
+     (* (nfa_by_lts_defs.nfa_invar s_ops' l_ops d_ops')" *)
+     (* by (rule_tac nfa_by_lts_defs.nfa_by_lts_correct) *)
 
   fix AA
-  assume invar_AA: "nfa_invar AA"
-     and DFA_AA: "DFA (nfa_\<alpha> AA)"
-     and AA_initially_connected: "SemiAutomaton_is_initially_connected (nfa_\<alpha> AA)"
+  assume invar_AA: "nfa.nfa_invar AA"
+     and DFA_AA: "DFA (nfa.nfa_\<alpha> AA)"
+     and AA_initially_connected: "SemiAutomaton_is_initially_connected (nfa.nfa_\<alpha> AA)"
 
-  from invar_AA have invar_no_props_AA: "nfa_invar_no_props AA" by (simp add: nfa_invar_alt_def)
+  from invar_AA have invar_no_props_AA: "nfa.nfa_invar_no_props AA" by (simp add: nfa.nfa_invar_alt_def)
 
   let ?AA' = "(Hopcroft_minimise_impl rev_emp rev_add rev_get_succs rev_cleanup s_image_rename d_it d_image_rename) AA"
 
-  let ?AL = "l.to_list (nfa_labels AA)"
-  have AL_OK: "distinct ?AL" "set ?AL = \<Sigma> (nfa_\<alpha> AA)"
-    using invar_no_props_AA by (simp_all add: nfa_invar_no_props_def l.correct)
+  let ?AL = "nfa.l.to_list (nfa.nfa_labels AA)"
+  have AL_OK: "distinct ?AL" "set ?AL = \<Sigma> (nfa.nfa_\<alpha> AA)"
+    using invar_no_props_AA by (simp_all add: nfa.nfa_invar_no_props_def nfa.l.correct)
   
-  def rv \<equiv> "rev_cleanup (ltsga_reverse rev_emp rev_add d_it (nfa_trans AA))"
+  define rv where "rv \<equiv> rev_cleanup (ltsga_reverse rev_emp rev_add d_it (nfa.nfa_trans AA))"
   from ltsga_reverse_correct [OF rev_emp_OK rev_add_OK d_it_OK] 
-  have rv_OK: "lts_reverse (lts_op_\<alpha> d_ops) (lts_op_invar d_ops)
-     rev_\<alpha> rev_invar (ltsga_reverse rev_emp rev_add d_it)" .
+  have rv_OK: "lts_reverse nfa.d.\<alpha> nfa.d.invar rev_\<alpha> rev_invar (ltsga_reverse rev_emp rev_add d_it)" .
  
-  from lts_reverse.lts_reverse_correct[OF rv_OK, of "nfa_trans AA"]
+  from lts_reverse.lts_reverse_correct[OF rv_OK, of "nfa.nfa_trans AA"]
        lts_copy.copy_correct [OF rev_cleanup_OK]
   have rev_d_props: "rev2_invar rv"
-      "rev2_\<alpha> rv = 
-       {(v', e, v) |v e v'. (v, e, v') \<in> lts_op_\<alpha> d_ops (nfa_trans AA)}"
+      "rev2_\<alpha> rv = {(v', e, v) |v e v'. (v, e, v') \<in> nfa.d.\<alpha> (nfa.nfa_trans AA)}"
     using invar_no_props_AA
-    by (simp_all add: nfa_invar_no_props_def rv_def)
+    by (simp_all add: nfa.nfa_invar_no_props_def rv_def)
  
-  def pre_fun \<equiv> "(\<lambda>a pim (l, u). 
-   rev_get_succs rv (Hopcroft_class_map_\<alpha>_impl (\<lambda>i. map_op_lookup pim_ops i pim) l u) a)"
+  define pre_fun where "pre_fun \<equiv> (\<lambda>a pim (l, u). 
+   rev_get_succs rv (Hopcroft_class_map_\<alpha>_impl (\<lambda>i. hop.pim.lookup i pim) l u) a)"
 
   { fix a pim u l
 
@@ -3195,7 +3198,7 @@ proof (intro dfa_minimise.intro nfa_by_lts_correct
     from rev_d_props
     have "s2_invar (pre_fun a pim (l, u)) \<and>
       s2_\<alpha> (pre_fun a pim (l, u)) =
-      {q. \<exists>q'. (q, a, q') \<in> \<Delta> (nfa_\<alpha> AA) \<and>
+      {q. \<exists>q'. (q, a, q') \<in> \<Delta> (nfa.nfa_\<alpha> AA) \<and>
                q' \<in> {the (map_op_lookup pim_ops i pim) |i. l \<le> i \<and> i \<le> u}}"
      unfolding pre_fun_def
      apply (simp add: rev_get_succs_correct Hopcroft_class_map_\<alpha>_impl_correct[of _ _ _ pm]
@@ -3204,45 +3207,45 @@ proof (intro dfa_minimise.intro nfa_by_lts_correct
      done
   } note pre_fun_OK = this
 
-  def rename_map \<equiv> "Hopcroft_code_rename_map (nfa_states AA) (nfa_accepting AA) ?AL pre_fun"
-  def rename_fun \<equiv> "(\<lambda>q. states_enumerate (the (map_op_lookup sm_ops q rename_map)))::('q \<Rightarrow> 'q)"
+  define rename_map where "rename_map \<equiv> hop.Hopcroft_code_rename_map (nfa.nfa_states AA) (nfa.nfa_accepting AA) ?AL pre_fun"
+  define rename_fun where "rename_fun \<equiv> (\<lambda>q. states_enumerate (the (hop.sm.lookup q rename_map)))::('q \<Rightarrow> 'q)"
 
-  have Q_OK: "(nfa_states AA, \<Q> (nfa_\<alpha> AA)) \<in> s_rel" and
-       F_OK: "(nfa_accepting AA, \<F> (nfa_\<alpha> AA)) \<in> s_rel"
-     using invar_no_props_AA by (simp_all add: nfa_invar_no_props_def s_rel_def)
+  have Q_OK: "(nfa.nfa_states AA, \<Q> (nfa.nfa_\<alpha> AA)) \<in> hop.s_rel" and
+       F_OK: "(nfa.nfa_accepting AA, \<F> (nfa.nfa_\<alpha> AA)) \<in> hop.s_rel"
+    using invar_no_props_AA by (simp_all add: nfa.nfa_invar_no_props_def hop.s_rel_def in_br_conv)
 
-  from Hopcroft_code_correct_rename_fun [OF Q_OK F_OK DFA_AA AL_OK pre_fun_OK,
+  from hop.Hopcroft_code_correct_rename_fun [OF Q_OK F_OK DFA_AA AL_OK pre_fun_OK,
        folded rename_map_def]
-  have "map_op_invar sm_ops rename_map"
-       "dom (map_op_\<alpha> sm_ops rename_map) = \<Q> (nfa_\<alpha> AA)" and
-       rename_fun_OK: "NFA_is_strong_equivalence_rename_fun (nfa_\<alpha> AA) rename_fun"
+  have "hop.sm.invar rename_map"
+       "dom (hop.sm.\<alpha> rename_map) = \<Q> (nfa.nfa_\<alpha> AA)" and
+       rename_fun_OK: "NFA_is_strong_equivalence_rename_fun (nfa.nfa_\<alpha> AA) rename_fun"
     unfolding rename_fun_def
     by auto
 
-  from rename_states_impl_correct_dfa [OF wf_target s_image_rename_OK d_image_rename_OK]
-  have rename_states_OK: "dfa_rename_states nfa_\<alpha> nfa_invar (nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops')
+  from nfa.rename_states_impl_correct_dfa [OF wf_target s_image_rename_OK d_image_rename_OK]
+  have rename_states_OK: "dfa_rename_states nfa.nfa_\<alpha> nfa.nfa_invar (nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops')
    (nfa_by_lts_defs.nfa_invar s_ops' l_ops d_ops')
-   (rename_states_impl s_image_rename d_image_rename True)" by simp
+   (nfa_by_lts_defs.rename_states_impl s_image_rename d_image_rename True)" by simp
 
   from merge_NFA_minimise [OF DFA_AA AA_initially_connected rename_fun_OK]
-  have rename_is_minimal: "NFA_isomorphic_wf (NFA_rename_states (nfa_\<alpha> AA) rename_fun) (NFA_minimise (nfa_\<alpha> AA))"
+  have rename_is_minimal: "NFA_isomorphic_wf (NFA_rename_states (nfa.nfa_\<alpha> AA) rename_fun) (NFA_minimise (nfa.nfa_\<alpha> AA))"
     by simp
 
-  have AA'_alt_def: "?AA' = rename_states_impl s_image_rename d_image_rename True AA rename_fun"
+  have AA'_alt_def: "?AA' = nfa.rename_states_impl s_image_rename d_image_rename True AA rename_fun"
     unfolding Hopcroft_minimise_impl_def rename_fun_def rename_map_def pre_fun_def rv_def
-              Hopcroft_code_rename_map_def 
+              hop.Hopcroft_code_rename_map_def 
     by (simp add: Let_def split_def)
 
   from DFA_AA rename_is_minimal invar_AA
        dfa_rename_states.dfa_rename_states_correct [OF rename_states_OK, of AA rename_fun]
   have "nfa_by_lts_defs.nfa_invar s_ops' l_ops d_ops' ?AA'"
-       "nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops' ?AA' = NFA_rename_states (nfa_\<alpha> AA) rename_fun"
+       "nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops' ?AA' = NFA_rename_states (nfa.nfa_\<alpha> AA) rename_fun"
     by (simp_all add: NFA_isomorphic_wf___minimise DFA_alt_def DFA_is_minimal_def 
-             nfa_invar_def AA'_alt_def)
+             nfa.nfa_invar_def AA'_alt_def)
  
   with rename_is_minimal show
        "nfa_by_lts_defs.nfa_invar s_ops' l_ops d_ops' ?AA' \<and>
-        NFA_isomorphic_wf (nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops' ?AA') (NFA_minimise (nfa_\<alpha> AA))"
+        NFA_isomorphic_wf (nfa_by_lts_defs.nfa_\<alpha> s_ops' l_ops d_ops' ?AA') (NFA_minimise (nfa.nfa_\<alpha> AA))"
     by simp
 qed
 
@@ -3278,7 +3281,7 @@ begin
 
   lemma ts2_impl : "tsbm_defs m2_ops iam_ops s2_ops"
     unfolding tsbm_defs_def
-    by (simp add: m2.StdMap_axioms s2.StdSet_axioms iamr.StdMap_axioms)
+    by (simp add: m2.StdMap_axioms s2.StdSet_axioms iam.StdMap_axioms)
 
   definition "hopcroft_lts_\<alpha>2 \<equiv> ltsbm_AQQ_defs.ltsbm_\<alpha>(tsbm_defs.tsbm_\<alpha> m2_ops iam_ops s2_ops)"
   definition "hopcroft_lts_invar2 \<equiv> ltsbm_AQQ_defs.ltsbm_invar(tsbm_defs.tsbm_invar m2_ops iam_ops s2_ops)"
@@ -3308,8 +3311,8 @@ begin
      m_it m (\<lambda>_. True) (\<lambda>(a, mm) m2.
        m2.update a (
          mm_it mm (\<lambda>_. True) (\<lambda>(q, s) mm2.
-            iamr.update q (copy s) mm2) (iamr.empty ())) m2) (m2.empty ())"
-         
+            iam.update q (copy s) mm2) (iam.empty ())) m2) (m2.empty ())"
+       
   lemma hopcroft_lts_copy_correct :
     "lts_copy hopcroft_lts_\<alpha> hopcroft_lts_invar hopcroft_lts_\<alpha>2 hopcroft_lts_invar2
               hopcroft_lts_copy"
@@ -3317,7 +3320,7 @@ begin
     fix l1
     assume invar_l1: "hopcroft_lts_invar l1"
 
-    def inner_it \<equiv> "\<lambda>mm. mm_it mm iam_invar
+    define inner_it where "inner_it \<equiv> \<lambda>mm. mm_it mm iam_invar
               (\<lambda>(q, s). map_op_update iam_ops q (copy s))
               (map_op_empty iam_ops ())"
     have inner_it_intro: "\<And>mm. mm_it mm iam_invar
@@ -3330,33 +3333,29 @@ begin
       unfolding hopcroft_lts_copy_def inner_it_intro 
       proof (rule m_it.iterate_rule_insert_P [where I =
                "\<lambda>d m2. hopcroft_lts_\<alpha>2 m2 = {(q, a, q'). (q, a, q') \<in> hopcroft_lts_\<alpha> l1 \<and> a \<in> d} \<and>
-          hopcroft_lts_invar2 m2 \<and> dom (m2.\<alpha> m2) = d"])
-        case goal1
-          from invar_l1 show "m.invar l1"
-             unfolding hopcroft_lts_invar_def ltsbm_AQQ_defs.ltsbm_invar_def
-                     tsbm_defs.tsbm_invar_alt_def[OF ts_impl]
+          hopcroft_lts_invar2 m2 \<and> dom (m2.\<alpha> m2) = d"])  
+        from invar_l1 show "m.invar l1"
+          unfolding hopcroft_lts_invar_def ltsbm_AQQ_defs.ltsbm_invar_def tsbm_defs.tsbm_invar_alt_def[OF ts_impl]
           by simp
       next
-        case goal2 show ?case
+        show "hopcroft_lts_\<alpha>2 (m2.empty ()) = {(q, a, q'). (q, a, q') \<in> hopcroft_lts_\<alpha> l1 \<and> a \<in> {}} \<and> hopcroft_lts_invar2 (m2.empty ()) \<and> dom (m2.\<alpha> (m2.empty ())) = {}"
           unfolding hopcroft_lts_invar2_def ltsbm_AQQ_defs.ltsbm_invar_def
                     tsbm_defs.tsbm_invar_alt_def[OF ts2_impl]
           by (simp add: hopcroft_lts_\<alpha>2_alt_def m2.correct)
       next
-        case goal4 thus ?case
-          by (auto simp add: hopcroft_lts_\<alpha>_alt_def)
-      next
-        case (goal3 k v it mm)
-        from goal3(1) have k_nin_it: "k \<notin> it" by simp
-        note l1_k_eq = goal3(2)
-        note it_subset = goal3(3)
-        note ind_hyp = goal3(4)
+        fix k v it \<sigma>
+        assume asm:"k \<in> dom (m.\<alpha> l1) - it" "m.\<alpha> l1 k = Some v" "it \<subseteq> dom (m.\<alpha> l1)" "hopcroft_lts_\<alpha>2 \<sigma> = {(q, a, q'). (q, a, q') \<in> hopcroft_lts_\<alpha> l1 \<and> a \<in> it} \<and> hopcroft_lts_invar2 \<sigma> \<and> dom (m2.\<alpha> \<sigma>) = it"
+        from asm(1) have k_nin_it: "k \<notin> it" by simp
+        note l1_k_eq = asm(2)
+        note it_subset = asm(3)
+        note ind_hyp = asm(4)
 
         from ind_hyp k_nin_it 
-        have "k \<notin> dom (map_op_\<alpha> m2_ops mm)" by simp
-        hence mm_k_eq: "m2.\<alpha> mm k = None" by auto
+        have "k \<notin> dom (map_op_\<alpha> m2_ops \<sigma>)" by simp
+        hence mm_k_eq: "m2.\<alpha> \<sigma> k = None" by auto
 
-        from ind_hyp have invar2_hop_mm: "hopcroft_lts_invar2 mm" by simp
-        hence invar_mm: "m2.invar mm"
+        from ind_hyp have invar2_hop_mm: "hopcroft_lts_invar2 \<sigma>" by simp
+        hence invar_mm: "m2.invar \<sigma>"
           unfolding hopcroft_lts_invar2_def ltsbm_AQQ_defs.ltsbm_invar_def
                     tsbm_defs.tsbm_invar_alt_def[OF ts2_impl]
           by simp
@@ -3368,52 +3367,74 @@ begin
                     tsbm_defs.tsbm_invar_alt_def[OF ts_impl]
           by simp
 
-        def inner_it_val \<equiv> "{(q, k, q') | q q'. 
-                \<exists>s3. iamr.\<alpha> (inner_it v) q = Some s3 \<and>
+        define inner_it_val where "inner_it_val \<equiv> {(q, k, q') | q q'. 
+                \<exists>s3. iam.\<alpha> (inner_it v) q = Some s3 \<and>
                      q' \<in> s2.\<alpha> s3}"
          
-        have inner_it_OK: "iamr.invar (inner_it v) \<and>
-                           (\<forall>w s3.  iamr.\<alpha> (inner_it v) w = Some s3 \<longrightarrow>
+        have inner_it_OK: "iam.invar (inner_it v) \<and>
+                           (\<forall>w s3.  iam.\<alpha> (inner_it v) w = Some s3 \<longrightarrow>
                                     s2.invar s3) \<and>
                            inner_it_val = {(q, a, q'). a = k \<and> (q, a, q') \<in> hopcroft_lts_\<alpha> l1}" 
           unfolding inner_it_def inner_it_val_def
         proof (rule mm_it.iterate_rule_insert_P [where I = "\<lambda>d a.
-                   iamr.invar a \<and>
-                   (\<forall>w s3.  iamr.\<alpha> a w = Some s3 \<longrightarrow> s2.invar s3) \<and>
-                   (\<forall>q q'. (\<exists>s3. iamr.\<alpha> a q = Some s3 \<and> q' \<in> s2.\<alpha> s3) = 
+                   iam.invar a \<and>
+                   (\<forall>w s3.  iam.\<alpha> a w = Some s3 \<longrightarrow> s2.invar s3) \<and>
+                   (\<forall>q q'. (\<exists>s3. iam.\<alpha> a q = Some s3 \<and> q' \<in> s2.\<alpha> s3) = 
                            (q \<in> d \<and> (q, k, q') \<in> hopcroft_lts_\<alpha> l1))"])
-            case goal1 thus ?case
+          show "mm.invar v"
               using invar_v by simp
           next
-            case goal2 thus ?case
-              by (simp add: iamr.correct)
+            show "iam.invar (iam.empty ()) \<and> (\<forall>w s3. iam.\<alpha> (iam.empty ()) w = Some s3 \<longrightarrow> s2.invar s3) \<and> (\<forall>q q'. (\<exists>s3. iam.\<alpha> (iam.empty ()) q = Some s3 \<and> q' \<in> s2.\<alpha> s3) = (q \<in> {} \<and> (q, k, q') \<in> hopcroft_lts_\<alpha> l1))"
+              by (simp add: iam.correct)
           next
-            case goal4 thus ?case
-              by (auto simp add: hopcroft_lts_\<alpha>_alt_def l1_k_eq)
+            fix ka va it \<sigma>
+            assume "ka \<in> dom (mm.\<alpha> v) - it" "mm.\<alpha> v ka = Some va" "it \<subseteq> dom (mm.\<alpha> v)"
+                   "iam.invar \<sigma> \<and> (\<forall>w s3. iam.\<alpha> \<sigma> w = Some s3 \<longrightarrow> s2.invar s3) \<and> (\<forall>q q'. (\<exists>s3. iam.\<alpha> \<sigma> q = Some s3 \<and> q' \<in> s2.\<alpha> s3) = (q \<in> it \<and> (q, k, q') \<in> hopcroft_lts_\<alpha> l1))"
+            then show "iam.invar ((case (ka, va) of (q, s) \<Rightarrow> iam.update q (copy s)) \<sigma>) \<and>
+            (\<forall>w s3. iam.\<alpha> ((case (ka, va) of (q, s) \<Rightarrow> iam.update q (copy s)) \<sigma>) w = Some s3 \<longrightarrow> s2.invar s3) \<and>
+            (\<forall>q q'. (\<exists>s3. iam.\<alpha> ((case (ka, va) of (q, s) \<Rightarrow> iam.update q (copy s)) \<sigma>) q = Some s3 \<and> q' \<in> s2.\<alpha> s3) = (q \<in> insert ka it \<and> (q, k, q') \<in> hopcroft_lts_\<alpha> l1))"
+              apply (intro conjI allI)
+              apply (auto simp add: hopcroft_lts_\<alpha>_alt_def l1_k_eq)
+              using invar_v cp.copy_correct(2) apply (simp add: iam.correct split: if_splits)
+              apply blast
+              apply (simp add: s2.correct iam.correct)
+              apply force
+              apply (simp add: s2.correct iam.correct split: if_splits)
+              using cp.copy_correct(1) invar_v apply blast
+              apply blast
+              apply (auto simp add: s2.correct iam.correct cp.copy_correct(1) invar_v)
+              done
           next
-            case (goal3 q s3 it' a) note hyps = this
-
-            from invar_v hyps have "s.invar s3" by simp
-            from hyps cp.copy_correct[OF `s.invar s3`] 
-            show ?case 
-              by (simp add: iamr.correct hopcroft_lts_\<alpha>_alt_def l1_k_eq)
+            show "\<And>\<sigma>. iam.invar \<sigma> \<and> (\<forall>w s3. iam.\<alpha> \<sigma> w = Some s3 \<longrightarrow> s2.invar s3) \<and> (\<forall>q q'. (\<exists>s3. iam.\<alpha> \<sigma> q = Some s3 \<and> q' \<in> s2.\<alpha> s3) = (q \<in> dom (mm.\<alpha> v) \<and> (q, k, q') \<in> hopcroft_lts_\<alpha> l1)) \<Longrightarrow>
+         iam.invar \<sigma> \<and> (\<forall>w s3. iam.\<alpha> \<sigma> w = Some s3 \<longrightarrow> s2.invar s3) \<and> {(q, k, q') |q q'. \<exists>s3. iam.\<alpha> \<sigma> q = Some s3 \<and> q' \<in> s2.\<alpha> s3} = {a. case a of (q, aa, q') \<Rightarrow> aa = k \<and> (q, aa, q') \<in> hopcroft_lts_\<alpha> l1}"
+              apply (intro conjI allI impI)
+              apply blast
+              apply blast
+              apply (auto simp add: hopcroft_lts_\<alpha>_alt_def l1_k_eq)
+              done
         qed
         from invar2_hop_mm
-        have \<alpha>_new: "hopcroft_lts_\<alpha>2 (map_op_update m2_ops k (inner_it v) mm) = 
-              hopcroft_lts_\<alpha>2 mm \<union> inner_it_val"
+        have \<alpha>_new: "hopcroft_lts_\<alpha>2 (map_op_update m2_ops k (inner_it v) \<sigma>) = 
+              hopcroft_lts_\<alpha>2 \<sigma> \<union> inner_it_val"
           unfolding hopcroft_lts_\<alpha>2_alt_def inner_it_val_def
                     hopcroft_lts_invar2_def ltsbm_AQQ_defs.ltsbm_invar_def
                     tsbm_defs.tsbm_invar_alt_def[OF ts2_impl]
           by (simp add: m2.correct set_eq_iff all_conj_distrib mm_k_eq)
 
         from ind_hyp
-        show ?case
+        show "hopcroft_lts_\<alpha>2 ((case (k, v) of (a, mm) \<Rightarrow> m2.update a (inner_it mm)) \<sigma>) = {(q, a, q'). (q, a, q') \<in> hopcroft_lts_\<alpha> l1 \<and> a \<in> insert k it} \<and>
+            hopcroft_lts_invar2 ((case (k, v) of (a, mm) \<Rightarrow> m2.update a (inner_it mm)) \<sigma>) \<and> dom (m2.\<alpha> ((case (k, v) of (a, mm) \<Rightarrow> m2.update a (inner_it mm)) \<sigma>)) = insert k it"
           unfolding hopcroft_lts_invar2_def ltsbm_AQQ_defs.ltsbm_invar_def
                     tsbm_defs.tsbm_invar_alt_def[OF ts2_impl]
           apply (simp add: m2.correct invar_mm \<alpha>_new inner_it_OK)
           apply auto
-        done
-      qed    
+          done
+      next
+        fix \<sigma>
+        assume "hopcroft_lts_\<alpha>2 \<sigma> = {(q, a, q'). (q, a, q') \<in> hopcroft_lts_\<alpha> l1 \<and> a \<in> dom (m.\<alpha> l1)} \<and> hopcroft_lts_invar2 \<sigma> \<and> dom (m2.\<alpha> \<sigma>) = dom (m.\<alpha> l1)"
+        thus "hopcroft_lts_\<alpha>2 \<sigma> = hopcroft_lts_\<alpha> l1 \<and> hopcroft_lts_invar2 \<sigma>"
+          by (auto simp add: hopcroft_lts_\<alpha>_alt_def)
+      qed
     thus "hopcroft_lts_\<alpha>2 (hopcroft_lts_copy l1) = hopcroft_lts_\<alpha> l1"
          "hopcroft_lts_invar2 (hopcroft_lts_copy l1)" by simp_all
   qed
@@ -3480,7 +3501,7 @@ begin
     next
       case (Some im) note l_a_eq = this
 
-      def l' \<equiv> "List.map_filter (\<lambda>q. iamr.lookup q im) vs" 
+      define l' where "l' \<equiv> List.map_filter (\<lambda>q. iamr.lookup q im) vs" 
 
       from invar_l l_a_eq
       have invar_im : "iamr.invar im" 
