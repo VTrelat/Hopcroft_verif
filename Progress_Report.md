@@ -54,6 +54,7 @@
             -   :white_check_mark: repaired theory `AccessibleImpl` ~~is broken~~
             -   :x: theory `NFAByLTS` is broken
                 -   :x: proof of lemma `NFA_construct_reachable_impl_correct` is broken and I cannot fix it
+                -   :x: proof of lemma `right_quotient_lists_impl_code` is broken
                 -   :white_check_mark: repaired proof of lemma `hopcroft_lts_copy_correct` ~~is broken~~
             -   :x: theory `RBT_Presburger_Impl` is broken
 
