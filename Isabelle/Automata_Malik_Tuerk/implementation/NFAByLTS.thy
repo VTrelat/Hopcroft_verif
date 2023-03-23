@@ -3466,7 +3466,7 @@ begin
                  (mm.update q (set_op_ins s_ops v' s3) m2) l))"
 
     unfolding hopcroft_lts_add_def tsbm_defs.tsbm_add_def[OF ts_impl, abs_def]
-              ltsbm_AQQ_defs.ltsbm_add_def[abs_def] iam_ops_unfold
+              ltsbm_AQQ_defs.ltsbm_add_def[abs_def]
     by simp
 
   lemma hopcroft_lts_add_correct :
@@ -3480,7 +3480,7 @@ begin
 
   definition "hopcroft_lts_get_succ_set l vs a = 
      (case m2.lookup a l of None \<Rightarrow> s2.empty ()
-     | Some im \<Rightarrow> un_list (List.map_filter (\<lambda>q. iamr.lookup q im) vs))"
+     | Some im \<Rightarrow> un_list (List.map_filter (\<lambda>q. iam.lookup q im) vs))"
 
   lemma hopcroft_lts_get_succ_set_correct :
     "lts_get_succ_set hopcroft_lts_\<alpha>2 hopcroft_lts_invar2 s2.\<alpha> s2.invar hopcroft_lts_get_succ_set"
@@ -3501,21 +3501,23 @@ begin
     next
       case (Some im) note l_a_eq = this
 
-      define l' where "l' \<equiv> List.map_filter (\<lambda>q. iamr.lookup q im) vs" 
+      define l' where "l' \<equiv> List.map_filter (\<lambda>q. iam.lookup q im) vs" 
 
       from invar_l l_a_eq
-      have invar_im : "iamr.invar im" 
+      have invar_im : "iam.invar im" 
        and l'_OK: "\<forall>s1\<in>set l'. s2.invar s1" 
        unfolding l'_def set_map_filter hopcroft_lts_invar2_def ltsbm_AQQ_defs.ltsbm_invar_def
                  tsbm_defs.tsbm_invar_alt_def[OF ts2_impl]
-       by (auto simp add: m2.correct iamr.correct)
+       apply (auto simp add: m2.correct iam.correct)
+       apply (metis option.collapse)
+       done
 
       from invar_l l_a_eq un.union_list_correct[OF l'_OK] invar_im
       show ?thesis
         apply (simp add: l'_def hopcroft_lts_get_succ_set_def s2.correct hopcroft_lts_\<alpha>2_alt_def
-                      hopcroft_lts_invar2_def ltsbm_AQQ_defs.ltsbm_invar_def iamr.correct
+                      hopcroft_lts_invar2_def ltsbm_AQQ_defs.ltsbm_invar_def iam.correct
                       tsbm_defs.tsbm_invar_def[OF ts2_impl] m2.correct set_map_filter)
-        apply auto
+        apply fastforce
       done
     qed
     thus "?P1" "?P2" by simp_all
