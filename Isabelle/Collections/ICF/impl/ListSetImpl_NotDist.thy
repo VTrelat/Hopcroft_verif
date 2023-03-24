@@ -25,7 +25,7 @@ type_synonym
 subsection "Definitions"
 
 definition lsnd_\<alpha> :: "'a lsnd \<Rightarrow> 'a set" where "lsnd_\<alpha> == set"
-abbreviation (input) lsnd_invar 
+definition lsnd_invar 
   :: "'a lsnd \<Rightarrow> bool" where "lsnd_invar == (\<lambda>_. True)"
 definition lsnd_empty :: "unit \<Rightarrow> 'a lsnd" where "lsnd_empty == (\<lambda>_::unit. [])"
 definition lsnd_memb :: "'a \<Rightarrow> 'a lsnd \<Rightarrow> bool" where "lsnd_memb x l == List.member l x"
@@ -50,6 +50,7 @@ definition list_to_lsnd :: "'a list \<Rightarrow> 'a lsnd" where "list_to_lsnd =
 subsection "Correctness"
 lemmas lsnd_defs = 
   lsnd_\<alpha>_def
+  lsnd_invar_def
   lsnd_empty_def
   lsnd_memb_def
   lsnd_ins_def
@@ -75,7 +76,7 @@ lemma lsnd_ins_dj_impl: "set_ins_dj lsnd_\<alpha> lsnd_invar lsnd_ins_dj"
 by (unfold_locales) (auto simp add: lsnd_defs)
 
 lemma lsnd_delete_impl: "set_delete lsnd_\<alpha> lsnd_invar lsnd_delete"
-by (unfold_locales) (auto simp add: lsnd_delete_def lsnd_\<alpha>_def remove_rev_alt_def)
+by (unfold_locales) (auto simp add: lsnd_delete_def lsnd_\<alpha>_def remove_rev_alt_def lsnd_invar_def)
 
 lemma lsnd_\<alpha>_finite[simp, intro!]: "finite (lsnd_\<alpha> l)"
   by (auto simp add: lsnd_defs)
@@ -158,7 +159,7 @@ proof -
     done
 qed
 interpretation lsnd: StdSet_no_invar lsnd_ops
-  by unfold_locales (simp add: icf_rec_unf)
+  by unfold_locales (simp add: icf_rec_unf lsnd_invar_def)
 setup Locale_Code.close_block
 
 setup \<open>ICF_Tools.revert_abbrevs "lsnd"\<close>
