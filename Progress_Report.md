@@ -39,11 +39,9 @@
         setup Locale_Code.close_block
         ```
     -   :white_check_mark: **old theory `Hopcroft_Minimisation` is fully repaired**
-    -   added $\LaTeX$ template report for the final report
-    -   :x: to make it a suitable AFP entry, need to add a final explicit theorem stating that the algorithm is correct and actually minimises a DFA on the lowest level (i.e. implementation)
-        -   :white_check_mark: repaired theory `Presburger_Automata` ~~is broken~~
+    -   added $\LaTeX$ template report for the final report **[branch `latex-report`]**
+    -   :x: to make it a suitable AFP entry, need to add a final explicit theorem stating that the algorithm is correct and actually minimises a DFA on the lowest level (i.e. implementation) **[branch `code_gen`]**
         -   :x: to achieve this, we need theory `RBT_Presburger_Impl` and its imports to be repaired:
-            -   :x: theory `RBT_NFAImpl` is broken
             -   :white_check_mark: repaired theory `LTSByLTS_DLTS`
             -   :white_check_mark: repaired theory `LTSGA`
             -   :white_check_mark: repaired theory `LTSImpl`
@@ -54,10 +52,12 @@
             -   :white_check_mark: repaired theory `NFAGA` ~~is broken~~
             -   :white_check_mark: repaired theory `AccessibleImpl` ~~is broken~~
             -   :white_check_mark: repaired theory `Presburger_Adapt` ~~is broken~~
+            -   :white_check_mark: repaired theory `Presburger_Automata` ~~is broken~~
+            -   :x: theory `RBT_NFAImpl` is broken
             -   :x: theory `NFAByLTS` is broken
+                -   :white_check_mark: repaired proof of lemma `hopcroft_lts_copy_correct` ~~is broken~~
                 -   :x: proof of lemma `NFA_construct_reachable_impl_correct` is broken and I cannot fix it
                 -   :x: proof of lemma `right_quotient_lists_impl_code` is broken
-                -   :white_check_mark: repaired proof of lemma `hopcroft_lts_copy_correct` ~~is broken~~
 
 ---
 
