@@ -54,6 +54,7 @@
             -   :white_check_mark: repaired theory `Presburger_Adapt` ~~is broken~~
             -   :white_check_mark: repaired theory `Presburger_Automata` ~~is broken~~
             -   :x: theory `RBT_NFAImpl` is broken
+                -   Isabelle seems to struggle with abbreviations, e.g. `lsnd` and `lss`, which causes some proofs to fail (nitpick even finds counterexamples)
             -   :x: theory `NFAByLTS` is broken
                 -   :white_check_mark: repaired proof of lemma `hopcroft_lts_copy_correct` ~~is broken~~
                 -   :x: proof of lemma `NFA_construct_reachable_impl_correct` is broken and I cannot fix it
