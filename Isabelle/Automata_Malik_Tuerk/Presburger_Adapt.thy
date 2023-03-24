@@ -915,7 +915,7 @@ begin
 
   definition pres_DFA_exists_min_impl where
     "pres_DFA_exists_min_impl A AA = 
-      right_quotient_lists (list_all (\<lambda>b. \<not> b)) (StdNFADefs.minimise_Hopcroft_NFA (rename_labels_gen AA A tl))"
+      nfa.right_quotient_lists (list_all (\<lambda>b. \<not> b)) (nfa.minimise_Hopcroft_NFA (rename_labels_gen AA A tl))"
 
   lemma im_tl_eq: "tl ` {bl. length bl = Suc n} = {bl. length bl = n}"
      apply (auto simp add: image_iff length_Suc_conv)[]
@@ -929,7 +929,7 @@ begin
     shows "nfa.invar (pres_DFA_exists_min_impl A AA)"
     unfolding pres_DFA_exists_min_impl_def pres_DFA_exists_min_def pres_DFA_labels_tl_def
     apply (insert assms)
-    apply (intro nfa.correct_isomorphic conjI rename_labels_gen_correct___isomorphic)+
+    apply (intro nfa.correct_isomorphic conjI labels_gen.rename_labels_gen_correct___isomorphic)+
     apply (simp_all add: im_tl_eq)
   done
 
@@ -941,7 +941,7 @@ begin
     shows "NFA_isomorphic_wf (nfa.\<alpha> (pres_DFA_exists_min_impl A AA)) (pres_DFA_exists_min n \<A>)"
     unfolding pres_DFA_exists_min_impl_def pres_DFA_exists_min_def pres_DFA_labels_tl_def
     apply (insert assms)
-    apply (intro nfa.correct_isomorphic conjI rename_labels_gen_correct___isomorphic)+
+    apply (intro nfa.correct_isomorphic conjI labels_gen.rename_labels_gen_correct___isomorphic)+
     apply (simp_all add: im_tl_eq)
   proof -
      assume iso: "NFA_isomorphic_wf (nfa_op_\<alpha> nfa_ops AA) \<A>"
@@ -970,7 +970,7 @@ begin
 
   definition pres_DFA_forall_min_impl where
     "pres_DFA_forall_min_impl A AA = 
-     complement (pres_DFA_exists_min_impl A (complement AA))"
+     nfa.complement (pres_DFA_exists_min_impl A (nfa.complement AA))"
 
   lemma pres_DFA_forall_min_impl_correct_invar :
     assumes "nfa.invar AA" 
@@ -1010,15 +1010,15 @@ begin
     | And:    "nfa_of_pf n (And p q) c = 
                  (let (P, c') = nfa_of_pf n p c in
                   let (Q, c'') = nfa_of_pf n q c' in
-                  (bool_comb op\<and> P Q, c''))"
+                  (nfa.bool_comb (\<and>) P Q, c''))"
     | Or:     "nfa_of_pf n (Or p q) c = 
                  (let (P, c') = nfa_of_pf n p c in
                   let (Q, c'') = nfa_of_pf n q c' in
-                  (bool_comb op\<or> P Q, c''))"
+                  (nfa.bool_comb (\<or>) P Q, c''))"
     | Imp:    "nfa_of_pf n (Imp p q) c = 
                  (let (P, c') = nfa_of_pf n p c in
                   let (Q, c'') = nfa_of_pf n q c' in
-                  (bool_comb op\<longrightarrow> P Q, c''))"
+                  (nfa.bool_comb (\<longrightarrow>) P Q, c''))"
     | Exists: "nfa_of_pf n (Exist p) c = 
                  (let (c', A) = c_\<alpha> c n in
                   let (P, c'') = nfa_of_pf (Suc n) p c' in
@@ -1029,7 +1029,7 @@ begin
                   (pres_DFA_forall_min_impl A P, c''))"
     | Neg:    "nfa_of_pf n (Neg p) c = 
                  (let (P, c') = nfa_of_pf n p c in
-                  (complement P, c'))"
+                  (nfa.complement P, c'))"
 
 lemmas nfa_of_pf_induct =
   nfa_of_pf.induct [case_names Eq Le And Or Imp Exist Forall Neg]
@@ -1053,8 +1053,8 @@ next
     by (auto simp add: pres_DFA_eq_ineq_impl_correct split: prod.split)
 next
   case (And n p q c) 
-  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule PairE)
-  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule PairE)
+  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule prod.exhaust)
+  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule prod.exhaust)
 
   from And(1)[of c] And(2)[of c'] And(3)
   show ?case 
@@ -1065,8 +1065,8 @@ next
   done   
 next
   case (Or n p q c) 
-  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule PairE)
-  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule PairE)
+  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule prod.exhaust)
+  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule prod.exhaust)
 
   from Or(1)[of c] Or(2)[of c'] Or(3)
   show ?case 
@@ -1077,8 +1077,8 @@ next
   done   
 next
   case (Imp n p q c) 
-  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule PairE)
-  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule PairE)
+  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule prod.exhaust)
+  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule prod.exhaust)
 
   from Imp(1)[of c] Imp(2)[of c'] Imp(3)
   show ?case 
@@ -1089,8 +1089,8 @@ next
   done   
 next
   case (Exist n p c)
-  obtain c' A where [simp]: "c_\<alpha> c n = (c', A)" by (rule PairE)
-  obtain P c'' where [simp]: "nfa_of_pf (Suc n) p c' = (P, c'')" by (rule PairE)
+  obtain c' A where [simp]: "c_\<alpha> c n = (c', A)" by (rule prod.exhaust)
+  obtain P c'' where [simp]: "nfa_of_pf (Suc n) p c' = (P, c'')" by (rule prod.exhaust)
 
   from Exist(1)[of c'] Exist(2) cache_correct [of c n]
   show ?case 
@@ -1101,8 +1101,8 @@ next
   done   
 next
   case (Forall n p c)
-  obtain c' A where [simp]: "c_\<alpha> c n = (c', A)" by (rule PairE)
-  obtain P c'' where [simp]: "nfa_of_pf (Suc n) p c' = (P, c'')" by (rule PairE)
+  obtain c' A where [simp]: "c_\<alpha> c n = (c', A)" by (rule prod.exhaust)
+  obtain P c'' where [simp]: "nfa_of_pf (Suc n) p c' = (P, c'')" by (rule prod.exhaust)
 
   from Forall(1)[of c'] Forall(2) cache_correct [of c n]
   show ?case 
@@ -1113,7 +1113,7 @@ next
   done   
 next
   case (Neg n p c)
-  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule PairE)
+  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule prod.exhaust)
 
   from Neg(1)[of c] Neg(2)
   show ?case 
@@ -1135,10 +1135,10 @@ unfolding pf_to_nfa_def
 by (simp_all add: init_cache_OK)
 
 lemma eval_pf_impl :
-  "eval_pf pf [] = accept (pf_to_nfa 0 pf) []"
+  "eval_pf pf [] = nfa.accept (pf_to_nfa 0 pf) []"
 proof -
   note equiv_wf = pf_to_nfa___correct [of 0 pf]
-  note NFA_accept_OK = accept_correct___isomorphic [OF equiv_wf, of "[]"]
+  note NFA_accept_OK = nfa.accept_correct___isomorphic [OF equiv_wf, of "[]"]
   with DFA_of_pf___correct [of 0 pf] NFA_accept_OK 
   show ?thesis by simp
 qed
@@ -1190,9 +1190,9 @@ begin
       done
     next
       case None note lookup_eq_none[simp] = this
-      obtain m' bl where [simp]: "c_\<alpha> m n = (m', bl)" by (rule PairE)
+      obtain m' bl where [simp]: "c_\<alpha> m n = (m', bl)" by (rule prod.exhaust)
 
-      def bl' \<equiv> "set_op_union s_ops (s_image (op # True) bl) (s_image (op # False) bl)"
+      define bl' where "bl' \<equiv> set_op_union s_ops (s_image ((#) True) bl) (s_image ((#) False) bl)"
 
       from ind_hyp [OF invar_m] 
       have bl'_props: "s.invar bl'" "s.\<alpha> bl' = {bs. length bs = Suc n}" and invar_m': "c_invar m'"
