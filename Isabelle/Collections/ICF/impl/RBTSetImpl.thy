@@ -65,6 +65,9 @@ interpretation
   pi_rs_ro: proper_it_loc rs.rev_iterateoi rs.rev_iterateoi
   by unfold_locales (rule pi_rs)+
 
+definition "rs_image_filter \<equiv> undefined"
+definition "rs_image \<equiv> undefined"
+
 lemma rs_ops_unfold[code_unfold]:
     "set_op_\<alpha> rs_ops = rs.\<alpha>"
     "set_op_invar rs_ops = rs.invar"
@@ -91,7 +94,7 @@ lemma rs_ops_unfold[code_unfold]:
     "set_op_disjoint_witness rs_ops = rs.disjoint_witness"
     "set_op_sel rs_ops = rs.sel"
     "set_op_to_list rs_ops = rs.to_list"
-    (* "set_op_from_list rs_ops = list.to_rs" *)
+    "set_op_from_list rs_ops = rs.from_list"
     "set_op_min rs_ops = rs.min"
     "set_op_max rs_ops = rs.max"
     by (auto simp add: rs_ops_def)
