@@ -1499,9 +1499,77 @@ defer
 \<comment>\<open>goal solved\<close>
   apply (simp add: in_br_conv I_def S_def)
 \<comment>\<open>goal solved\<close>
-  apply clarify
-    apply (simp del: br_def add: in_br_conv S_def I_def R_def R'_def)
-    defer
+  (* apply clarify *)
+     (* apply (simp del: br_def add: in_br_conv S_def I_def R_def R'_def) *)
+  apply (subgoal_tac "\<And>x' x1 x2 x1a x1b x2a x2b s e s' e' x1c x2c x1d x1e x2d x2e.
+       \<lbrakk>(NFA_construct_reachable_init_impl II, x') \<in> br state_map_\<alpha> state_map_invar \<times>\<^sub>r br s.\<alpha> s.invar; x' = (x1, x2); x1a = (x1b, x2a); NFA_construct_reachable_init_impl II = (x1a, x2b); (s, s') \<in> R' \<times>\<^sub>r R;
+        (e, e') \<in> br q2_\<alpha> q2_invar; True; True; s' = (x1c, x2c); x1d = (x1e, x2d); s = (x1d, x2e);
+        e' \<in> dom x1c \<and> e' \<in> accessible (LTS_forget_labels D) (set (map q2_\<alpha> II)) \<and> NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1c, x2c); \<not> s.memb (the (qm.lookup (ff e) x1e)) (nfa_states x2e);
+        the (x1c e') \<notin> \<Q> x2c; q2_invar e \<and> q2_\<alpha> e \<in> S\<rbrakk>
+       \<Longrightarrow> NFA_construct_reachable_impl_step det DS x1e x2d (nfa_trans x2e) e
+            \<le> \<Down> (br state_map_\<alpha> state_map_invar \<times>\<^sub>r br d.\<alpha> d.invar \<times>\<^sub>r \<langle>br q2_\<alpha> q2_invar\<rangle>list_rel) (NFA_construct_reachable_abstract_impl_step (accessible (LTS_forget_labels D) (set (map q2_\<alpha> II))) DS' x1c (\<Delta> x2c) e')")
+      apply blast
+     apply (clarify, simp)
+     apply (rule_tac \<A> = "nfa_\<alpha> (ay, az, bm, bn, bo, bp)" in NFA_construct_reachable_impl_step_correct[simplified])
+                     apply (metis I_def S_def f_inj_on image_set)
+                    apply (metis ff_OK I_def S_def image_set)
+  using d_add_OK(1) apply blast
+  using d_add_OK(2) apply blast
+  using det_OK apply blast
+  apply (simp add: DS'_OK I_def S_def)
+               apply (simp add: in_br_conv R'_def)
+              apply (simp add: in_br_conv R'_def)
+             apply (simp add: R_def)
+            apply (simp add: in_br_conv R_def)
+  apply (simp add: R_def invar'_def nfa_by_lts_defs.nfa_invar_no_props_def nfa_by_lts_defs_axioms)
+  apply (subgoal_tac "\<And>x1b x2a x2b e e' x1c x2c x1e x2d aj ak al am an bf x1f x1ba ea e'a x1ca x2ca x1ea x2da ay az bm bn bo bp y ya.
+       \<lbrakk>state_map_invar (x1b, x2a) \<and> s.invar x2b; x1ba = x1b; ((x1e, x2d), x1c) \<in> R' \<and> ((aj, ak, al, am, an, bf), x2c) \<in> R; e' = q2_\<alpha> e; \<not> s.memb (the (qm.lookup (ff e) x1e)) aj; y \<notin> \<Q> x2c; x1f = state_map_\<alpha> (x1b, x2a);
+        NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b); ((x1ea, x2da), x1ca) \<in> R' \<and> ((ay, az, bm, bn, bo, bp), x2ca) \<in> R; e'a = q2_\<alpha> ea; \<not> s.memb (the (qm.lookup (ff ea) x1ea)) ay; ya \<notin> \<Q> x2ca; x1c (q2_\<alpha> e) = Some y;
+        q2_invar e; q2_\<alpha> e \<in> S; x1ca (q2_\<alpha> ea) = Some ya; q2_invar ea; q2_\<alpha> ea \<in> S; q2_\<alpha> e \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
+        NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1c, x2c); q2_\<alpha> ea \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
+        NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1ca, x2ca)\<rbrakk>
+       \<Longrightarrow> x1ca (q2_\<alpha> ea) = Some (qm.lookup (ff ea) x1ea)") (* Maybe not \<open>ya\<close> but something like \<open>the (qm.lookup (ff ea) x1ea)\<close> *)
+          apply blast
+         apply (simp add: R'_def)
+          apply blast
+         apply (simp add: R_def in_br_conv)
+        apply blast
+       apply blast
+      apply (simp add: DS_OK)
+  apply (subgoal_tac "\<And>x1b x2a x2b e e' x1c x2c x1e x2d aj ak al am an bf x1f x1ba ea e'a x1ca x2ca x1ea x2da ay az bm bn bo bp y ya.
+       \<lbrakk>state_map_invar (x1b, x2a) \<and> s.invar x2b; x1ba = x1b; ((x1e, x2d), x1c) \<in> R' \<and> ((aj, ak, al, am, an, bf), x2c) \<in> R; e' = q2_\<alpha> e; \<not> s.memb (the (qm.lookup (ff e) x1e)) aj; y \<notin> \<Q> x2c; x1f = state_map_\<alpha> (x1b, x2a);
+        NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b); ((x1ea, x2da), x1ca) \<in> R' \<and> ((ay, az, bm, bn, bo, bp), x2ca) \<in> R; e'a = q2_\<alpha> ea; \<not> s.memb (the (qm.lookup (ff ea) x1ea)) ay; ya \<notin> \<Q> x2ca; x1c (q2_\<alpha> e) = Some y;
+        q2_invar e; q2_\<alpha> e \<in> S; x1ca (q2_\<alpha> ea) = Some ya; q2_invar ea; q2_\<alpha> ea \<in> S; q2_\<alpha> e \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
+        NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1c, x2c); q2_\<alpha> ea \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
+        NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1ca, x2ca)\<rbrakk>
+       \<Longrightarrow> NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1ca, nfa_\<alpha> (ay, az, bm, bn, bo, bp))")
+      apply (simp add: R_def)
+     apply (simp add: R_def)
+    apply (clarify)
+    apply (simp add: R_def R'_def)
+    apply (rename_tac x1b x2a x2b q q2 qm n Qs As D0 Is Fs ps v1 v2 v3 v4 v5 r)
+    apply (intro conjI impI)
+           apply (clarify)
+           apply (simp add: invar'_def nfa_invar_no_props_def nfa_selectors_def s.correct state_map_invar_def state_map_\<alpha>_def qm.correct)
+           defer
+           apply (simp add: invar'_def nfa_invar_no_props_def)
+           apply (intro conjI)
+  using s.ins_dj_correct(2) s.memb_correct apply blast
+           apply (rule_tac s.ins_dj_correct(2))
+            apply blast
+           defer
+  using FFP_OK apply blast
+          apply (simp add: invar'_def nfa_invar_no_props_def)
+          apply (intro conjI)
+  using FFP_OK apply blast
+  using FFP_OK apply blast
+  using FFP_OK apply blast
+  using FFP_OK apply blast
+       apply (simp add: nfa_\<alpha>_def)
+       defer
+  apply (simp add: invar'_def nfa_by_lts_defs.nfa_invar_no_props_def nfa_by_lts_defs_axioms s.ins_dj_correct(2) s.memb_correct)
+      apply (simp add: in_br_conv R_def)
+
 \<comment>\<open>goal solved\<close>
      apply clarify
      apply (simp add: in_br_conv split: if_split)
@@ -1593,7 +1661,7 @@ next
     by simp
   have invar_D0: "d.invar D0"
     using asm(8) invar'_def nfa_invar_no_props_def by simp
-  note some_r=asm(4)
+  note some_r=asm(3)
   have r_not_in_Q:"r \<notin> \<Q> (nfa_\<alpha> (Qs, As, D0, Is, Fs, ps))"
     by (simp add: asm(2))
   have q2_acc:"q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (set I)"
@@ -1607,7 +1675,7 @@ next
   have aux:"NFA_construct_reachable_impl_step det DS qm n D0 q
        \<le> \<Down> (br state_map_\<alpha> state_map_invar \<times>\<^sub>r br d.\<alpha> d.invar \<times>\<^sub>r \<langle>br q2_\<alpha> q2_invar\<rangle>list_rel)
            (NFA_construct_reachable_abstract_impl_step (accessible (LTS_forget_labels D) (set I)) DS' (state_map_\<alpha> (qm, n)) (d.\<alpha> D0) (q2_\<alpha> q))"
-    using D0_nfa DS'_OK I_def S_def asm(3) asm(6) d_add_OK(1) d_add_OK(2) det_OK f_inj_on ff_OK invar_D0 invar_qm_n nfa_construct_mem q2_acc r_not_in_Q some_r by blast
+    using D0_nfa DS'_OK I_def S_def asm(4) asm(6) d_add_OK(1) d_add_OK(2) det_OK f_inj_on ff_OK invar_D0 invar_qm_n nfa_construct_mem q2_acc r_not_in_Q some_r by blast
 
 (*
   have empty:"(br state_map_\<alpha> state_map_invar \<times>\<^sub>r br d.\<alpha> d.invar \<times>\<^sub>r \<langle>br q2_\<alpha> q2_invar\<rangle>list_rel) = {}"
@@ -1618,12 +1686,31 @@ next
     apply (rename_tac q1 q2 qm D n)
     sorry
 *)
-
+  note DS_OK_of_q=DS_OK[of q, simplified NFA_construct_reachable_impl_step_rel_def in_br_conv, OF asm(4) q2_acc[simplified S_def[symmetric]]]
   show "NFA_construct_reachable_impl_step det DS qm n D0 q
             \<le> \<Down> {} (NFA_construct_reachable_abstract_impl_step (accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)) DS' (state_map_\<alpha> (qm, n)) (d.\<alpha> D0) (q2_\<alpha> q))"
     apply (simp_all add: map_I)
-    using aux unfolding conc_fun_def
-    sorry
+    apply (simp add: NFA_construct_reachable_abstract_impl_step_def)
+    apply (unfold NFA_construct_reachable_impl_step_def)
+    apply (refine_rcg)
+          defer
+          apply (subgoal_tac " DS' (q2_\<alpha> q) = (\<lambda>(as, q'). (a_\<alpha> as, q2_\<alpha> q')) ` DS q")
+    using DS_OK_of_q apply auto
+     defer
+     apply (auto simp add: inj_on_def)
+  proof-
+    assume
+      DS'_DS:"DS' (q2_\<alpha> q) = {(a_\<alpha> as, q2_\<alpha> q') |as q'. (as, q') \<in> DS q}" and
+      DS_invar:"\<forall>as q'. (as, q') \<in> DS q \<longrightarrow> a_invar as \<and> q2_invar q'" and
+      DS_inj_on_abs:"\<forall>as1 q1' as2 q2'. (as1, q1') \<in> DS q \<and> (as2, q2') \<in> DS q \<and> a_\<alpha> as1 = a_\<alpha> as2 \<and> q2_\<alpha> q1' = q2_\<alpha> q2' \<longrightarrow> as1 = as2 \<and> q1' = q2'"
+
+    let ?f = "\<lambda>(as, q'). (a_\<alpha> as, q2_\<alpha> q')"
+    from DS_inj_on_abs have "inj_on ?f (DS q)"
+      by (auto simp add: inj_on_def)
+
+    show False
+      sorry
+  qed
 qed
 
 lemma NFA_construct_reachable_impl_alt_def :
