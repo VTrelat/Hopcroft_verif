@@ -57,8 +57,8 @@
                 -   Isabelle seems to struggle with abbreviations, e.g. `lsnd` and `lss`, which causes some proofs to fail (nitpick even finds counterexamples)
             -   :x: theory `NFAByLTS` is broken
                 -   :white_check_mark: repaired proof of lemma `hopcroft_lts_copy_correct` ~~is broken~~
+                -   :white_check_mark: repaired proof of lemma `right_quotient_lists_impl_code` ~~is broken~~
                 -   :x: proof of lemma `NFA_construct_reachable_impl_correct` is broken and I cannot fix it
-                -   :x: proof of lemma `right_quotient_lists_impl_code` is broken
 
 ---
 

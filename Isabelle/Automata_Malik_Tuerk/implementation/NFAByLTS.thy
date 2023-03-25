@@ -1607,14 +1607,17 @@ next
   have aux:"NFA_construct_reachable_impl_step det DS qm n D0 q
        \<le> \<Down> (br state_map_\<alpha> state_map_invar \<times>\<^sub>r br d.\<alpha> d.invar \<times>\<^sub>r \<langle>br q2_\<alpha> q2_invar\<rangle>list_rel)
            (NFA_construct_reachable_abstract_impl_step (accessible (LTS_forget_labels D) (set I)) DS' (state_map_\<alpha> (qm, n)) (d.\<alpha> D0) (q2_\<alpha> q))"
-    using D0_nfa DS'_OK I_def S_def asm(3) asm(6) d_add_OK(1) d_add_OK(2) det_OK f_inj_on ff_OK invar_D0 invar_qm_n nfa_construct_mem q2_acc r_not_in_Q some_r by fastforce
+    using D0_nfa DS'_OK I_def S_def asm(3) asm(6) d_add_OK(1) d_add_OK(2) det_OK f_inj_on ff_OK invar_D0 invar_qm_n nfa_construct_mem q2_acc r_not_in_Q some_r by blast
 
-  (* have empty:"(br state_map_\<alpha> state_map_invar \<times>\<^sub>r br d.\<alpha> d.invar \<times>\<^sub>r \<langle>br q2_\<alpha> q2_invar\<rangle>list_rel) = {}" *)
-    (* apply simp *)
-    (* apply (intro impI allI) *)
-    (* apply (unfold state_map_invar_def) *)
-    (* apply (auto) *)
-    (* sorry *)
+(*
+  have empty:"(br state_map_\<alpha> state_map_invar \<times>\<^sub>r br d.\<alpha> d.invar \<times>\<^sub>r \<langle>br q2_\<alpha> q2_invar\<rangle>list_rel) = {}"
+  apply simp
+  apply (intro impI allI)
+  apply (unfold state_map_invar_def)
+    apply (auto)
+    apply (rename_tac q1 q2 qm D n)
+    sorry
+*)
 
   show "NFA_construct_reachable_impl_step det DS qm n D0 q
             \<le> \<Down> {} (NFA_construct_reachable_abstract_impl_step (accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)) DS' (state_map_\<alpha> (qm, n)) (d.\<alpha> D0) (q2_\<alpha> q))"
@@ -2517,7 +2520,7 @@ lemma right_quotient_lists_impl_code :
          F = fst (worklist (\<lambda>s. True)
                     (\<lambda>s e. if set_op_memb s_ops e s then (s, [])
                            else (set_op_ins s_ops e s,
-                                 option_case [] (set_op_to_list s_ops) (map_op_lookup m_ops e m)))
+                                 case_option [] (set_op_to_list s_ops) (map_op_lookup m_ops e m)))
                     (set_op_empty s_ops (), set_op_to_list s_ops F))        
      in (Q, A, D, I, F, p))"
 proof -
@@ -2532,9 +2535,8 @@ proof -
   thus ?thesis
     unfolding right_quotient_lists_impl_def right_quotient_map_build_def
               nfa_selectors_def snd_conv fst_conv right_quotient_map_lookup_def
-    apply (simp add: s.accessible_restrict_code_def[abs_def] split_def
+    by (simp add: s.accessible_restrict_code_def[abs_def] split_def
                 cong: if_cong)
-    sorry
 qed
 
 lemma right_quotient_lists_impl_correct :
