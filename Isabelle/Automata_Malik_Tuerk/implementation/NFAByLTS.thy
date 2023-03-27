@@ -1528,23 +1528,13 @@ defer
         q2_invar e; q2_\<alpha> e \<in> S; x1ca (q2_\<alpha> ea) = Some ya; q2_invar ea; q2_\<alpha> ea \<in> S; q2_\<alpha> e \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
         NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1c, x2c); q2_\<alpha> ea \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
         NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1ca, x2ca)\<rbrakk>
-       \<Longrightarrow> x1ca (q2_\<alpha> ea) = Some (qm.lookup (ff ea) x1ea)") (* Maybe not \<open>ya\<close> but something like \<open>the (qm.lookup (ff ea) x1ea)\<close> *)
+       \<Longrightarrow> x1ca (q2_\<alpha> ea) = Some ya") (* Maybe not \<open>Some ya\<close> but something like \<open>(qm.lookup (ff ea) x1ea)\<close> *)
           apply blast
-         apply (simp add: R'_def)
-          apply blast
-         apply (simp add: R_def in_br_conv)
+          apply (clarify, simp add: R'_def R_def ff_OK state_map_\<alpha>_def)
         apply blast
        apply blast
       apply (simp add: DS_OK)
-  apply (subgoal_tac "\<And>x1b x2a x2b e e' x1c x2c x1e x2d aj ak al am an bf x1f x1ba ea e'a x1ca x2ca x1ea x2da ay az bm bn bo bp y ya.
-       \<lbrakk>state_map_invar (x1b, x2a) \<and> s.invar x2b; x1ba = x1b; ((x1e, x2d), x1c) \<in> R' \<and> ((aj, ak, al, am, an, bf), x2c) \<in> R; e' = q2_\<alpha> e; \<not> s.memb (the (qm.lookup (ff e) x1e)) aj; y \<notin> \<Q> x2c; x1f = state_map_\<alpha> (x1b, x2a);
-        NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b); ((x1ea, x2da), x1ca) \<in> R' \<and> ((ay, az, bm, bn, bo, bp), x2ca) \<in> R; e'a = q2_\<alpha> ea; \<not> s.memb (the (qm.lookup (ff ea) x1ea)) ay; ya \<notin> \<Q> x2ca; x1c (q2_\<alpha> e) = Some y;
-        q2_invar e; q2_\<alpha> e \<in> S; x1ca (q2_\<alpha> ea) = Some ya; q2_invar ea; q2_\<alpha> ea \<in> S; q2_\<alpha> e \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
-        NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1c, x2c); q2_\<alpha> ea \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
-        NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1ca, x2ca)\<rbrakk>
-       \<Longrightarrow> NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1ca, nfa_\<alpha> (ay, az, bm, bn, bo, bp))")
-      apply (simp add: R_def)
-     apply (simp add: R_def)
+     apply (clarify, simp add: R_def)
     apply (clarify)
     apply (simp add: R_def R'_def)
     apply (rename_tac x1b x2a x2b q q2 qm n Qs As D0 Is Fs ps v1 v2 v3 v4 v5 r)
@@ -1565,11 +1555,55 @@ defer
   using FFP_OK apply blast
   using FFP_OK apply blast
   using FFP_OK apply blast
-       apply (simp add: nfa_\<alpha>_def)
-       defer
-  apply (simp add: invar'_def nfa_by_lts_defs.nfa_invar_no_props_def nfa_by_lts_defs_axioms s.ins_dj_correct(2) s.memb_correct)
-      apply (simp add: in_br_conv R_def)
+       apply (simp add:  ff_OK state_map_\<alpha>_def invar'_def nfa_invar_no_props_def state_map_invar_def qm.lookup_correct s.ins_dj_correct(1))
+      apply (simp add: invar'_def nfa_by_lts_defs.nfa_invar_no_props_def nfa_by_lts_defs_axioms s.ins_dj_correct(2) s.memb_correct)
+     apply (simp add: in_br_conv R_def)
+    apply (simp add: R_def R'_def invar'_def state_map_invar_def state_map_\<alpha>_def I_def S_def ff_OK nfa_invar_no_props_def nfa_by_lts_defs_axioms qm.lookup_correct s.memb_correct)
+   apply (clarify, simp add: R_def R'_def invar'_def state_map_invar_def state_map_\<alpha>_def I_def S_def ff_OK nfa_invar_no_props_def nfa_by_lts_defs_axioms qm.lookup_correct s.memb_correct)
+   defer
+    apply (clarify, simp add: R_def R'_def invar'_def state_map_invar_def state_map_\<alpha>_def I_def[symmetric] S_def ff_OK nfa_invar_no_props_def nfa_by_lts_defs_axioms qm.lookup_correct s.memb_correct)
+proof-
+  fix x1b x2a x2b q qm n Qs As D0 Is Fs v1 v2 v3 v4 v5 r
+  assume asm:
+    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)"
+    "r \<notin> s.\<alpha> Qs"
+    "qm.\<alpha> qm (f (q2_\<alpha> q)) = Some r"
+    "q2_invar q" "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
+    "NFA_construct_reachable_abstract_impl_weak_invar I (l.\<alpha> A) FP D (qm.\<alpha> qm \<circ> f, nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>))"
+    "FFP q"
+    "FP (q2_\<alpha> q)"
+    "qm.invar x1b \<and> (\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n'))"
+    "s.invar x2b"
+    "qm.invar qm \<and> (\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n'))"
+    "qm.invar v2 \<and> (\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n'))"
+    "s.invar Qs" "d.invar v4" "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1" "l.invar As" "d.invar D0" "s.invar Is" "s.invar Fs" "r \<in> s.\<alpha> Fs"
+  let ?A = "nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"
+  have "NFA ?A"
+    unfolding nfa_\<alpha>_def NFA_def using asm
+    apply auto
+    unfolding FinSemiAutomaton_def
+     apply (intro conjI)
+      defer
+    unfolding FinSemiAutomaton_axioms_def
+    apply simp
+    unfolding NFA_axioms_def
+     apply (intro conjI)
+      apply simp
+      defer
+    apply simp
+    sorry
 
+  moreover have "\<Q> ?A = s.\<alpha> Qs" "\<F> ?A = s.\<alpha> Fs"
+    by simp+
+
+  ultimately show False
+    using asm(2, 20) NFA.\<F>_consistent[of ?A] by blast
+next
+  fix x1b x2a x2b q qm n Qs As D0 Is Fs v1 v2 v3 v4 v5 r
+qed
+
+
+(*
 \<comment>\<open>goal solved\<close>
      apply clarify
      apply (simp add: in_br_conv split: if_split)
@@ -1581,7 +1615,7 @@ defer
   apply clarify
   apply (simp)
   apply (rename_tac q qm n Qs As D0 Is Fs ps r)
-
+*)
 
 (*
   \<comment>\<open>step OK\<close>
