@@ -17,7 +17,10 @@
     -   :x: theory `NFAByLTS` is still broken
         -   :x: advances in the proof of lemma `NFA_construct_reachable_impl_correct` but two subgoals are still unproved.  
             I think the problem is that we would have to prove that `nfa_α (Qs, As, D0, Is, Fs, ⦇nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True⦈)` is an NFA for things to work correctly. In particular, we would get `s.α Fs ⊆ s.α Qs`.
-    -   :x: theory `RBT_NFAImpl` is still broken
+    -   :x: theory `RBT_NFAImpl` is still broken:
+        -   Isabelle seems to struggle with abbreviations, e.g. `lsnd` and `lss`, which causes some proofs to fail (nitpick even finds counterexamples)
+    -   :x: theory `RBTSetImpl` is still broken:
+        -   :x: definitions for `rs_image_filter` and `rs_image_filter` are still undefined
 
 ---
 
