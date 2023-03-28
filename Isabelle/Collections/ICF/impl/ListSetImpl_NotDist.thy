@@ -15,7 +15,7 @@ text_raw \<open>\label{thy:ListSetImpl_NotDist}\<close>
   @type 'a lsnd
   @abbrv lsnd
   Sets implemented by lists that may contain duplicate elements. 
-  Insertion is quick, but other operations are less performant than on 
+  Insertion is quick, but other operations are less efficient than on 
   lists with distinct elements.
 *)
 
@@ -172,6 +172,33 @@ lemma pi_lsnd[proper_it]:
 
 interpretation pi_lsnd: proper_it_loc lsnd_iteratei lsnd_iteratei
   apply unfold_locales by (rule pi_lsnd)
+
+lemma lsnd_ops_unfold[code_unfold]:
+  "set_op_empty lsnd_ops = lsnd.empty"
+  "set_op_memb lsnd_ops = lsnd.memb"
+  "set_op_ins lsnd_ops = lsnd.ins"
+  "set_op_delete lsnd_ops = lsnd.delete"
+  "set_op_list_it lsnd_ops = lsnd.list_it"
+  "set_op_sng lsnd_ops = lsnd.sng"
+  "set_op_isEmpty lsnd_ops = lsnd.isEmpty"
+  "set_op_isSng lsnd_ops = lsnd.isSng"
+  "set_op_ball lsnd_ops = lsnd.ball"
+  "set_op_bex lsnd_ops = lsnd.bex"
+  "set_op_size lsnd_ops = lsnd.size"
+  "set_op_size_abort lsnd_ops = lsnd.size_abort"
+  "set_op_union lsnd_ops = lsnd.union"
+  "set_op_union_dj lsnd_ops = lsnd.union_dj"
+  "set_op_diff lsnd_ops = lsnd.diff"
+  "set_op_filter lsnd_ops = lsnd.filter"
+  "set_op_inter lsnd_ops = lsnd.inter"
+  "set_op_subset lsnd_ops = lsnd.subset"
+  "set_op_equal lsnd_ops = lsnd.equal"
+  "set_op_disjoint lsnd_ops = lsnd.disjoint"
+  "set_op_disjoint_witness lsnd_ops = lsnd.disjoint_witness"
+  "set_op_sel lsnd_ops = lsnd.sel"
+  "set_op_to_list lsnd_ops = lsnd.to_list"
+  "set_op_from_list lsnd_ops = lsnd.from_list"
+  by blast+
 
 definition test_codegen where "test_codegen \<equiv> (
   lsnd.empty,
