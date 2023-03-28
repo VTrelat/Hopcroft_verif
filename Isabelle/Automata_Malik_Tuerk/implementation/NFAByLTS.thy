@@ -1659,6 +1659,7 @@ defer
 \<comment>\<open>goal solved\<close>
 *)
 (* using [[goals_limit = 6]] *)
+(*
 proof -
   fix q rm \<A> qm n Qs As DD Is Fs p r
   assume rm_q: "rm (q2_\<alpha> q) = Some r" and
@@ -1761,6 +1762,8 @@ next
       sorry
   qed
 qed
+
+*)
 
 lemma NFA_construct_reachable_impl_alt_def :
   "NFA_construct_reachable_impl det S I A FP DS =
