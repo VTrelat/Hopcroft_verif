@@ -2,7 +2,7 @@
     Authors:     Thomas Tuerk <tuerk@in.tum.de>
 *)
 
-header {* Presburger Automata Implementation *}
+header \<open> Presburger Automata Implementation \<close>
 
 theory RBT_CodeExport
 imports Main 
@@ -10,7 +10,7 @@ imports Main
         "RBT_Presburger_Impl"
 begin
 
-code_include OCaml "STArray" {*
+code_include OCaml "STArray" \<open>
 module STArray = struct
 
 type 'a cell = Value of 'a array | Invalid;;
@@ -81,7 +81,7 @@ let array_shrink (a:'a arrayType) sz = shrink (a,Big_int.int_of_big_int sz);;
 end
 
 end
-*}
+\<close>
 
 code_type array 
   (OCaml "_/ STArray.IsabelleMapping.arrayType")
@@ -131,7 +131,7 @@ export_code
 in OCaml module_name "Automata_Export" file "Automata_Export_RBT.ml"
 
 code_include SML "STArray"
-{*
+\<open>
 structure STArray = struct
 
 datatype 'a Cell = Invalid | Value of 'a array;
@@ -202,7 +202,7 @@ end;
 end;
 
 
-*}
+\<close>
 
 code_type array 
   (SML "_/ STArray.IsabelleMapping.ArrayType")
