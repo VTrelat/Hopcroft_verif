@@ -1,4 +1,4 @@
-# Biweekly report for tracking progress
+# Bimonthly report for tracking progress
 
 ---
 
@@ -6,7 +6,18 @@
 
 -   [01.03.2023 - 12.03.2023](#01032023---12032023)
 -   [13.03.2023 - 26.03.2023](#13032023---26032023)
+-   [27.03.2023 - 09.04.2023](#27032023---09042023)
 -   [Remarks](#remarks)
+
+---
+
+## 27.03.2023 - 09.04.2023
+
+-   #### Notes
+    -   :x: theory `NFAByLTS` is still broken
+        -   :x: advances in the proof of lemma `NFA_construct_reachable_impl_correct` but two subgoals are still unproved.  
+            I think the problem is that we would have to prove that `nfa_α (Qs, As, D0, Is, Fs, ⦇nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True⦈)` is an NFA for things to work correctly. In particular, we would get `s.α Fs ⊆ s.α Qs`.
+    -   :x: theory `RBT_NFAImpl` is still broken
 
 ---
 

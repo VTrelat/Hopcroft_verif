@@ -1600,6 +1600,21 @@ proof-
     using asm(2, 20) NFA.\<F>_consistent[of ?A] by blast
 next
   fix x1b x2a x2b q qm n Qs As D0 Is Fs v1 v2 v3 v4 v5 r
+  assume asm:
+    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)" "r \<notin> s.\<alpha> Qs" "qm.\<alpha> qm (f (q2_\<alpha> q)) = Some r" "q2_invar q" "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
+    "NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (qm.\<alpha> qm \<circ> f, nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>))"
+    "FFP q" "FP (q2_\<alpha> q)" "s.invar x2b" "d.invar v4" "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1" "qm.invar x1b" "\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n')" "qm.invar qm"
+    "\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n')" "s.invar Qs" "qm.invar v2" "\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n')" "l.invar As" "d.invar D0" "s.invar Is" "s.invar Fs"
+
+  from \<open>r \<notin> s.\<alpha> Qs\<close> have r_not_in_Fs:"r \<notin> s.\<alpha> Fs"
+    sorry
+  
+  show "\<lparr>\<Q> = insert r (s.\<alpha> Qs), \<Sigma> = l.\<alpha> As, \<Delta> = d.\<alpha> v4, \<I> = s.\<alpha> Is, \<F> = insert r (s.\<alpha> Fs)\<rparr> =
+            nfa_\<alpha> (s.ins_dj r Qs, As, v4, Is, s.ins_dj r Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"
+    apply (unfold nfa_\<alpha>_def)
+    apply (simp add: s.ins_dj_correct)
+    using s.ins_dj_correct(1)[OF \<open>s.invar Fs\<close> r_not_in_Fs] apply auto
+      by (simp add: \<open>s.invar Qs\<close> \<open>r \<notin> s.\<alpha> Qs\<close> s.ins_dj_correct(1))+
 qed
 
 
