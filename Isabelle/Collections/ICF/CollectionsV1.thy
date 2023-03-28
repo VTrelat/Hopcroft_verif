@@ -24,7 +24,7 @@ begin
 *** ?'a::type
 *** ?'a::hashable
 
-  The problem seems difficult to track down, as it, e.g., does not iccur for 
+  The problem seems difficult to track down, as it, e.g., does not occur for 
   sets.
 *)
 
