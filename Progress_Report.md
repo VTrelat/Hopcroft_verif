@@ -20,7 +20,7 @@
     -   :x: theory `RBT_NFAImpl` is still broken:
         -   Isabelle seems to struggle with abbreviations, e.g. `lsnd` and `lss`, which causes some proofs to fail (nitpick even finds counterexamples)
     -   :x: theory `RBTSetImpl` is still broken:
-        -   :x: definitions for `rs_image_filter` and `rs_image_filter` are still undefined
+        -   :x: definitions for `rs_image_filter` and `rs_image` are still undefined
 
 ---
 

@@ -43,8 +43,6 @@ definition "rs_nfa_accept \<equiv> rs_nfa_defs.accept_impl rs_iteratei rs_lts_dl
 definition "rs_nfa_accept_nfa \<equiv> rs_nfa_defs.accept_nfa_impl rs_iteratei rs_lts_dlts_succ_it"
 definition "rs_nfa_accept_dfa \<equiv> rs_nfa_defs.accept_dfa_impl"
 
-term "rs_lts_image"
-
 definition "rs_nfa_rename_states \<equiv> rs_nfa_defs.rename_states_impl rs_image rs_lts_dlts_image False"
 definition "rs_nfa_rename_states_dfa \<equiv> rs_nfa_defs.rename_states_impl rs_image rs_lts_dlts_image_dlts True"
 definition "rs_nfa_rename_labels_gen \<equiv> rs_nfa_defs.rename_labels_impl_gen rs_lts_dlts_image"
@@ -82,24 +80,30 @@ definition lsnd_lss_copy where
   "lsnd_lss_copy = mergesort"
 
 lemma lsnd_lss_copy_impl :
-  "set_copy ListSetImpl_NotDist.lsnd_\<alpha> ListSetImpl_NotDist.lsnd_invar ListSetImpl_Sorted.lss_\<alpha> ListSetImpl_Sorted.lss_invar lsnd_lss_copy"
-unfolding set_copy_def lsnd_lss_copy_def
-  apply (intro conjI allI impI)
-  apply (unfold lsnd_invar_def lss_invar_def lss_\<alpha>_def lsnd_\<alpha>_def, simp_all)
-  unfolding mergesort_def using mergesort_by_rel_permutes[of "(\<le>)"] apply simp
-  (* problem: counter-example *)
+  "set_copy ListSetImpl_Sorted.lss_\<alpha> ListSetImpl_Sorted.lss_invar ListSetImpl_NotDist.lsnd_\<alpha> ListSetImpl_NotDist.lsnd_invar lsnd_lss_copy"
+  unfolding set_copy_def lsnd_lss_copy_def
+    lsnd_invar_def  lss_invar_def lss_\<alpha>_def lsnd_\<alpha>_def mergesort_def
+  using mergesort_by_rel_permutes[of "(\<le>)"] by simp
 
 lemma lss_lss_copy_impl :
   "set_copy lss_\<alpha> lss_invar lss_\<alpha> lss_invar id"
-unfolding set_copy_def 
+unfolding set_copy_def
 by simp
 
+declare[[show_abbrevs=false]]
 interpretation rs_hop_ltsr :  Hopcroft_lts rm_ops rm_ops iam_ops lss_ops lss_ops 
   id rm_iteratei iam_iteratei lss_union_list
-  unfolding Hopcroft_lts_def 
-  by (simp add: lssr.StdSet_axioms rmr.StdMap_axioms lss_ops_unfold lss_union_list_impl
-                rm_ops_unfold lsndr.StdSet_axioms rm_iteratei_impl lsnd_ops_unfold
-                lss_lss_copy_impl iamr.StdMap_axioms iam_iteratei_impl iam_ops_unfold)
+  unfolding Hopcroft_lts_def
+  apply auto
+        apply (simp add: rm.StdMap_axioms)
+       apply (simp add: lss.StdSet_axioms)
+      apply (simp add: iam.StdMap_axioms)
+     defer
+     apply (simp add: lss_lss_copy_impl)
+    apply (simp add: rm.v1_iteratei_impl)
+  apply (simp add: lss.StdSet_axioms rm.StdMap_axioms lss_ops_unfold lss_union_list_impl
+                rm_ops_unfold lsnd.StdSet_axioms rm_iteratei_impl lsnd_ops_unfold
+                lss_lss_copy_impl iam.StdMap_axioms iam_iteratei_impl iam_ops_unfold)
 
 definition "rs_hop_lts_\<alpha> \<equiv> rs_hop_ltsr.hopcroft_lts_\<alpha>"
 definition "rs_hop_lts_invar \<equiv> rs_hop_ltsr.hopcroft_lts_invar"

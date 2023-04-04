@@ -1587,10 +1587,13 @@ proof-
     unfolding FinSemiAutomaton_axioms_def
     apply simp
     unfolding NFA_axioms_def
-     apply (intro conjI)
+     apply (intro conjI[rotated])
       apply simp
-      defer
     apply simp
+     defer
+    unfolding SemiAutomaton_def
+     apply (intro conjI allI impI)
+        apply auto
     sorry
 
   moreover have "\<Q> ?A = s.\<alpha> Qs" "\<F> ?A = s.\<alpha> Fs"
