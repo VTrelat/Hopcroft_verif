@@ -16,7 +16,7 @@
 \newcommand{\edmargin}[2]{\marginpar{\raggedright\linespread{.7}\tiny #1: #2}}
 
 % redefine proof environment with grey background and black square at the end
-\renewenvironment{proof}[1][Proof]{\begin{mdframed}[backgroundcolor=black!5, topline=false, rightline=false, bottomline=false, linecolor=black!15, linewidth=3pt]{\noindent\textit{#1.}\ }}{\noindent\hfill$\blacksquare$\end{mdframed}}
+\renewenvironment{proof}[1][Proof]{\begin{mdframed}[backgroundcolor=black!5, topline=false, rightline=false, bottomline=false, linecolor=black!15, linewidth=3pt]{\noindent\textit{#1.}\ }}{\noindent\par\hfill$\blacksquare$\end{mdframed}}
 
 % \usepackage{times}
 
@@ -107,17 +107,17 @@ John E. Hopcroft's algorithm for minimizing DFAs was first presented in his orig
 \KwData{\textbf{Input:} a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
 \KwResult{\textbf{Output:} the equivalence class of $\mathcal{Q}$ under state equivalence}
 Construct $\delta^{-1}(q, a) := \{t \in \mathcal{Q}\ |\ \delta(t, a) = q\}$ for all $q \in \mathcal{Q}$ and $a \in \Sigma$ \;\label{alg:original:1}
-Construct $P_1 := \mathcal{F}$, $P_2 := \mathcal{Q} \setminus \mathcal{F}$ and $a_i := \{q \in P_i \ | \ \delta^{-1}(q, a) \neq \varnothing \}$ for all $i \in \{1, 2\}$ and $a \in \Sigma$ \;
+Construct $P_1 := \mathcal{F}$, $P_2 := \mathcal{Q} \setminus \mathcal{F}$ and $s_{a,i} := \{q \in P_i \ | \ \delta^{-1}(q, a) \neq \varnothing \}$ for all $i \in \{1, 2\}$ and $a \in \Sigma$ \;
 Let $k := 3$ \;
-For all $a \in \Sigma$, construct $L_a := \underset{0 \leq i < k}{\operatorname*{arg\,min}}\ \left| a_i \right|$ \; \label{alg:original:4}
+For all $a \in \Sigma$, construct $L_a := \underset{0 \leq i < k}{\operatorname*{arg\,min}}\ \left| s_{a, i} \right|$ \; \label{alg:original:4}
 \While{$\exists a \in \Sigma, L_a \neq \varnothing$\label{alg:original:loop}}{
-    Pick $a \in \Sigma$ such that $L_a \neq \varnothing$ and $i \in L_a$ \;
+    Pick $a \in \Sigma$ such that $L_a \neq \varnothing$ and $i \in L_a$ \; \label{alg:original:pick}
     $L_a := L_a \setminus \{i\}$ \;
-    \ForAll{$j < k, \exists q \in P_j, \delta(q, a) \in a_i$}{
-        $P'_j := \{t \in P_j\ |\ \delta(t, a) \in a_i \}$ and $P''_j := P_j \setminus P'_j$ \;
-        $P_j := P'_j$ and $P_{k} := P''_j$; construct $a_j$ and $a_k$ for all $a \in \Sigma$ accordingly \;
+    \ForAll{$j < k, \exists q \in P_j, \delta(q, a) \in s_{a,i}$}{
+        $P'_j := \{t \in P_j\ |\ \delta(t, a) \in s_{a,i} \}$ and $P''_j := P_j \setminus P'_j$ \;
+        $P_j := P'_j$ and $P_{k} := P''_j$; construct $s_{a,j}$ and $s_{a,k}$ for all $a \in \Sigma$ accordingly \;
         For all $a \in \Sigma$, $L_a := \begin{cases}
-        L_a \cup \{j\} & \text{if $j \notin L_a \land \left| a_j \right| \leq \left| a_k \right|$} \\
+        L_a \cup \{j\} & \text{if $j \notin L_a \land \left| s_{a,j} \right| \leq \left| s_{a,k} \right|$} \\
         L_a \cup \{k\} & \text{otherwise}
         \end{cases}$ \;
         $k := k + 1$ \;
@@ -153,7 +153,7 @@ If $(a, C)$ is a splitter of $B$, $P$ can be updated to $P \setminus \{B\} \cup 
             Split $B$ with $(a, B')$ into $B_0$ and $B_1$ \;
             $P := (P \setminus \{B\}) \cup \{B_0, B_1\}$ \;
             \ForAll{$b \in \Sigma$}{
-                \eIf{$(b, B \in \mathcal{W})$}{
+                \eIf{$(b, B) \in \mathcal{W}$}{
                     $\mathcal{W} := (\mathcal{W} \setminus \{(b, B)\}) \cup \{(b, B_0), (b, B_1)\}$ \;
                 }{
                     $\mathcal{W} := \mathcal{W} \cup \{(b, \min \{ B_0, B_1 \})\}$ \;
@@ -189,7 +189,7 @@ Sets such as $P_i$ must be represented in a way that allows $O(1)$ time for addi
 
 \begin{requirement}
     \label{req:4}
-For a state $q$ in a set $P_i$ or $a_i$, its position must be determined in $O(1)$ time.
+For a state $q$ in a set $P_i$ or $s_{a,i}$, its position must be determined in $O(1)$ time.
 \ednote{VT}{Maybe not necessary? This should be provable from Req.\ \ref{req:2} and Req.\ \ref{req:3}.}
 \end{requirement}
 
@@ -200,15 +200,15 @@ For a state $q$ in a set $P_i$ or $a_i$, its position must be determined in $O(1
     The non trivial part is the computation of the inverse transition function $\delta^{-1}(q, a)$, for all $q \in \mathcal{Q}$ and $a \in \Sigma$. This can be done in $O(\left| \Sigma \right| \cdot \left| \mathcal{Q} \right|)$ time by iterating over $\Sigma$ and traversing the automaton (e.g.\ with a DFS) while keeping track of the predecessor at each step.
 \end{proof}
 
-\begin{lemma}
-    An iteration of the loop at line \ref{alg:original:loop} taken for a letter $a$ and an index $i \in L_a$ takes a time proportional to the number of transitions terminating in $P_i$ and the number of symbols in the alphabet, i.e. $\Theta\left(\left| \Sigma \right| \cdot \left| \bigcup_{q \in P_i} \delta^{-1}(q, a) \right| \right)$ time.
+\begin{lemma}\label{lem:time_iteration}
+    An iteration of the loop at line \ref{alg:original:loop} taken for a letter $a$ and an index $i \in L_a$ takes a time proportional to the number of transitions terminating in $P_i$ and the number of symbols in the alphabet, i.e. $\Theta\left(\left| \Sigma \right| \cdot \left| s_{a,i} \right| \right)$ time.
 \end{lemma}
 \begin{proof}
-    We pick an $a \in \Sigma$ such that $L_a \neq \varnothing$ and an $i \in L_a$. We need to examine all $j < k$ such that $\exists q \in P_j, \delta(q, a) \in a_i$ to construct the sets corresponding to splitting the block $P_j$ w.r.t.\ $a$ and $P_i$.
+    We pick an $a \in \Sigma$ such that $L_a \neq \varnothing$ and an $i \in L_a$. We need to examine all $j < k$ such that $\exists q \in P_j, \delta(q, a) \in s_{a,i}$ to construct the sets corresponding to splitting the block $P_j$ w.r.t.\ $a$ and $P_i$.
 
-    Let $j < k$. From the definition of $a_i$, we obtain the following:
+    Let $j < k$. From the definition of $s_{a,i}$, we obtain the following:
     \begin{align*}
-        \exists q \in P_j, \delta(q, a) \in a_i &\iff \exists q \in P_j, \delta(q, a) \in P_i \land \underset{\text{true}}{\underbrace{\delta^{-1}(\delta(q, a), a) \neq \varnothing}} \\
+        \exists q \in P_j, \delta(q, a) \in s_{a,i} &\iff \exists q \in P_j, \delta(q, a) \in P_i \land \underset{\text{true}}{\underbrace{\delta^{-1}(\delta(q, a), a) \neq \varnothing}} \\
         & \iff \exists q \in P_j, \delta(q, a) \in P_i
     \end{align*}
     Which corresponds to finding states in $P_j$ having an outgoing $a$-transition to a state in $P_i$, as represented in the following scheme:
@@ -232,10 +232,101 @@ For a state $q$ in a set $P_i$ or $a_i$, its position must be determined in $O(1
     $$ \{q \in P_j\ |\ \delta(q,a) \in P_i \} = \left( \bigcup_{q \in P_i} \delta^{-1}(q, a)\right) \cap P_j $$
     Since $\delta^{-1}$ was already computed in the first step of the algorithm, we can determine using req.\ \ref{req:3} whether a state of $\bigcup_{q \in P_i} \delta^{-1}(q, a)$ is also in $P_j$ in $\Theta(1)$ time.
     
-    Thus, instead of examining $P_j$ for all $j < k$, we rather go through the table of $\delta^{-1}$ and for each state $q$ such that $\delta(q, a) \in P_i$, we know from req.\ \ref{req:4} that we can determine the index $j < k$ (because there are $k$ blocks) of the block $P_j$ containing $q$ in $\Theta(1)$ time. The sets $P'_j$ and $P''_j = P_k$ can be constructed on the fly without any additional time cost. The construction of the sets $b_j$ and $b_k$ as well as the update of $L_b$ for all $b \in \Sigma$ can also be done on the fly but require $\Theta(1)$ time for each symbol $b \in \Sigma$ and thus add up to a total of $\Theta(\left| \Sigma \right|)$ time.
-
-    Overall, an iteration of the loop takes $\Theta\left(\left| \Sigma \right| \cdot \left| \bigcup_{q \in P_i} \delta^{-1}(q, a) \right| \right)$ time.
+    Thus, instead of examining $P_j$ for all $j < k$, we rather go through the table of $\delta^{-1}$ and for each state $q$ such that $\delta(q, a) \in P_i$, we know from req.\ \ref{req:4} that we can determine the index $j < k$ (because there are $k$ blocks) of the block $P_j$ containing $q$ in $\Theta(1)$ time. The sets $P'_j$ and $P''_j = P_k$ resulting from the partition can be constructed on the fly without any additional time cost. The construction of the sets $b_j$ and $b_k$ as well as the update of $L_b$ for all $b \in \Sigma$ can also be done on the fly but require $\Theta(1)$ time for each symbol $b \in \Sigma$ and thus add up to a total of $\Theta(\left| \Sigma \right|)$ time.
+    Finally, notice that $$ \left| \bigcup_{q \in P_i} \delta^{-1}(q, a) \right| = \left| \{ q \in P_i \ | \ \delta^{-1}(q,a) \neq \varnothing \} \right| = \left| s_{a,i} \right| $$
+    Overall, an iteration of the loop takes $\Theta\left(\left| \Sigma \right| \cdot \left| s_{a,i} \right| \right)$ time.
 \end{proof}
+\ednote{VT}{$|\Sigma|$ should not appear here!!! Otherwise it would result in a $O(|\Sigma|^2 |\mathcal{Q}| \log |\mathcal{Q}|)$ complexity!}
+
+We will now justify the logarithmic factor in the time complexity. We briefly explain why a logarithm stands out and prove the statement by induction. The idea is that for each symbol $a \in \Sigma$, a state $q \in \mathcal{Q}$ can be in at most one of the splitters $s_{a,i}$. When the loop iterates over this splitter, it will split the block and keep the smaller one, whose size will be at most the size of the splitter divided by two. This means that $s_{a, i}$ can be processed at most $\log \left| s_{a,i} \right|$ times. We now properly state and prove the property by induction.
+
+We see splitters as updatable program variables. This means that $s_{a,i}$ as a set may differ along the loop, however we know there exists some $q \in \mathcal{Q}$ such that $s_{a,i}$ is the unique set containing $q$ throughout the execution. This gives a way to characterize splitters throughout the whole execution.
+\begin{lemma}\label{lem:log}
+    Let $a \in \Sigma$. Each splitter $s_{a,i}$ where $i\in L_a$ is processed -- i.e.\ picked at line \ref{alg:original:pick} -- at most $\lfloor \log \left| s_{a,i} \right| \rfloor$ times.
+\end{lemma}
+\begin{proof}
+    We first show the following statement:
+
+    \textit{During an iteration, the chosen splitter $s_{a,i}$ will either be removed from the set of splitters (i.e.\ $L_a := L_a \setminus \{i\}$) or its size will be reduced by at least $\frac{\left| s_{a, i}\right|}{2}$ after the iteration.}
+
+    \bigskip
+    Let $\{P_1, \cdots, P_\ell\}$ be the current partition and let $s_{a, i}$ be the selected splitter. Thus, $s_{a, i}$ is no longer in the set of splitters, i.e.\ $i \notin L_a$. Since we go over all splittable blocks, $P_i$ may also be split by $s_{a, i}$.
+    \begin{itemize}
+        \item If $P_i$ is not split by $s_{a, i}$, then $s_{a, i}$ was already removed from the splitters. Note that it can be added again later if it is split by another splitter.
+        \item If $P_i$ is split into $P'_i$ and $P''_i$, then the smaller set is added to the splitters.
+    If $P''_i$ is the smaller one, a new splitter $s_{a, k}$ is added to the splitters\footnote{Note that $\left| s_{a, k} \right| \leq \frac{\left| s_{a, i} \right|}{2}$} and $s_{a, i}$ was already removed from the set of splitters. If $P'_i$ is the smaller one, then $P_i$ is updated to $P'_i$ and thus $s_{a, i}$ is updated to a set whose size is at most $\frac{\left| s_{a, i} \right|}{2}$.
+    \end{itemize}
+    Therefore, since a splitter cannot be empty, $s_{a, i}$ can be processed at most $m$ times where $m$ is such that
+    $$ 1 \leq \frac{\left| s_{a, i}\right|}{2^m} < 2$$
+    which is equivalent to
+    $$ m \leq \log \left| s_{a, i} \right| < m + 1 \quad \text{i.e.}\quad \left\lfloor\log \left| s_{a, i} \right|\right\rfloor = m $$
+\end{proof}
+
+\begin{lemma}\label{lem:bound}
+    Let $a \in \Sigma$. Let us consider some step in the algorithm such that $\mathcal{P}$ is the current partition. The total time spent in the loop until termination for any symbol $a$ is bounded by
+    $$ T_a := \theta \left(\sum_{i \in L_a} \left| s_{a, i} \right| \log \left| s_{a, i} \right| + \sum_{i \in \{1, \cdots, |\mathcal{P}|\}\setminus L_a} \left| s_{a, i} \right| \log \frac{\left| s_{a, i} \right|}{2} \right)$$
+    where $\theta$ is the constant of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
+\end{lemma}
+\begin{proof}
+    We show the result by induction over the steps.
+
+    \bigskip
+    \textbf{Base case:} the current partition is $\{P_1, P_2\}$ and we may assume w.l.o.g.\ that $L_a = \{1\}$.
+    We have to show that the total time spent in the loop for $a$ is bounded by $T_a = \left| s_{a, 1} \right| \log \left| s_{a, 1} \right| + \left| s_{a, 2} \right| \log \frac{\left| s_{a, 2} \right|}{2}$.
+    \begin{itemize}
+        \item We know from lemma \ref{lem:time_iteration} that an iteration of the loop for $s_{a, i}$ takes $\theta\left| s_{a,i} \right|$ time. We also know from lemma \ref{lem:log} that $s_{a, i}$ can be processed at most $\log \left| s_{a, i} \right|$ times\footnote{We drop the floor operator for simplicity. Note that since we are giving upper bounds, this is completely valid.}, the total time for $s_{a, 1}$ is bounded by $\theta \left| s_{a, 1} \right| \log \left| s_{a, 1} \right|$.
+
+        \item For $s_{a, 2}$, we know that it is not in the set of splitters, but it can be added if $P_2$ is split by $s_{a, 1}$ into $P'_2$ and $P''_2$. Since $L_a$ is empty, the smaller one is added as a splitter and thus has a size at most $\frac{\left| s_{a, 2} \right|}{2}$ and thus can be processed at most this many times. An iteration over this new splitter will take less than $\theta \left| s_{a, 2} \right|$ time, thus the total time for $s_{a, 2}$ is bounded by $\theta \left| s_{a, 2} \right| \log \frac{\left| s_{a, 2} \right|}{2}$.
+    \end{itemize}
+
+    \textbf{Inductive step:} Let $\{P_1, \cdots, P_\ell\} := \mathcal{P}$ be the current partition. The induction hypothesis states that the total time spent in the loop until termination for $a$ is bounded by
+    $$ T_a := \theta \left(\sum_{i \in L_a} \left| s_{a, i} \right| \log \left| s_{a, i} \right| + \sum_{i \in \{1, \cdots, \ell\}\setminus L_a} \left| s_{a, i} \right| \log \frac{\left| s_{a, i} \right|}{2} \right)$$
+    By going through one more step, some blocks of $\mathcal{P}$ may be split and we define a new time $\hat{T}_a$ over this new partition and we have to show that $\hat{T}_a \leq T_a$.
+
+    Suppose $P_j$ is split into $P'_j$ and $P''_j$ by any splitter. Let $\tilde{s}_{a, j}$ be the new value for $s_{a, j}$ and $s_{a, \ell + 1}$ the new potential splitter. The partition is updated as well, i.e.\ $P_j$ is updated to $P'_j$ and $P_{\ell + 1} := P''_j$ is added to the partition.
+    We have to consider the cases where $j \in L_a$ and $j \notin L_a$ separately.
+    \begin{itemize}
+        \item $j \in L_a$:  is added to the set of splitters, so now $\ell + 1 \in L_a$ and the partition is updated as well. Note that
+        $$ \left| s_{a, \ell + 1} \right| = \left| s_{a, j} \right| - \left| \tilde{s}_{a, j} \right|$$
+        Thus, instead of taking $\theta \left| s_{a, j} \right| \log \left| s_{a, j} \right|$ time for $s_{a, j}$, it now takes
+        $$\theta \left( \left| \tilde{s}_{a, j} \right| \log \left| \tilde{s}_{a, j} \right| + \left| s_{a, \ell + 1} \right| \log \left| s_{a, \ell + 1} \right| \right)$$
+        i.e.
+        \begin{equation*}\label{eq:j_in_L_a}
+            \theta \left( \left| \tilde{s}_{a, j} \right| \log \left| \tilde{s}_{a, j} \right| + (\left| s_{a, j} \right| - \left| \tilde{s}_{a, j} \right|) \log (\left| s_{a, j} \right| - \left| \tilde{s}_{a, j} \right|) \right)
+        \end{equation*}
+        By using concavity of the logarithm, we have:
+        \begin{equation*}
+            \left| \tilde{s}_{a, j} \right| \log \left| \tilde{s}_{a, j} \right| + (\left| s_{a, j} \right| - \left| \tilde{s}_{a, j} \right|) \log (\left| s_{a, j} \right| - \left| \tilde{s}_{a, j} \right|) \leq \left| s_{a, j} \right| \log \left| s_{a, j} \right|
+        \end{equation*}
+
+        \item $j \notin L_a$: the smaller splitter between $\tilde{s}_{a, j}$ and $s_{a, \ell + 1}$ is added to the set of splitters. If $\sigma$ is the smaller splitter and $\xi$ is the other one, then it is added as splitter, i.e.\ its index is added to $L_a$. Thus, the corresponding term in the sum $\left| s_{a, j} \right| \log \frac{\left| s_{a, j} \right|}{2}$ is updated as follows:
+        \begin{equation*}
+            \theta \left(\left| \sigma \right| \log \left| \sigma \right| + \theta \left| \xi \right| \log \left(\frac{\left| \xi \right|}{2}\right)\right)
+        \end{equation*}
+        Since $\left| \xi \right| = \left| s_{a, j}\right| - \left| \sigma \right|$, we have:
+        \begin{equation*}
+            \underset{\text{because $\sigma$ is a splitter}}{\underbrace{\theta \left| \sigma \right| \log \left| \sigma \right|}} + \underset{\text{because the other splitter is not added as a splitter}}{\underbrace{\theta (\left| s_{a, j} \right| - \left| \sigma \right|) \log \left(\frac{\left| s_{a, j} \right| - \left| \sigma \right|}{2}\right)}}
+        \end{equation*}
+        By using the fact that $\left| \sigma \right| \leq \left| \frac{s_{a, j}}{2} \right|$, we have:
+        \begin{align*}
+            & \left| \sigma \right| \log \left| \sigma \right| + (\left| s_{a, j} \right| - \left| \sigma \right|)\log \left(\frac{\left| s_{a, j} \right|}{2} - \left| \sigma \right|\right) - \left| s_{a, j} \right| \log \frac{\left| s_{a, j} \right|}{2} \\
+            & \leq \left| \sigma \right| \log \frac{\left| s_{a, j} \right|}{2} + (\left| s_{a, j} \right| - \left| \sigma \right|) \log \left(\frac{\left| s_{a, j} \right|}{2} - \left| \sigma \right|\right) - \left| s_{a, j} \right| \log \frac{\left| s_{a, j} \right|}{2} \\
+            & \leq (\left| s_{a, j} \right| - \left| \sigma \right|) \log \left(\frac{\frac{\left| s_{a, j} \right|}{2} - \left| \sigma \right|}{\frac{\left| s_{a, j}\right|}{2}}\right) \leq 0
+        \end{align*}
+
+        Overall, splitting a block of $\mathcal{P}$ does not increase the total time spent over the loop, hence $\hat{T}_a \leq T_a$.
+    \end{itemize}
+\end{proof}
+
+From lemma \ref{lem:bound}, we obtain in particular that for the initial partition, the following holds:
+$$\forall a \in \Sigma, T_a \leq \theta(|P_1| + |P_2|)\log(|P_1| + |P_2|) = \theta|\mathcal{Q}| \log |\mathcal{Q}|$$
+
+By iterating over all symbols in $\Sigma$, we eventually obtain the following theorem.
+
+\begin{theorem}
+    \label{thm:complexity}
+    Algorithm \ref{alg:original} runs in $O\left(|\Sigma|\cdot|\mathcal{Q}| \log |\mathcal{Q}|\right)$ time.
+\end{theorem}
 
 % \printglossary[type=\acronymtype]
 
