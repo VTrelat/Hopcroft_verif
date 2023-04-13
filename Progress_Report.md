@@ -29,7 +29,7 @@
         -   Isabelle seems to struggle with abbreviations, e.g. `lsnd` and `lss`, which causes some proofs to fail (nitpick even finds counterexamples)
     -   :x: theory `RBTSetImpl` is still broken:
         -   :x: definitions for `rs_image_filter` and `rs_image` are still undefined
-    -   ❌ **leave out Isabelle implementation issues for the moment**
+    -   **leave out Isabelle implementation issues for the moment**
     -   started paper proof for time complexity based on Hopcroft's original 1971 paper
         -   quite unclear, difficult to read
         -   some arguments are claimed without really proving them
