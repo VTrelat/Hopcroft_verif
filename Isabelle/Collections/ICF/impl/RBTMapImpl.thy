@@ -98,6 +98,38 @@ interpretation pi_rm_rev: proper_it_loc RBT_add.rm_reverse_iterateoi
   RBT_add.rm_reverse_iterateoi
   apply unfold_locales by (rule pi_rm_rev)
 
+lemma rm_iterateoi_impl: "poly_map_iterateoi rm.\<alpha> rm.invar rm.iterateoi"
+  by (simp add: finite_map.intro poly_map_iterateoi_axioms.intro poly_map_iterateoi_def rm.iterateoi_correct)
+
+lemma rm_iteratei_impl: "poly_map_iteratei rm.\<alpha> rm.invar rm.iteratei"
+  by (simp add: poly_map_iteratei.intro poly_map_iteratei_axioms.intro rm.finite_map_axioms rm.iteratei_correct)
+
+lemma rm_ops_unfold[code_unfold]:
+  "map_op_add_dj rm_ops = rm.add_dj"
+  "map_op_ball rm_ops = rm.ball"
+  "map_op_bex rm_ops = rm.bex"
+  "map_op_delete rm_ops = rm.delete"
+  "map_op_empty rm_ops = rm.empty"
+  "map_op_isEmpty rm_ops = rm.isEmpty"
+  "map_op_isSng rm_ops = rm.isSng"
+  "map_op_list_it rm_ops = rm.list_it"
+  "map_op_lookup rm_ops = rm.lookup"
+  "map_op_max rm_ops = rm.max"
+  "map_op_min rm_ops = rm.min"
+  "map_op_restrict rm_ops = rm.restrict"
+  "map_op_rev_list_it rm_ops = rm.rev_list_it"
+  "map_op_sel rm_ops = rm.sel"
+  "map_op_size rm_ops = rm.size"
+  "map_op_size_abort rm_ops = rm.size_abort"
+  "map_op_sng rm_ops = rm.sng"
+  "map_op_to_list rm_ops = rm.to_list"
+  "map_op_to_map rm_ops = rm.to_map"
+  "map_op_to_rev_list rm_ops = rm.to_rev_list"
+  "map_op_to_sorted_list rm_ops = rm.to_sorted_list"
+  "map_op_update rm_ops = rm.update"
+  "map_op_update_dj rm_ops = rm.update_dj"
+  by blast+
+
 text \<open>Code generator test\<close>
 definition "test_codegen \<equiv> (rm.add ,
   rm.add_dj ,

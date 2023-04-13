@@ -15,7 +15,7 @@ text_raw \<open>\label{thy:ListSetImpl_NotDist}\<close>
   @type 'a lsnd
   @abbrv lsnd
   Sets implemented by lists that may contain duplicate elements. 
-  Insertion is quick, but other operations are less performant than on 
+  Insertion is quick, but other operations are less efficient than on 
   lists with distinct elements.
 *)
 
@@ -25,7 +25,7 @@ type_synonym
 subsection "Definitions"
 
 definition lsnd_\<alpha> :: "'a lsnd \<Rightarrow> 'a set" where "lsnd_\<alpha> == set"
-abbreviation (input) lsnd_invar 
+definition lsnd_invar 
   :: "'a lsnd \<Rightarrow> bool" where "lsnd_invar == (\<lambda>_. True)"
 definition lsnd_empty :: "unit \<Rightarrow> 'a lsnd" where "lsnd_empty == (\<lambda>_::unit. [])"
 definition lsnd_memb :: "'a \<Rightarrow> 'a lsnd \<Rightarrow> bool" where "lsnd_memb x l == List.member l x"
@@ -50,6 +50,7 @@ definition list_to_lsnd :: "'a list \<Rightarrow> 'a lsnd" where "list_to_lsnd =
 subsection "Correctness"
 lemmas lsnd_defs = 
   lsnd_\<alpha>_def
+  lsnd_invar_def
   lsnd_empty_def
   lsnd_memb_def
   lsnd_ins_def
@@ -75,7 +76,7 @@ lemma lsnd_ins_dj_impl: "set_ins_dj lsnd_\<alpha> lsnd_invar lsnd_ins_dj"
 by (unfold_locales) (auto simp add: lsnd_defs)
 
 lemma lsnd_delete_impl: "set_delete lsnd_\<alpha> lsnd_invar lsnd_delete"
-by (unfold_locales) (auto simp add: lsnd_delete_def lsnd_\<alpha>_def remove_rev_alt_def)
+by (unfold_locales) (auto simp add: lsnd_delete_def lsnd_\<alpha>_def remove_rev_alt_def lsnd_invar_def)
 
 lemma lsnd_\<alpha>_finite[simp, intro!]: "finite (lsnd_\<alpha> l)"
   by (auto simp add: lsnd_defs)
@@ -158,7 +159,7 @@ proof -
     done
 qed
 interpretation lsnd: StdSet_no_invar lsnd_ops
-  by unfold_locales (simp add: icf_rec_unf)
+  by unfold_locales (simp add: icf_rec_unf lsnd_invar_def)
 setup Locale_Code.close_block
 
 setup \<open>ICF_Tools.revert_abbrevs "lsnd"\<close>
@@ -171,6 +172,33 @@ lemma pi_lsnd[proper_it]:
 
 interpretation pi_lsnd: proper_it_loc lsnd_iteratei lsnd_iteratei
   apply unfold_locales by (rule pi_lsnd)
+
+lemma lsnd_ops_unfold[code_unfold]:
+  "set_op_empty lsnd_ops = lsnd.empty"
+  "set_op_memb lsnd_ops = lsnd.memb"
+  "set_op_ins lsnd_ops = lsnd.ins"
+  "set_op_delete lsnd_ops = lsnd.delete"
+  "set_op_list_it lsnd_ops = lsnd.list_it"
+  "set_op_sng lsnd_ops = lsnd.sng"
+  "set_op_isEmpty lsnd_ops = lsnd.isEmpty"
+  "set_op_isSng lsnd_ops = lsnd.isSng"
+  "set_op_ball lsnd_ops = lsnd.ball"
+  "set_op_bex lsnd_ops = lsnd.bex"
+  "set_op_size lsnd_ops = lsnd.size"
+  "set_op_size_abort lsnd_ops = lsnd.size_abort"
+  "set_op_union lsnd_ops = lsnd.union"
+  "set_op_union_dj lsnd_ops = lsnd.union_dj"
+  "set_op_diff lsnd_ops = lsnd.diff"
+  "set_op_filter lsnd_ops = lsnd.filter"
+  "set_op_inter lsnd_ops = lsnd.inter"
+  "set_op_subset lsnd_ops = lsnd.subset"
+  "set_op_equal lsnd_ops = lsnd.equal"
+  "set_op_disjoint lsnd_ops = lsnd.disjoint"
+  "set_op_disjoint_witness lsnd_ops = lsnd.disjoint_witness"
+  "set_op_sel lsnd_ops = lsnd.sel"
+  "set_op_to_list lsnd_ops = lsnd.to_list"
+  "set_op_from_list lsnd_ops = lsnd.from_list"
+  by blast+
 
 definition test_codegen where "test_codegen \<equiv> (
   lsnd.empty,

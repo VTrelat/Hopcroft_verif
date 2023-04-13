@@ -2,20 +2,20 @@
     Authors:     Thomas Tuerk <tuerk@in.tum.de>
 *)
 
-header {* Constructing Nondeterministic Finite Automata *}
+section \<open> Constructing Nondeterministic Finite Automata \<close>
 
 theory NFAConstruct
 imports Main LTS SemiAutomaton NFA 
 begin
 
-text {* In the following automata are constructed by 
+text \<open> In the following automata are constructed by 
 sequentially adding states together to an initially empty automaton.
 An \emph{empty} automaton contains an alphabet of labels and a set of initial states.
 Adding states updates the set of states, the transition relation and the set of
 accepting states.
 
 This construction is used to add only the reachable states to an automaton.
-*}
+\<close>
 
 definition NFA_initial_automaton :: "'q set \<Rightarrow> 'a set \<Rightarrow> ('q, 'a) NFA_rec" where
   "NFA_initial_automaton I A \<equiv> \<lparr> \<Q>={}, \<Sigma>=A, \<Delta> = {}, \<I>=I, \<F> = {} \<rparr>"
@@ -31,8 +31,8 @@ definition NFA_construct_reachable where
  (accessible (LTS_forget_labels D) I)"
 
 lemma NFA_insert_state___comp_fun_commute :
-  "comp_fun_commute (NFA_insert_state FP D)"
-apply (simp add: NFA_insert_state_def comp_fun_commute_def o_def)
+  "comp_fun_commute_on UNIV (NFA_insert_state FP D)"
+apply (simp add: NFA_insert_state_def comp_fun_commute_on_def o_def)
 apply (subst fun_eq_iff)
 apply simp
 apply (metis Un_commute Un_left_commute insert_commute)
@@ -43,8 +43,8 @@ lemma fold_NFA_insert_state :
 \<lparr> \<Q>=Q \<union> (\<Q> \<A>), \<Sigma>=\<Sigma> \<A>, \<Delta> = \<Delta> \<A> \<union> {qsq. qsq \<in> D \<and> fst qsq \<in> Q}, 
   \<I>=\<I> \<A>, \<F> = (\<F> \<A>) \<union> {q. q \<in> Q \<and> FP q} \<rparr>"
 apply (induct rule: finite_induct)
-  apply (simp) 
-apply (simp add: comp_fun_commute.fold_insert [OF NFA_insert_state___comp_fun_commute])
+apply (simp)
+apply (simp add: comp_fun_commute_on.fold_insert [OF NFA_insert_state___comp_fun_commute])
 apply (auto simp add: NFA_insert_state_def)
 done
 
@@ -57,7 +57,7 @@ lemma NFA_construct_reachable_simp :
 by (simp add: NFA_construct_reachable_def
               fold_NFA_insert_state NFA_initial_automaton_def)
 
-text {* Now show that this can be used to remove unreachable states *}
+text \<open> Now show that this can be used to remove unreachable states \<close>
 lemma (in NFA) NFA_remove_unreachable_states_implementation :
 assumes I_OK: "I = \<I> \<A>"
     and A_OK: "A = \<Sigma> \<A>"
@@ -103,8 +103,8 @@ proof -
   done
 qed
 
-text {* Now let's implement efficiently constructing NFAs. During implementation, 
-        the states are renamend as well. *}
+text \<open> Now let's implement efficiently constructing NFAs. During implementation, 
+        the states are renamend as well. \<close>
 definition NFA_construct_reachable_map_OK where
   "NFA_construct_reachable_map_OK S rm DD rm' \<longleftrightarrow>
    DD \<subseteq> dom rm' \<and>
@@ -131,7 +131,7 @@ by (simp add: subset_iff dom_def) metis
 
 definition NFA_construct_reachable_abstract_impl_invar where
 "NFA_construct_reachable_abstract_impl_invar I A FP D \<equiv> (\<lambda>((rm, \<A>), wl).
-(\<exists>s. NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) empty 
+(\<exists>s. NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) Map.empty 
        (s \<union> set I \<union> set wl \<union> {q'. \<exists>a q. q\<in>s \<and> (q,a,q')\<in> D}) rm \<and>
      (accessible (LTS_forget_labels D) (set I)  = 
       accessible_restrict (LTS_forget_labels D) s (set wl)) \<and>
@@ -141,7 +141,7 @@ definition NFA_construct_reachable_abstract_impl_invar where
 
 definition NFA_construct_reachable_abstract_impl_weak_invar where
 "NFA_construct_reachable_abstract_impl_weak_invar I A FP D \<equiv> (\<lambda>(rm, \<A>).
-(\<exists>s. NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) empty 
+(\<exists>s. NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) Map.empty 
        (s \<union> set I \<union> {q'. \<exists>a q. q\<in>s \<and> (q,a,q')\<in> D}) rm \<and>
      s \<subseteq> accessible (LTS_forget_labels D) (set I) \<and> 
      (\<A> = NFA_rename_states 
@@ -206,7 +206,7 @@ proof -
      and rm''_q': "rm'' q' = Some r'"
   from q_in_dom obtain r where rm_q: "rm q = Some r" by auto
 
-  def D'' \<equiv> "DD q - it"
+  define D'' where "D'' \<equiv> DD q - it"
   have D''_intro : "(DD q - (it - {(as, q')})) = insert (as, q') D''"
     using in_it it_subset D''_def by auto 
 
@@ -258,7 +258,7 @@ definition NFA_construct_reachable_abstract_impl where
   "NFA_construct_reachable_abstract_impl I A FP D DD =
    do {
      (rm, I') \<leftarrow> SPEC (\<lambda>(rm, I'). 
-        NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) empty (set I) rm \<and>
+        NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) Map.empty (set I) rm \<and>
         I' = (the \<circ> rm) ` (set I));
      ((rm, \<A>), _) \<leftarrow> WORKLISTIT (NFA_construct_reachable_abstract_impl_invar I A FP D) 
       (\<lambda>_. True)
@@ -321,10 +321,10 @@ defer
 defer
 proof -
   fix rm :: "'q \<Rightarrow> 'q2 option"
-  assume rm_OK: "NFA_construct_reachable_map_OK S empty (set I) rm"
+  assume rm_OK: "NFA_construct_reachable_map_OK S Map.empty (set I) rm"
 
   thus "NFA_construct_reachable_abstract_impl_invar I A FP D
-         ((rm, \<lparr>\<Q> = {}, \<Sigma> = A, \<Delta> = {}, \<I> = (the \<circ> rm) ` (set I), \<F> = {}\<rparr>), I)"
+          ((rm, \<lparr>\<Q> = {}, \<Sigma> = A, \<Delta> = {}, \<I> = (\<lambda>x. the (rm x)) ` set I, \<F> = {}\<rparr>), I)"
     unfolding NFA_construct_reachable_abstract_impl_invar_def
     apply (simp)
     apply (rule exI [where x = "{}"])
@@ -343,7 +343,7 @@ next
     apply (simp add: reach_simp S_def[symmetric])
     apply (rule NFA_isomorphic___NFA_rename_states)
     apply (simp add: inj_on_def NFA_construct_reachable_map_OK_def dom_def subset_iff Ball_def)
-    apply (metis the.simps)
+    apply (metis option.sel)
   done
 next
   fix rm :: "'q \<Rightarrow> 'q2 option"
@@ -352,7 +352,7 @@ next
 
   from invar obtain s where 
     S_eq: "S = accessible_restrict (LTS_forget_labels D) s (insert q (set wl))" and
-    rm_OK: "NFA_construct_reachable_map_OK S empty (insert q (s \<union> set I \<union> 
+    rm_OK: "NFA_construct_reachable_map_OK S Map.empty (insert q (s \<union> set I \<union> 
             set wl \<union> {q'. \<exists>a q. q \<in> s \<and> (q, a, q') \<in> D})) rm" and
     \<A>_eq: "\<A> = NFA_rename_states
            \<lparr>\<Q> = s, \<Sigma> = A, \<Delta> = {qsq \<in> D. fst qsq \<in> s}, \<I> = set I, \<F> = {q \<in> s. FP q}\<rparr>
@@ -380,7 +380,7 @@ next
   show "NFA_construct_reachable_abstract_impl_invar I A FP D ((rm, \<A>), wl)"
   proof -
     from invar obtain s where 
-      rm_OK: "NFA_construct_reachable_map_OK S empty (insert q (s \<union> set I \<union> 
+      rm_OK: "NFA_construct_reachable_map_OK S Map.empty (insert q (s \<union> set I \<union> 
               set wl \<union> {q'. \<exists>a q. q \<in> s \<and> (q, a, q') \<in> D})) rm" and
       S_eq: "S = accessible_restrict (LTS_forget_labels D) s (insert q (set wl))" and
       \<A>_eq: "\<A> = NFA_rename_states 
@@ -393,7 +393,7 @@ next
     with rm_OK rm_q_eq q_in_S s_subset have "q \<in> s"
       unfolding NFA_construct_reachable_map_OK_def
       apply (simp add: image_iff Bex_def dom_def subset_iff inj_on_def Ball_def)
-      apply (metis the.simps)
+      apply (metis option.sel)
     done
 
     from `q \<in> s` have "insert q (s \<union> set I \<union> set wl \<union> {q'. \<exists>a q. q \<in> s \<and> (q, a, q') \<in> D}) = 
@@ -424,7 +424,7 @@ next
          \<F> = {q \<in> s. FP q}\<rparr> (the \<circ> rm)" 
      unfolding NFA_construct_reachable_abstract_impl_invar_def S_def[symmetric] by auto
 
-  def D'' \<equiv> "{(a, q'). (q, a, q') \<in> D}" 
+   define D'' where "D'' \<equiv> {(a, q'). (q, a, q') \<in> D}" 
 
   from DD_OK[OF q_in_S] 
   have snd_D''_eq: "snd ` D'' = snd ` (DD q)"
@@ -437,7 +437,7 @@ next
     unfolding NFA_construct_reachable_abstract_impl_foreach_invar.simps snd_D''_eq
     by (auto simp add: Let_def D''_def DD_OK)
 
-  def DDD \<equiv> "insert q (s \<union> set I \<union> set wl \<union> {q'. \<exists>a q. q \<in> s \<and> (q, a, q') \<in> D})"
+  define DDD where "DDD \<equiv> insert q (s \<union> set I \<union> set wl \<union> {q'. \<exists>a q. q \<in> s \<and> (q, a, q') \<in> D})"
   have DDD_intro: "(insert q
        (s \<union> set I \<union> (set N \<union> set wl) \<union> {q'. \<exists>a qa. (qa = q \<or> qa \<in> s) \<and> (qa, a, q') \<in> D})) = DDD \<union> snd ` D''"  
     unfolding DDD_def by (auto simp add: image_iff set_N_eq D''_def)
@@ -511,7 +511,8 @@ next
       apply (metis) 
     done
 
-    show ?thesis by (simp add: NFA_rename_states_full_def \<A>_eq rm'_eq_F rm'_eq_I rm'_eq_Q D'_eq')
+  show ?thesis
+    using rm'_eq_I rm'_eq_Q by (simp add: NFA_rename_states_full_def \<A>_eq rm'_eq_F D'_eq')
   qed
 
   from S_eq have s_subset: "s \<subseteq> S" unfolding accessible_restrict_def by simp
@@ -548,7 +549,7 @@ definition NFA_construct_reachable_abstract2_impl where
   "NFA_construct_reachable_abstract2_impl I A FP D DD =
    do {
      (rm, I') \<leftarrow> SPEC (\<lambda>(rm, I'). 
-        NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) empty (set I) rm \<and>
+        NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) Map.empty (set I) rm \<and>
         I' = (the \<circ> rm) ` (set I));
      ((rm, \<A>), _) \<leftarrow> WORKLISTIT (NFA_construct_reachable_abstract_impl_invar I A FP D) 
       (\<lambda>_. True)

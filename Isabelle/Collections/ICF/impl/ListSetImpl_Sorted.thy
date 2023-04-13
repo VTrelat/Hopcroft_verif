@@ -268,6 +268,33 @@ lemma pi_lss[proper_it]:
 interpretation pi_lss: proper_it_loc lss_iteratei lss_iteratei
   apply unfold_locales by (rule pi_lss)
 
+lemma lss_ops_unfold[code_unfold]:
+  "set_op_empty lss_ops = lss.empty"
+  "set_op_memb lss_ops = lss.memb"
+  "set_op_ins lss_ops = lss.ins"
+  "set_op_delete lss_ops = lss.delete"
+  "set_op_list_it lss_ops = lss.list_it"
+  "set_op_sng lss_ops = lss.sng"
+  "set_op_isEmpty lss_ops = lss.isEmpty"
+  "set_op_isSng lss_ops = lss.isSng"
+  "set_op_ball lss_ops = lss.ball"
+  "set_op_bex lss_ops = lss.bex"
+  "set_op_size lss_ops = lss.size"
+  "set_op_size_abort lss_ops = lss.size_abort"
+  "set_op_union lss_ops = lss.union"
+  "set_op_union_dj lss_ops = lss.union_dj"
+  "set_op_diff lss_ops = lss.diff"
+  "set_op_filter lss_ops = lss.filter"
+  "set_op_inter lss_ops = lss.inter"
+  "set_op_subset lss_ops = lss.subset"
+  "set_op_equal lss_ops = lss.equal"
+  "set_op_disjoint lss_ops = lss.disjoint"
+  "set_op_disjoint_witness lss_ops = lss.disjoint_witness"
+  "set_op_sel lss_ops = lss.sel"
+  "set_op_to_list lss_ops = lss.to_list"
+  "set_op_from_list lss_ops = lss.from_list"
+  by blast+
+
 definition test_codegen where "test_codegen \<equiv> (
   lss.empty,
   lss.memb,

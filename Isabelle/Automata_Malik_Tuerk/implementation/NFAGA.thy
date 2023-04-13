@@ -2,9 +2,7 @@ theory NFAGA
 imports NFASpec
 begin
 
-
-
-subsection {* Construction hierarchie *}
+subsection \<open> Construction hierarchy \<close>
 
 lemma nfa_dfa_construct_default :
 assumes label_set_OK: "nfa_dfa_construct_label_sets \<alpha> invar \<alpha>_s invar_s q2_\<alpha> q2_invar (\<lambda>x. {x}) (\<lambda>_. True) construct"
@@ -12,12 +10,16 @@ shows "nfa_dfa_construct \<alpha> invar \<alpha>_s invar_s q2_\<alpha> q2_invar 
 proof (intro nfa_dfa_construct.intro nfa_dfa_construct_axioms.intro)
   from label_set_OK show "nfa \<alpha> invar" unfolding nfa_dfa_construct_label_sets_def by simp
 next
-  case goal2 note assms = this
+  fix \<A>::"('f, 'c) NFA_rec" and det and f::"'f \<Rightarrow> 'g" and ff I A FP and D_it::"'e \<Rightarrow> ('h \<Rightarrow> bool) \<Rightarrow> ('c \<times> 'e \<Rightarrow> 'h \<Rightarrow> 'h) \<Rightarrow> 'h \<Rightarrow> 'h"
+  assume assms: "NFA \<A>" "det \<Longrightarrow> DFA \<A>" "inj_on f (\<Q> \<A>)" "\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> \<Q> \<A>\<rbrakk> \<Longrightarrow> ff q = f (q2_\<alpha> q)" "distinct (map q2_\<alpha> I)" "\<And>q. q \<in> set I \<Longrightarrow> q2_invar q"
+    "q2_\<alpha> ` set I = \<I> \<A>" "invar_s A" "\<alpha>_s A = \<Sigma> \<A>" "\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> \<Q> \<A>\<rbrakk> \<Longrightarrow> FP q = (q2_\<alpha> q \<in> \<F> \<A>)"
+    "\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> \<Q> \<A>\<rbrakk> \<Longrightarrow> set_iterator_abs (\<lambda>(a, q'). (a, q2_\<alpha> q')) (\<lambda>(a, q'). q2_invar q') (D_it q) {(a, q'). (q2_\<alpha> q, a, q') \<in> \<Delta> \<A>}"
+
   note label_set_rule = nfa_dfa_construct_label_sets.nfa_dfa_construct_label_sets_correct[OF label_set_OK,
-     where DS_q = "\<lambda>q. {({a}, q') | a q'. (q, a, q') \<in> \<Delta> \<A>}"]
+      where DS_q = "\<lambda>q. {({a}, q') | a q'. (q, a, q') \<in> \<Delta> \<A>}"]
   note label_set_rule' = label_set_rule [of \<A> det f ff I A FP D_it, OF assms(1-9)]
 
-  show ?case
+  show "invar (construct det ff I A FP D_it) \<and> NFA_isomorphic_wf (\<alpha> (construct det ff I A FP D_it)) (NFA_remove_unreachable_states \<A>)"
   proof (rule label_set_rule')
     fix q
     assume pre: "q2_invar q" "q2_\<alpha> q \<in> \<Q> \<A>"
@@ -56,12 +58,16 @@ shows "nfa_construct \<alpha> invar \<alpha>_s invar_s q2_\<alpha> q2_invar cons
 proof (intro nfa_construct.intro nfa_construct_axioms.intro)
   from label_set_OK show "nfa \<alpha> invar" unfolding nfa_construct_label_sets_def by simp
 next
-  case goal2 note assms = this
+  fix \<A>::"('f, 'c) NFA_rec" and det and f::"'f \<Rightarrow> 'g" and ff I A FP and D_it::"'e \<Rightarrow> ('h \<Rightarrow> bool) \<Rightarrow> ('c \<times> 'e \<Rightarrow> 'h \<Rightarrow> 'h) \<Rightarrow> 'h \<Rightarrow> 'h"
+  assume assms: "NFA \<A>" "inj_on f (\<Q> \<A>)" "\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> \<Q> \<A>\<rbrakk> \<Longrightarrow> ff q = f (q2_\<alpha> q)" "distinct (map q2_\<alpha> I)"
+    "\<And>q. q \<in> set I \<Longrightarrow> q2_invar q" "q2_\<alpha> ` set I = \<I> \<A>" "invar_s A" "\<alpha>_s A = \<Sigma> \<A>"
+    "\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> \<Q> \<A>\<rbrakk> \<Longrightarrow> FP q = (q2_\<alpha> q \<in> \<F> \<A>)"
+    "\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> \<Q> \<A>\<rbrakk> \<Longrightarrow> set_iterator_abs (\<lambda>(a, q'). (a, q2_\<alpha> q')) (\<lambda>(a, q'). q2_invar q') (D_it q) {(a, q'). (q2_\<alpha> q, a, q') \<in> \<Delta> \<A>}"
   note label_set_rule = nfa_construct_label_sets.nfa_construct_label_sets_correct[OF label_set_OK,
      where DS_q = "\<lambda>q. {({a}, q') | a q'. (q, a, q') \<in> \<Delta> \<A>}"]
   note label_set_rule' = label_set_rule [of \<A> f ff I A FP D_it, OF assms(1-9)]
 
-  show ?case
+  show "invar (construct ff I A FP D_it) \<and> NFA_isomorphic_wf (\<alpha> (construct ff I A FP D_it)) (NFA_remove_unreachable_states \<A>)"
   proof (rule label_set_rule')
     fix q
     assume "q2_invar q" "q2_\<alpha> q \<in> \<Q> \<A>"
@@ -98,12 +104,16 @@ shows "dfa_construct \<alpha> invar \<alpha>_s invar_s q2_\<alpha> q2_invar cons
 proof (intro dfa_construct.intro dfa_construct_axioms.intro)
   from label_set_OK show "nfa \<alpha> invar" unfolding dfa_construct_label_sets_def by simp
 next
-  case goal2 note assms = this
+  fix \<A>::"('f, 'c) NFA_rec" and det and f::"'f \<Rightarrow> 'g" and ff I A FP and D_it::"'e \<Rightarrow> ('h \<Rightarrow> bool) \<Rightarrow> ('c \<times> 'e \<Rightarrow> 'h \<Rightarrow> 'h) \<Rightarrow> 'h \<Rightarrow> 'h"
+  assume assms: "DFA \<A>" "inj_on f (\<Q> \<A>)" "\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> \<Q> \<A>\<rbrakk> \<Longrightarrow> ff q = f (q2_\<alpha> q)"
+    "distinct (map q2_\<alpha> I)" "\<And>q. q \<in> set I \<Longrightarrow> q2_invar q" "q2_\<alpha> ` set I = \<I> \<A>" "invar_s A" "\<alpha>_s A = \<Sigma> \<A>"
+    "\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> \<Q> \<A>\<rbrakk> \<Longrightarrow> FP q = (q2_\<alpha> q \<in> \<F> \<A>)"
+    "\<And>q. \<lbrakk>q2_invar q; q2_\<alpha> q \<in> \<Q> \<A>\<rbrakk> \<Longrightarrow> set_iterator_abs (\<lambda>(a, q'). (a, q2_\<alpha> q')) (\<lambda>(a, q'). q2_invar q') (D_it q) {(a, q'). (q2_\<alpha> q, a, q') \<in> \<Delta> \<A>}"
   note label_set_rule = dfa_construct_label_sets.dfa_construct_label_sets_correct[OF label_set_OK,
      where DS_q = "\<lambda>q. {({a}, q') | a q'. (q, a, q') \<in> \<Delta> \<A>}"]
   note label_set_rule' = label_set_rule [of \<A> f ff I A FP D_it, OF assms(1-9)]
 
-  show ?case
+  show "invar (construct ff I A FP D_it) \<and> NFA_isomorphic_wf (\<alpha> (construct ff I A FP D_it)) (NFA_remove_unreachable_states \<A>)"
   proof (rule label_set_rule')
     fix q
     assume "q2_invar q" "q2_\<alpha> q \<in> \<Q> \<A>"
@@ -160,7 +170,7 @@ lemma dfa_construct_no_enc_fun_default :
                 dfa_construct_fun_axioms_def)
 
 
-subsection {* Construct with functions *}
+subsection \<open> Construct with functions \<close>
 
 definition construct_by_fun ::
   "('q2_rep,'i,'a,'a_set,'\<sigma>,'nfa) nfa_construct \<Rightarrow>
@@ -174,14 +184,17 @@ lemma construct_by_fun_alt_def :
   "construct_by_fun const it_A ff I A FP D_fun =
    const ff [I] A FP (\<lambda>q c f. it_A A c (\<lambda>x. f (x, D_fun q x)))"
    unfolding construct_by_fun_def[abs_def] set_iterator_image_alt_def 
-by simp
+   by simp
+
+ term "poly_set_iteratei \<alpha> invar_s it_A"
+ term "poly_set_iteratei_defs.iteratei"
 
 lemma construct_by_fun_correct :
-fixes const :: "('q2_rep,'i,'a,'a_set,'\<sigma>,'nfa) nfa_construct"
+fixes const :: "('q2_rep,'i,'a,'a_set,'a list,'nfa) nfa_construct"
   and \<alpha> :: "'nfa \<Rightarrow> ('q, 'a) NFA_rec" 
   and q2_\<alpha> :: "'q2_rep \<Rightarrow> 'q2"
 assumes const_OK: "dfa_construct \<alpha> invar \<alpha>_s invar_s q2_\<alpha> q2_invar const"
-    and it_A: "set_iteratei \<alpha>_s invar_s it_A"
+    and it_A: "poly_set_iteratei \<alpha>_s invar_s it_A"
 shows "dfa_construct_fun \<alpha> invar \<alpha>_s invar_s q2_\<alpha> q2_invar (construct_by_fun const it_A)"
 proof (intro dfa_construct_fun.intro dfa_construct_fun_axioms.intro)
   from const_OK show "nfa \<alpha> invar" unfolding dfa_construct_def by simp
@@ -218,7 +231,7 @@ proof (intro dfa_construct_fun.intro dfa_construct_fun_axioms.intro)
 
     let ?DS_q = "{(a,  D_fun q a) |a. a \<in> \<Sigma> \<A>}"
 
-    from set_iteratei.iteratei_rule[OF it_A, OF invar_A] have 
+    from poly_set_iteratei.list_it_correct[OF it_A, OF invar_A] have 
       it_A_OK': "set_iterator (it_A A) (\<alpha>_s A)" .
 
     from set_iterator_image_correct [OF it_A_OK', of "\<lambda>a. (a, D_fun q a)"]
@@ -243,7 +256,7 @@ proof (intro dfa_construct_fun.intro dfa_construct_fun_axioms.intro)
 qed
 
 
-subsection{* Brzozowski *}
+subsection\<open> Brzozowski \<close>
 
 definition Brzozowski_impl :: "('nfa \<Rightarrow> 'nfa) \<Rightarrow> ('nfa \<Rightarrow> 'nfa) \<Rightarrow> 'nfa \<Rightarrow> 'nfa" where
   "Brzozowski_impl r d A = d (r (d (r A)))"
@@ -277,7 +290,7 @@ qed
 
 
 
-subsection{* Minimisation combined with determinisation *}
+subsection\<open> Minimisation combined with determinisation \<close>
 
 lemma NFAGA_minimisation_with_determinisation :
 fixes \<alpha>1::"'nfa1 \<Rightarrow> ('q1::{automaton_states}, 'a) NFA_rec"
@@ -323,7 +336,7 @@ proof (intro nfa_minimise.intro nfa_minimise_axioms.intro conjI)
 qed
 
 
-subsection{* Language Operations *}
+subsection\<open> Language Operations \<close>
 
 definition NFAGA_language_is_univ :: "('nfa \<Rightarrow> 'nfa) \<Rightarrow> ('nfa \<Rightarrow> 'nfa) \<Rightarrow> ('nfa \<Rightarrow> bool) \<Rightarrow> 'nfa \<Rightarrow> bool" where
   "NFAGA_language_is_univ d c is_emp A =  is_emp (c (d A))"
@@ -379,7 +392,7 @@ assumes c_OK: "nfa_complement \<alpha> invar c"
     and d_OK: "nfa_determinise \<alpha> invar \<alpha> invar d"
     and bc_OK: "nfa_bool_comb_same \<alpha> invar bc"
     and is_emp_OK: "nfa_language_is_empty \<alpha> invar is_emp"
-shows "nfa_language_is_subset \<alpha> invar (NFAGA_language_is_subset d c (bc (op \<and>)) is_emp)"
+shows "nfa_language_is_subset \<alpha> invar (NFAGA_language_is_subset d c (bc (\<and>)) is_emp)"
 proof (intro nfa_language_is_subset.intro nfa_language_is_subset_axioms.intro)
   from c_OK show nfa_OK: "nfa \<alpha> invar" unfolding nfa_complement_def by simp_all
 
@@ -407,11 +420,11 @@ proof (intro nfa_language_is_subset.intro nfa_language_is_subset_axioms.intro)
     by simp
 
   note bc_props_aux = nfa_bool_comb_same.bool_comb_correct___same_isomorphic[OF bc_OK, OF invar_n1 invar_cdn2 \<Sigma>_eq',
-    where ?bc = "op \<and>"]
+    where ?bc = "(\<and>)"]
 
   from bc_props_aux(1) bc_props_aux(2)[OF NFA_isomorphic_wf_refl[OF NFA_n1] iso_cdn2]
-  have invar_res: "invar (bc op \<and> n1 (c (d n2)))"
-   and iso_res: "NFA_isomorphic_wf (\<alpha> (bc op \<and> n1 (c (d n2))))
+  have invar_res: "invar (bc (\<and>) n1 (c (d n2)))"
+   and iso_res: "NFA_isomorphic_wf (\<alpha> (bc (\<and>) n1 (c (d n2))))
      (NFA_product (\<alpha> n1) (DFA_complement (NFA_determinise (\<alpha> n2))))"
         unfolding NFA_product_def by simp_all
 
@@ -423,20 +436,20 @@ proof (intro nfa_language_is_subset.intro nfa_language_is_subset_axioms.intro)
   from iso_cdn2 have NFA_cdn2: "NFA (DFA_complement (NFA_determinise (\<alpha> n2)))"
     unfolding NFA_isomorphic_wf_alt_def by simp
 
-  have "\<L> (\<alpha> (bc op \<and> n1 (c (d n2)))) = \<L> (NFA_product (\<alpha> n1) (DFA_complement (NFA_determinise (\<alpha> n2))))"
+  have "\<L> (\<alpha> (bc (\<and>) n1 (c (d n2)))) = \<L> (NFA_product (\<alpha> n1) (DFA_complement (NFA_determinise (\<alpha> n2))))"
     using NFA_isomorphic_wf_\<L>[OF iso_res] .
   with NFA_product_\<L> [OF NFA_n1 NFA_cdn2] L_cdn2_eq
-  have L_res_eq: "\<L> (\<alpha> (bc op \<and> n1 (c (d n2)))) = \<L> (\<alpha> n1) \<inter> (lists (\<Sigma> (\<alpha> n2)) - \<L> (\<alpha> n2))" by simp
+  have L_res_eq: "\<L> (\<alpha> (bc (\<and>) n1 (c (d n2)))) = \<L> (\<alpha> n1) \<inter> (lists (\<Sigma> (\<alpha> n2)) - \<L> (\<alpha> n2))" by simp
  
   from nfa_language_is_empty.language_is_empty_correct [OF is_emp_OK, OF invar_res]
-  have emp_eq: "is_emp (bc op \<and> n1 (c (d n2))) = (\<L> (\<alpha> (bc op \<and> n1 (c (d n2)))) = {})" by simp
+  have emp_eq: "is_emp (bc (\<and>) n1 (c (d n2))) = (\<L> (\<alpha> (bc (\<and>) n1 (c (d n2)))) = {})" by simp
 
   have L_n1_subset: "\<L> (\<alpha> n1) \<subseteq> lists (\<Sigma> (\<alpha> n1))"
      using NFA.NFA_\<L>___lists_\<Sigma>[OF NFA_n1] by simp
   have L_n2_subset: "\<L> (\<alpha> n2) \<subseteq> lists (\<Sigma> (\<alpha> n2))"
      using NFA.NFA_\<L>___lists_\<Sigma>[OF NFA_n2] by simp
 
-  show "NFAGA_language_is_subset d c (bc op \<and>) is_emp n1 n2 =
+  show "NFAGA_language_is_subset d c (bc (\<and>)) is_emp n1 n2 =
        (\<L> (\<alpha> n1) \<subseteq> \<L> (\<alpha> n2))" 
     using L_n2_subset L_n1_subset
     unfolding NFAGA_language_is_subset_def emp_eq L_res_eq \<Sigma>_eq

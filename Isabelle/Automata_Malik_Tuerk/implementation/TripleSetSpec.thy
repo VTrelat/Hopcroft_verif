@@ -1,6 +1,7 @@
-header "Interface for sets of triples"
+section "Interface for sets of triples"
 theory TripleSetSpec
-imports Main "../../Cava_Refine"
+imports Main   "../../Collections/Refine_Dflt"
+  "../../Collections/ICF/CollectionsV1"
 
 begin
   type_synonym ('A,'B,'C,'T) triple_set_\<alpha> = "'T \<Rightarrow> ('A * 'B * 'C) set"
@@ -228,7 +229,7 @@ begin
       "invar l \<Longrightarrow> set (to_list l) = \<alpha> l"
       "invar l \<Longrightarrow> distinct (to_list l)"
 
-  section {* Record Based Interface *}
+  section \<open> Record Based Interface \<close>
   record ('A,'B,'C,'T) triple_set_ops =
     triple_set_op_\<alpha> :: "('A,'B,'C,'T) triple_set_\<alpha>"
     triple_set_op_invar :: "'T \<Rightarrow> bool"

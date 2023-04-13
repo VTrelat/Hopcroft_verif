@@ -322,6 +322,33 @@ begin
   interpretation pi_iam_rev: proper_it_loc iam_rev_iterateoi iam_rev_iterateoi
     apply unfold_locales by (rule pi_iam_rev)
 
+lemma iam_ops_unfold[code_unfold]:
+  "map_op_add iam_ops = iam.add"
+  "map_op_add_dj iam_ops = iam.add_dj"
+  "map_op_ball iam_ops = iam.ball"
+  "map_op_bex iam_ops = iam.bex"
+  "map_op_delete iam_ops = iam.delete"
+  "map_op_empty iam_ops = iam.empty"
+  "map_op_isEmpty iam_ops = iam.isEmpty"
+  "map_op_isSng iam_ops = iam.isSng"
+  "map_op_list_it iam_ops = iam.list_it"
+  "map_op_lookup iam_ops = iam.lookup"
+  "map_op_max iam_ops = iam.max"
+  "map_op_min iam_ops = iam.min"
+  "map_op_restrict iam_ops = iam.restrict"
+  "map_op_rev_list_it iam_ops = iam.rev_list_it"
+  "map_op_sel iam_ops = iam.sel"
+  "map_op_size iam_ops = iam.size"
+  "map_op_size_abort iam_ops = iam.size_abort"
+  "map_op_sng iam_ops = iam.sng"
+  "map_op_to_list iam_ops = iam.to_list"
+  "map_op_to_map iam_ops = iam.to_map"
+  "map_op_to_rev_list iam_ops = iam.to_rev_list"
+  "map_op_to_sorted_list iam_ops = iam.to_sorted_list"
+  "map_op_update iam_ops = iam.update"
+  "map_op_update_dj iam_ops = iam.update_dj"
+  by blast+
+
 text \<open>Code generator test\<close>
 definition "test_codegen \<equiv> (
   iam.add ,

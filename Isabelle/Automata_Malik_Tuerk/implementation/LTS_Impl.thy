@@ -2,14 +2,14 @@
     Authors:     Thomas Tuerk <tuerk@in.tum.de>
 *)
 
-header {* Labeled transition systems implementation *}
+section \<open> Labeled transition systems implementation \<close>
 
 theory LTS_Impl
 imports Main "../LTS" "LTSSpec"
-        "../../General/Accessible"
+        "../../Accessible"
 begin
 
-subsubsection {* Reachability *}
+subsubsection \<open> Reachability \<close>
 
 fun (in StdCommonLTS) is_reachable_impl where
    "is_reachable_impl l q [] Q = Q q"
@@ -24,10 +24,10 @@ apply (induct w arbitrary: q)
 apply (auto simp add: correct_common)
 done
 
-text {* The definition above is very simple, but inefficient.
+text \<open> The definition above is very simple, but inefficient.
  If a state is reachable via several paths all paths starting at this node
  are searched multiple times. The following definition solves this problem by
- replacing the depth first search with a breath first one. *}
+ replacing the depth first search with a breath first one. \<close>
 
 fun is_reachable_breath_impl where
    "is_reachable_breath_impl s_emp s_insert s_it succ_it l [] Q = Q"
@@ -64,29 +64,29 @@ lemma is_reachable_breath_impl_correct :
     note ind_hyp = Cons(1)
     note invar_Q = Cons(2)
 
-    def Q'' \<equiv> "s_it Q (\<lambda>_. True) (\<lambda>q. succ_it l q a (\<lambda>_. True) s_insert) (s_emp ())"
+    define Q'' where "Q'' \<equiv> s_it Q (\<lambda>_. True) (\<lambda>q. succ_it l q a (\<lambda>_. True) s_insert) (s_emp ())"
 
     have Q''_props: "invar Q'' \<and> \<alpha> Q'' = {q'. \<exists>q \<in> \<alpha> Q. (q, a, q') \<in> l_\<alpha> l}" 
     unfolding Q''_def
     proof (rule set_iteratei.iterate_rule_insert_P [OF s_it_OK, where 
         I = "\<lambda>QQ Q''. invar Q'' \<and> \<alpha> Q'' = {q'. \<exists>q \<in> QQ. (q, a, q') \<in> l_\<alpha> l}"])
-      case (goal3 q QQ Q'')
-      note pre = this
+      fix q QQ Q''
+      assume asm:"q \<in> \<alpha> Q - QQ" "QQ \<subseteq> \<alpha> Q" "invar Q'' \<and> \<alpha> Q'' = {q'. \<exists>q\<in>QQ. (q, a, q') \<in> l_\<alpha> l}"
 
       from lts_succ_it.lts_succ_it_correct [OF succ_it_OK, OF invar_l, of q a]
       have it_OK: "set_iterator (succ_it l q a) {q'. (q, a, q') \<in> l_\<alpha> l}" by simp
 
-      show ?case 
+      show "invar (succ_it l q a (\<lambda>_. True) s_insert Q'') \<and> \<alpha> (succ_it l q a (\<lambda>_. True) s_insert Q'') = {q'. \<exists>q\<in>insert q QQ. (q, a, q') \<in> l_\<alpha> l}"
         apply (rule set_iterator_no_cond_rule_insert_P [OF it_OK, where
                 I = "\<lambda>QQ Q'''. invar Q''' \<and> \<alpha> Q''' = \<alpha> Q'' \<union> QQ"])
-        apply (auto simp add: pre set_ins.ins_correct[OF s_ins_OK])
+        apply (auto simp add: asm set_ins.ins_correct[OF s_ins_OK])
       done
     qed (simp_all add: invar_Q set_empty.empty_correct[OF s_emp_OK])
     with ind_hyp[of Q'']
     show ?case by (simp add: Q''_def[symmetric] Bex_def set_eq_iff) 
   qed
 
-text {* For deterministic transition systems, it is easier *}
+text \<open> For deterministic transition systems, it is easier \<close>
 
 fun (in StdCommonLTS) DLTS_reach_impl where
    "DLTS_reach_impl l q [] = Some q"
@@ -120,7 +120,7 @@ next
 qed
     
 
-subsection {* Determinism check *}
+subsection \<open> Determinism check \<close>
 
 definition LTS_is_complete_deterministic_impl where
   "LTS_is_complete_deterministic_impl Q_ball A_ball succ_it l \<equiv>

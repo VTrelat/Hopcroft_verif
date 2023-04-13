@@ -14,8 +14,8 @@ theory NFA
         "../Accessible"
 begin
 
-text \<open> This theory defines nondetermistic finite automata.
-  These automata are represented as records containing a transtion relation, 
+text \<open> This theory defines nondeterministic finite automata.
+  These automata are represented as records containing a transition relation, 
   a set of initial states and a set of final states.\<close>
 
 record ('q,'a) NFA_rec =

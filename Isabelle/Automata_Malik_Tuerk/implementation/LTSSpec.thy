@@ -1,9 +1,10 @@
-header "Interface for Labelled Transition Systems"
+section "Interface for Labelled Transition Systems"
 theory LTSSpec
 imports 
   Main 
-  "../LTS" 
-  "../../Cava_Refine"
+  "../LTS"
+  "../../Collections/Refine_Dflt"
+  "../../Collections/ICF/CollectionsV1"
 begin
   type_synonym ('V,'W,'L) lts_\<alpha> = "'L \<Rightarrow> ('V * 'W * 'V) set"
   locale lts =
@@ -559,7 +560,7 @@ begin
     qed
   qed
 
-  section {* Record Based Interface *}
+  section \<open> Record Based Interface \<close>
   record ('V,'W,'L) lts_ops =
     lts_op_\<alpha> :: "('V,'W,'L) lts_\<alpha>"
     lts_op_invar :: "'L \<Rightarrow> bool"
@@ -762,8 +763,7 @@ begin
         apply (simp add: LTS_is_deterministic_def length_Suc_conv) 
         apply (subgoal_tac "\<And>xs::'a list. length xs < 2 \<longleftrightarrow> xs = [] \<or> (\<exists>x. xs = [x])")
         apply auto[]
-        apply fast
-        apply metis
+        apply fastforce
         apply (case_tac xs)
         apply simp_all
       done
@@ -771,7 +771,7 @@ begin
       show "lts_delete lts.\<alpha> ?invar' lts.delete"
         unfolding lts_delete_def
         using lts.lts_delete_correct
-      by (auto simp add: LTS_is_deterministic_def) metis+
+        by (auto simp add: LTS_is_deterministic_def)
 
       show "dlts_from_list lts.\<alpha> ?invar' lts.from_list"
         unfolding dlts_from_list_def

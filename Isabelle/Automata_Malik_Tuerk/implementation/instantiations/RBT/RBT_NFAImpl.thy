@@ -1,15 +1,15 @@
-header {* NFA by RBTs *}
+section \<open> NFA by RBTs \<close>
 theory RBT_NFAImpl 
 imports "../../NFAByLTS" "../../NFAGA" RBT_LTS_DLTS_LTSImpl  
-        "~~/src/HOL/Library/Efficient_Nat"
+        (* "HOL-Library.Efficient_Nat" *)
 begin
 
-subsection {* NFAs *}
+subsection \<open> NFAs \<close>
 
-interpretation rs_nfa_defs!: nfa_by_lts_defs "rs_ops :: (nat, (nat, unit) RBT.rbt) oset_ops" 
+interpretation rs_nfa_defs: nfa_by_lts_defs "rs_ops :: (nat, (nat, unit) RBT.rbt) oset_ops" 
   rs_ops rs_lts_dlts_ops  
   unfolding nfa_by_lts_defs_def
-  apply (simp add: rsr.StdSet_axioms rs_lts_dlts_impl)
+  apply (simp add: rs.StdSet_axioms rs_lts_dlts_impl)
 done
 
 type_synonym 'b rs_nfa =                  
@@ -70,31 +70,40 @@ definition "rs_nfa_language_is_univ \<equiv> NFAGA.NFAGA_language_is_univ rs_nfa
   rs_nfa_language_is_empty"
 definition "rs_nfa_language_is_subset \<equiv> 
   NFAGA.NFAGA_language_is_subset rs_nfa_determinise rs_nfa_complement
-   (rs_nfa_bool_comb op\<and>) rs_nfa_language_is_empty"
+   (rs_nfa_bool_comb (\<and>)) rs_nfa_language_is_empty"
 definition "rs_nfa_language_is_eq \<equiv> NFAGA.NFAGA_language_is_eq rs_nfa_language_is_subset"
 
 
-text {* Prepare lts for Hopcroft *}
+text \<open> Prepare lts for Hopcroft \<close>
 
 definition lsnd_lss_copy where
   "lsnd_lss_copy = mergesort"
 
 lemma lsnd_lss_copy_impl :
-  "set_copy lsnd_\<alpha> lsnd_invar lss_\<alpha> lss_invar lsnd_lss_copy"
-unfolding set_copy_def lsnd_invar_def lss_\<alpha>_def lsnd_\<alpha>_def lss_invar_def lsnd_lss_copy_def
-by (simp add: mergesort_correct)
+  "set_copy ListSetImpl_Sorted.lss_\<alpha> ListSetImpl_Sorted.lss_invar ListSetImpl_NotDist.lsnd_\<alpha> ListSetImpl_NotDist.lsnd_invar lsnd_lss_copy"
+  unfolding set_copy_def lsnd_lss_copy_def
+    lsnd_invar_def  lss_invar_def lss_\<alpha>_def lsnd_\<alpha>_def mergesort_def
+  using mergesort_by_rel_permutes[of "(\<le>)"] by simp
 
 lemma lss_lss_copy_impl :
   "set_copy lss_\<alpha> lss_invar lss_\<alpha> lss_invar id"
-unfolding set_copy_def 
+unfolding set_copy_def
 by simp
 
-interpretation rs_hop_ltsr! :  Hopcroft_lts rm_ops rm_ops iam_ops lss_ops lss_ops 
+declare[[show_abbrevs=false]]
+interpretation rs_hop_ltsr :  Hopcroft_lts rm_ops rm_ops iam_ops lss_ops lss_ops 
   id rm_iteratei iam_iteratei lss_union_list
-  unfolding Hopcroft_lts_def 
-  by (simp add: lssr.StdSet_axioms rmr.StdMap_axioms lss_ops_unfold lss_union_list_impl
-                rm_ops_unfold lsndr.StdSet_axioms rm_iteratei_impl lsnd_ops_unfold
-                lss_lss_copy_impl iamr.StdMap_axioms iam_iteratei_impl iam_ops_unfold)
+  unfolding Hopcroft_lts_def
+  apply auto
+        apply (simp add: rm.StdMap_axioms)
+       apply (simp add: lss.StdSet_axioms)
+      apply (simp add: iam.StdMap_axioms)
+     defer
+     apply (simp add: lss_lss_copy_impl)
+    apply (simp add: rm.v1_iteratei_impl)
+  apply (simp add: lss.StdSet_axioms rm.StdMap_axioms lss_ops_unfold lss_union_list_impl
+                rm_ops_unfold lsnd.StdSet_axioms rm_iteratei_impl lsnd_ops_unfold
+                lss_lss_copy_impl iam.StdMap_axioms iam_iteratei_impl iam_ops_unfold)
 
 definition "rs_hop_lts_\<alpha> \<equiv> rs_hop_ltsr.hopcroft_lts_\<alpha>"
 definition "rs_hop_lts_invar \<equiv> rs_hop_ltsr.hopcroft_lts_invar"
@@ -117,7 +126,7 @@ definition "rs_hop_lts_add \<equiv> rs_hop_ltsr.hopcroft_lts_add"
 definition "rs_hop_lts_copy \<equiv> id"
 definition "rs_hop_lts_get_succs \<equiv> rs_hop_ltsr.hopcroft_lts_get_succ_set"
 
-interpretation rs_hop!: nfa_by_lts_hop "rs_ops :: (nat, (nat, unit) RBT.rbt) oset_ops" 
+interpretation rs_hop: nfa_by_lts_hop "rs_ops :: (nat, (nat, unit) RBT.rbt) oset_ops" 
   rs_ops rs_lts_dlts_ops lss_\<alpha> lss_invar iam_ops iam_ops iam_ops iam_ops rm_ops rs_iteratei rs_iteratei lss_iteratei lss_iteratei rm_iteratei
   by unfold_locales
 
@@ -375,7 +384,7 @@ interpretation rs_nfa!: nfa_language_is_univ rs_nfa_\<alpha> rs_nfa_invar rs_nfa
  using rs_nfa_language_is_univ_impl .
 
 lemmas rs_nfa_language_is_subset_code [code] =  NFAGA.NFAGA_language_is_subset_def [of rs_nfa_determinise rs_nfa_complement 
-  "rs_nfa_bool_comb op\<and>" rs_nfa_language_is_empty, folded rs_nfa_defs]
+  "rs_nfa_bool_comb (\<and>)" rs_nfa_language_is_empty, folded rs_nfa_defs]
 lemmas rs_nfa_language_is_subset_impl = NFAGA.NFAGA_language_is_subset_correct [folded rs_nfa_defs, 
   OF rs_nfa_complement_impl rs_nfa_determinise_impl  rs_nfa_bool_comb_impl rs_nfa_language_is_empty_impl,
   folded rs_nfa_defs]

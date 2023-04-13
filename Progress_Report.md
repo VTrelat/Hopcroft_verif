@@ -1,4 +1,4 @@
-# Biweekly report for tracking progress
+# Bimonthly report for tracking progress
 
 ---
 
@@ -8,29 +8,39 @@
 -   [13.03.2023 - 26.03.2023](#13032023---26032023)
 -   [27.03.2023 - 09.04.2023](#27032023---09042023)
 -   [10.04.2023 - 23.04.2023](#10042023---23042023)
+-   [Remarks](#remarks)
 
 ---
 
 ## 10.04.2023 - 23.04.2023
-- #### Notes
-    - ✅ finished paper proof for time complexity (see [here](./LaTeX/main.pdf))
+
+-   #### Notes
+    -   ✅ finished paper proof for time complexity (see [here](./LaTeX/main.pdf))
 
 ---
 
 ## 27.03.2023 - 09.04.2023
-- #### Notes
-    - ❌ leave out Isabelle implementation issues for the moment
-    - ❌ continue with paper proof for time complexity
+
+-   #### Notes
+    -   :x: theory `NFAByLTS` is still broken
+    -   :x: advances in the proof of lemma `NFA_construct_reachable_impl_correct` but two subgoals are still unproved.  
+        I think the problem is that we would have to prove that `nfa_α (Qs, As, D0, Is, Fs, ⦇nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True⦈)` is an NFA for things to work correctly. In particular, we would get `s.α Fs ⊆ s.α Qs`.
+    -   :x: theory `RBT_NFAImpl` is still broken:
+        -   Isabelle seems to struggle with abbreviations, e.g. `lsnd` and `lss`, which causes some proofs to fail (nitpick even finds counterexamples)
+    -   :x: theory `RBTSetImpl` is still broken:
+        -   :x: definitions for `rs_image_filter` and `rs_image` are still undefined
+    -   ❌ **leave out Isabelle implementation issues for the moment**
+    -   started paper proof for time complexity based on Hopcroft's original 1971 paper
+        -   quite unclear, difficult to read
+        -   some arguments are claimed without really proving them
+        -   the final result is that the complexity is $O(n \log n)$, which strictly speaking is wrong. It should be $O(mn \log n)$
 
 ---
 
 ## 13.03.2023 - 26.03.2023
 
 -   #### Notes
-    -  ❌ started paper proof for time complexity based on Hopcroft's original 1971 paper
-        - quite unclear, difficult to read
-        - some arguments are claimed without really proving them
-        - the final result is that the complexity is $O(n \log n)$, which strictly speaking is wrong. It should be $O(mn \log n)$
+
     -   ✅ repaired proof of lemma `Hopcroft_map2_step_compute_iM_cache_swap_check_loop_correct`
         -   definition `Hopcroft_map2_step_compute_iM_cache_swap_check_loop` was broken: two arguments of `FOREACHoi` were swapped
     -   ✅ repaired proof of lemma `Hopcroft_map2_f_correct`
@@ -50,11 +60,34 @@
             declare s.iteratei_correct[refine_transfer del]
             ```
     -   added code generation with the help of Peter Lammich and the following trick:
+
         ```
         setup Locale_Code.open_block
         interpretation hop_impl ...
         setup Locale_Code.close_block
         ```
+
+    -   :white_check_mark: **old theory `Hopcroft_Minimisation` is fully repaired**
+    -   added $\LaTeX$ template report for the final report
+    -   :x: to make it a suitable AFP entry, need to add a final explicit theorem stating that the algorithm is correct and actually minimises a DFA on the lowest level (i.e. implementation)
+    -   :x: to achieve this, we need theory `RBT_Presburger_Impl` and its imports to be repaired:
+        -   :white_check_mark: repaired theory `LTSByLTS_DLTS`
+        -   :white_check_mark: repaired theory `LTSGA`
+        -   :white_check_mark: repaired theory `LTSImpl`
+        -   :white_check_mark: repaired theory `TripleSetSpec`
+        -   :white_check_mark: repaired theory `DLTSByMap`
+        -   :white_check_mark: repaired theory `NFAConstruct`
+        -   :white_check_mark: repaired theory `NFASpec` ~~is broken~~
+        -   :white_check_mark: repaired theory `NFAGA` ~~is broken~~
+        -   :white_check_mark: repaired theory `AccessibleImpl` ~~is broken~~
+        -   :white_check_mark: repaired theory `Presburger_Adapt` ~~is broken~~
+        -   :white_check_mark: repaired theory `Presburger_Automata` ~~is broken~~
+        -   :x: theory `RBT_NFAImpl` is broken
+            -   Isabelle seems to struggle with abbreviations, e.g. `lsnd` and `lss`, which causes some proofs to fail (nitpick even finds counterexamples)
+        -   :x: theory `NFAByLTS` is broken
+            -   :white_check_mark: repaired proof of lemma `hopcroft_lts_copy_correct` ~~is broken~~
+            -   :white_check_mark: repaired proof of lemma `right_quotient_lists_impl_code` ~~is broken~~
+            -   :x: proof of lemma `NFA_construct_reachable_impl_correct` is broken and I cannot fix it
     -   ✅ **theory `Hopcroft_Minimisation` is fully repaired**
 
 ---
@@ -81,16 +114,20 @@
     -   ✅ repaired proof of lemma `Hopcroft_map2_step_compute_iM_correct`:
         -   only syntax issues and fixing old names of rules
 
--   #### Remarks
-    -   I think lemma `in_br_conv` should be added as a simp rule
-    -   `def` --> `define`
-    -   `guess` --> `obtain`
-    -   `PairE` --> `prod.exhaust`
-    -   `prod_case_beta` --> `case_prod_beta`
-    -   `empty` --> `Map.empty`
-    -   `the.simps` --> `option.sel`
-    -   `op f` --> `(f)` for any function `f`
-    -   `map_pair_inj_on` --> `map_prod_inj_on`
-    -   `Option.map` --> `map_option`
-    -   `br_single_valued` --> `br_sv`
-    -   `rprod` --> `prod_rel`, adjusted with `prod_rel_syn`
+## Remarks
+
+-   I think lemma `in_br_conv` should be added as a simp rule
+-   `def` --> `define`
+-   `guess` --> `obtain`
+-   `PairE` --> `prod.exhaust`
+-   `prod_case_beta` --> `case_prod_beta`
+-   `empty` --> `Map.empty`
+-   `the.simps` --> `option.sel`
+-   `op f` --> `(f)` for any function `f`
+-   `map_pair_inj_on` --> `map_prod_inj_on`
+-   `Option.map` --> `map_option`
+-   `br_single_valued` --> `br_sv`
+-   `rprod` --> `prod_rel`, adjusted with `prod_rel_syn`
+-   `pair_collapse` --> `prod.collapse`
+-   syntax of the form `xs[i := x]` for list updates --> `list_update xs i x`
+-   `strong_UN_cong` --> `SUP_cong_simp`

@@ -1,13 +1,13 @@
-header "Implementing a set of triples by maps"
+section "Implementing a set of triples by maps"
 theory TripleSetByMap
 imports TripleSetSpec
 begin
 
 
 locale tsbm_defs = 
-  m1!: StdMap m1_ops +
-  m2!: StdMap m2_ops +
-  s3!: StdSet s3_ops 
+  m1: StdMap m1_ops +
+  m2: StdMap m2_ops +
+  s3: StdSet s3_ops 
   for m1_ops::"('a,'m2,'m1,_) map_ops_scheme"
   and m2_ops::"('b,'s3,'m2,_) map_ops_scheme"
   and s3_ops::"('c,'s3,_) set_ops_scheme"
@@ -69,13 +69,13 @@ begin
     show "tsbm_invar (tsbm_add v w v' l)"
       unfolding tsbm_invar_alt_def tsbm_add_def
       by (simp add: m1.correct m2.correct s3.correct 
-               split: option.split split_if_asm)
+               split: option.split if_split)
 
     from invar 
     show "tsbm_\<alpha> (tsbm_add v w v' l) = insert (v, w, v') (tsbm_\<alpha> l)"
       unfolding tsbm_invar_alt_def tsbm_\<alpha>_def tsbm_add_def
       by (simp add: m1.correct m2.correct s3.correct set_eq_iff
-               split: option.split split_if_asm)
+               split: option.split if_split)
   qed
 
   definition tsbm_memb :: "('a,'b,'c,'m1) triple_set_memb" where 
@@ -114,13 +114,13 @@ begin
     from invar_t invar_cs
     show "tsbm_invar (tsbm_add_Cs a b cs t)"
       unfolding tsbm_invar_alt_def2 tsbm_add_Cs_def
-      by (simp add: m1.correct m2.correct s3.correct split: option.split split_if_asm)
+      by (simp add: m1.correct m2.correct s3.correct split: option.split if_split)
 
     from invar_t invar_cs 
     show "tsbm_\<alpha> (tsbm_add_Cs a b cs t) = {(a, b, c) |c. c \<in> s3.\<alpha> cs} \<union> (tsbm_\<alpha> t)"
       unfolding tsbm_invar_alt_def tsbm_\<alpha>_def tsbm_add_Cs_def
       by (auto simp add: m1.correct m2.correct s3.correct set_eq_iff 
-               split: option.split split_if_asm)
+               split: option.split if_split)
   qed
 
 
@@ -141,13 +141,13 @@ begin
     from invar_t invar_cs
     show "tsbm_invar (tsbm_set_Cs a b cs t)"
       unfolding tsbm_invar_alt_def2 tsbm_set_Cs_def
-      by (simp add: m1.correct m2.correct s3.correct split: option.split split_if_asm)
+      by (simp add: m1.correct m2.correct s3.correct split: option.split if_split)
 
     from invar_t invar_cs dj
     show "tsbm_\<alpha> (tsbm_set_Cs a b cs t) = {(a, b, c) |c. c \<in> s3.\<alpha> cs} \<union> (tsbm_\<alpha> t)"
       unfolding tsbm_invar_alt_def tsbm_\<alpha>_def tsbm_set_Cs_def
       by (auto simp add: m1.correct m2.correct s3.correct set_eq_iff 
-               split: option.split split_if_asm)
+               split: option.split if_split)
   qed
 
   definition tsbm_add_Cl :: "('a,'b,'c,'m1) triple_set_add_Cl" where 
@@ -163,7 +163,7 @@ begin
   proof
     fix l v w vs
     assume invar: "tsbm_invar l"
-    def inner_add \<equiv> "\<lambda>s3. foldl (\<lambda>s3 v'. s3.ins v' s3) s3 vs" 
+    define inner_add where "inner_add \<equiv> \<lambda>s3. foldl (\<lambda>s3 v'. s3.ins v' s3) s3 vs" 
     have inner_add_fold : "\<And>s3. foldl (\<lambda>s3 v'. s3.ins v' s3) s3 vs = inner_add s3"
       unfolding inner_add_def by simp
 
@@ -178,13 +178,13 @@ begin
     show "tsbm_invar (tsbm_add_Cl v w vs l)"
       unfolding tsbm_invar_alt_def2 tsbm_add_Cl_def
       by (simp add: m1.correct m2.correct s3.correct inner_add_fold inner_add_thm
-               split: option.split split_if_asm)
+               split: option.split if_split)
 
     from invar 
     show "tsbm_\<alpha> (tsbm_add_Cl v w vs l) = {(v, w, v') |v'. v' \<in> set vs} \<union> (tsbm_\<alpha> l)"
       unfolding tsbm_invar_alt_def tsbm_\<alpha>_def tsbm_add_Cl_def
       by (auto simp add: m1.correct m2.correct s3.correct set_eq_iff inner_add_fold inner_add_thm
-               split: option.split split_if_asm)
+               split: option.split if_split)
   qed
 
 
@@ -264,13 +264,13 @@ begin
     show "tsbm_invar (tsbm_delete v w v' l)"
       unfolding tsbm_invar_alt_def tsbm_delete_def
       by (simp add: m1.correct m2.correct s3.correct 
-               split: option.split split_if_asm)
+               split: option.split if_split)
 
     from invar 
     show "tsbm_\<alpha> (tsbm_delete v w v' l) = (tsbm_\<alpha> l) - {(v, w, v')}"
       unfolding tsbm_invar_alt_def tsbm_\<alpha>_def tsbm_delete_def
       by (simp add: m1.correct m2.correct s3.correct set_eq_iff
-               split: option.split split_if_asm) auto
+               split: option.split if_split) auto
   qed
 
   definition tsbm_filter_it where
@@ -398,7 +398,7 @@ begin
   lemma tsbm_A_it_alt_def[code] :
     "tsbm_A_it = (\<lambda>it1 t b c c' f.
         it1 t c'
-         (\<lambda>(a,m2) \<sigma>. if option_case False (set_op_memb s3_ops c)
+         (\<lambda>(a,m2) \<sigma>. if case_option False (set_op_memb s3_ops c)
                      (map_op_lookup m2_ops b m2)
                  then f a \<sigma> else \<sigma>))"
     unfolding tsbm_A_it_def[abs_def] map_iterator_dom_filter_alt_def 
@@ -700,7 +700,7 @@ begin
   lemma tsbm_AC_it_alt_def[code] :
      "tsbm_AC_it = (\<lambda>it1 it3 m1 b c f.
         it1 m1 c
-         (\<lambda>(a, m2). option_case (\<lambda>c f \<sigma>0. \<sigma>0) it3 (map_op_lookup m2_ops b m2) c
+         (\<lambda>(a, m2). case_option (\<lambda>c f \<sigma>0. \<sigma>0) it3 (map_op_lookup m2_ops b m2) c
                (\<lambda>b. f (a, b))))"
      unfolding tsbm_AC_it_def[abs_def] map_iterator_product_alt_def 
                curry_def map_iterator_dom_filter_alt_def set_iterator_emp_def[abs_def]

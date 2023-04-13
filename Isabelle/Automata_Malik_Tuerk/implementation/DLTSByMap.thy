@@ -1,11 +1,11 @@
-header "Implementing Labelled Transition Systems by Maps"
+section "Implementing Labelled Transition Systems by Maps"
 theory DLTSByMap
 imports LTSSpec LTSGA
 begin
 
 locale dltsbm_defs = 
-  m1!: StdMap m1_ops +
-  m2!: StdMap m2_ops 
+  m1: StdMap m1_ops +
+  m2: StdMap m2_ops 
   for m1_ops::"('V,'m2,'m1,_) map_ops_scheme"
   and m2_ops::"('W,'V,'m2,_) map_ops_scheme"
 begin
@@ -81,13 +81,13 @@ begin
     from invar
     show "dltsbm_invar (dltsbm_add v w v' l)"
       unfolding dltsbm_invar_alt_def dltsbm_add_def
-      by (simp add: m1.correct m2.correct split: option.split split_if_asm)
+      by (simp add: m1.correct m2.correct split: option.split if_split)
 
     assume "\<And>v''. v'' \<noteq> v' \<Longrightarrow> (v, w, v'') \<notin> dltsbm_\<alpha> l" 
     with invar show "dltsbm_\<alpha> (dltsbm_add v w v' l) = insert (v, w, v') (dltsbm_\<alpha> l)"
       unfolding dltsbm_invar_alt_def dltsbm_\<alpha>_def dltsbm_add_def
       apply (simp add: m1.correct m2.correct set_eq_iff
-               split: option.split split_if_asm)
+               split: option.split if_split)
       apply auto 
       apply metis
     done
@@ -138,13 +138,13 @@ begin
     from invar
     show "dltsbm_invar (dltsbm_delete v w v' l)"
       unfolding dltsbm_invar_alt_def dltsbm_delete_def
-      by (simp add: m1.correct m2.correct split: option.split split_if_asm)
+      by (simp add: m1.correct m2.correct split: option.split if_split)
 
     from invar 
     show "dltsbm_\<alpha> (dltsbm_delete v w v' l) = (dltsbm_\<alpha> l) - {(v, w, v')}"
       unfolding dltsbm_invar_alt_def dltsbm_\<alpha>_def dltsbm_delete_def
       apply (simp add: m1.correct m2.correct set_eq_iff restrict_map_def
-               split: option.split split_if_asm)
+               split: option.split if_split)
       apply auto
     done
   qed
@@ -275,7 +275,7 @@ begin
                              then f (v1, (e, v2)) \<sigma> else \<sigma>)
                       \<sigma>
                 else \<sigma>))"
-     unfolding dltsbm_filter_it_def[abs_def] map_iterator_product_alt_def split_def pair_collapse
+     unfolding dltsbm_filter_it_def[abs_def] map_iterator_product_alt_def split_def prod.collapse
                fst_conv snd_conv set_iterator_filter_alt_def map_iterator_key_filter_alt_def
                
      by simp
@@ -360,7 +360,7 @@ begin
      (\<lambda>it1 l v' e c f.
         it1 l c
          (\<lambda>kv \<sigma>.
-             if option_case False (op = v')
+             if case_option False ((=) v')
                  (map_op_lookup m2_ops e (snd kv))
              then f (fst kv) \<sigma> else \<sigma>))"
     unfolding dltsbm_pre_it_def[abs_def] map_iterator_dom_filter_alt_def curry_def
@@ -403,7 +403,7 @@ begin
   definition dltsbm_pre_label_it where
     "dltsbm_pre_label_it it1 it2 m1 v' =
         map_iterator_product (it1 m1) 
-           (\<lambda>m2. map_iterator_dom_filter (op= v' \<circ> snd)
+           (\<lambda>m2. map_iterator_dom_filter ((=) v' \<circ> snd)
               (it2 m2))"
 
   lemma dltsbm_pre_label_it_alt_def :
@@ -429,7 +429,7 @@ begin
     from invar_l have invar_m1: "m1.invar l"
       unfolding dltsbm_invar_def by simp
 
-    let ?it_b = "\<lambda>m2. map_iterator_dom_filter (op= v' \<circ> snd) (it2 m2)"
+    let ?it_b = "\<lambda>m2. map_iterator_dom_filter ((=) v' \<circ> snd) (it2 m2)"
     let ?S_b = "\<lambda>m2. {e . m2.\<alpha> m2 e = Some v'}"
 
     { fix v m2
@@ -440,7 +440,7 @@ begin
         by (simp add: m1.correct)
 
       note it2_OK' = map_iteratei.iteratei_rule [OF it2_OK, OF invar_m2]
-      from map_iterator_dom_filter_correct [OF it2_OK', of "op= v' \<circ> snd"]
+      from map_iterator_dom_filter_correct [OF it2_OK', of "(=) v' \<circ> snd"]
       have "set_iterator (?it_b m2) (?S_b m2)" 
         by simp
     } note it_b_aux = this

@@ -3,27 +3,27 @@
     Authors:     Thomas Tuerk <tuerk@in.tum.de>
 *)
 
-header {* Presburger Adaptation *}
+section \<open> Presburger Adaptation \<close>
 
 theory Presburger_Adapt
 imports Main NFA DFA
   "implementation/NFASpec"
-  "../Libs/Presburger-Automata/DFS"
-  "../Libs/Presburger-Automata/Presburger_Automata"
-begin
+  "../Presburger-Automata/DFS"
+  "../Presburger-Automata/Presburger_Automata"
+begin             
 
 
-text {* The translation of Presburger arithmetic to finite automata
+text \<open> The translation of Presburger arithmetic to finite automata
 defined in the AFP Library \emph{Presburger-Automata} consists of
 building finite automata for Diophantine equations and inequations as well as
 standard automata constructions. These automata constructions are
 however defined on a datastructure which is well suited for the
 specific automata used. Here, let's try to replace these specialised
-finite automata with general ones. *}
+finite automata with general ones. \<close>
 
-subsection {* DFAs for Diophantine Equations and Inequations *}
+subsection \<open> DFAs for Diophantine Equations and Inequations \<close>
 
-subsubsection {* Definition *}
+subsubsection \<open> Definition \<close>
 
 datatype pres_NFA_state =
    pres_NFA_state_error 
@@ -80,7 +80,7 @@ definition pres_DFA_eq_ineq ::
        \<F> = {pres_NFA_state_int m |m.
              dioph_is_node ks l m \<and> 0 \<le> m \<and> (ineq \<or> m = 0)} \<rparr>"
 
-subsubsection {* Properties *}
+subsubsection \<open> Properties \<close>
 lemma pres_DFA_is_node___pres_DFA_eq_ineq_trans_fun :
 assumes q_OK: "pres_DFA_is_node ks l q"
     and bs_OK: "length bs = n"
@@ -98,9 +98,7 @@ next
       and m'_eq : "m' = (m - eval_dioph ks (map nat_of_bool bs)) div 2"
       and cond: "i \<or> eval_dioph ks (map nat_of_bool bs) mod 2 = m mod 2"
       apply (cases q, simp_all)
-      apply (case_tac "i \<or> eval_dioph ks (map nat_of_bool bs) mod 2 = int mod 2")
-      apply (simp_all)
-    done
+      by (metis pres_NFA_state.inject pres_NFA_state.simps(3))
 
     from q_OK q_eq have is_node_m: "dioph_is_node ks l m"
       unfolding pres_DFA_eq_ineq_def
@@ -393,12 +391,12 @@ proof -
 qed
 
 
-subsubsection {* Efficiency *}
+subsubsection \<open> Efficiency \<close>
 
-subsubsection {* Implementation *}
-text {* For using these automata constructions let's replace
+subsubsection \<open> Implementation \<close>
+text \<open> For using these automata constructions let's replace
 the new datatype for states with natural numbers and consider only
-reachable states. *}
+reachable states. \<close>
 
 fun pres_NFA_state_to_nat where
   "pres_NFA_state_to_nat pres_NFA_state_error = 0"
@@ -460,7 +458,7 @@ proof -
     by simp
 qed
 
-subsection {* Existential Quantification *}
+subsection \<open> Existential Quantification \<close>
 
 type_synonym pres_NFA = "(nat, bool list) NFA_rec"
 
@@ -726,7 +724,7 @@ by (simp add: pres_DFA_exists_min_def pres_DFA_labels_tl_def NFA_minimise_spec(2
               NFA.NFA_rename_labels___is_well_formed)
 
 
-subsection {* Universal Quantification *}
+subsection \<open> Universal Quantification \<close>
 
 definition pres_DFA_forall_min where
   "pres_DFA_forall_min n \<A> = DFA_complement (pres_DFA_exists_min n (DFA_complement \<A>))"
@@ -788,14 +786,14 @@ lemma \<Sigma>_pres_DFA_forall_min :
 by (simp add: pres_DFA_forall_min_def \<Sigma>_pres_DFA_exists_min DFA_complement___is_well_formed)
 
     
-subsection {* Translation *}
+subsection \<open> Translation \<close>
  
 fun DFA_of_pf :: "nat \<Rightarrow> pf \<Rightarrow> pres_NFA" where
   Eq:     "DFA_of_pf n (Eq ks l) = efficient_pres_DFA_eq_ineq False n ks l"
 | Le:     "DFA_of_pf n (Le ks l) = efficient_pres_DFA_eq_ineq True n ks l"
-| And:    "DFA_of_pf n (And p q) = NFA_bool_comb op\<and> (DFA_of_pf n p) (DFA_of_pf n q)"
-| Or:     "DFA_of_pf n (Or p q) = NFA_bool_comb op\<or> (DFA_of_pf n p) (DFA_of_pf n q)"
-| Imp:    "DFA_of_pf n (Imp p q) = NFA_bool_comb op\<longrightarrow> (DFA_of_pf n p) (DFA_of_pf n q)"
+| And:    "DFA_of_pf n (And p q) = NFA_bool_comb (\<and>) (DFA_of_pf n p) (DFA_of_pf n q)"
+| Or:     "DFA_of_pf n (Or p q) = NFA_bool_comb (\<or>) (DFA_of_pf n p) (DFA_of_pf n q)"
+| Imp:    "DFA_of_pf n (Imp p q) = NFA_bool_comb (\<longrightarrow>) (DFA_of_pf n p) (DFA_of_pf n q)"
 | Exists: "DFA_of_pf n (Exist p) = pres_DFA_exists_min n (DFA_of_pf (Suc n) p)"
 | Forall: "DFA_of_pf n (Forall p) = pres_DFA_forall_min n (DFA_of_pf (Suc n) p)"
 | Neg:    "DFA_of_pf n (Neg p) = DFA_complement (DFA_of_pf n p)"
@@ -854,10 +852,10 @@ next
 qed
 
 
-subsection {* Code Generation *}
+subsection \<open> Code Generation \<close>
 
-text {* The automata used for presburger arithmetic have label sets that consist of all
-bitvectors of a certain length. The following locale is used to cache these sets. *}
+text \<open> The automata used for presburger arithmetic have label sets that consist of all
+bitvectors of a certain length. The following locale is used to cache these sets. \<close>
 
 locale presburger_label_set_cache = set a_\<alpha> a_invar
     for a_\<alpha> :: "'al_set \<Rightarrow> ('a list) set" and a_invar +
@@ -896,28 +894,28 @@ begin
 
   lemma pres_DFA_eq_ineq_impl_correct :
   assumes A_OK: "a_invar A" "a_\<alpha> A = {bs. length bs = n}"
-  shows "invar (pres_DFA_eq_ineq_impl A ineq n ks l)"
-        "NFA_isomorphic_wf (\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
+  shows "nfa.invar (pres_DFA_eq_ineq_impl A ineq n ks l)"
+        "NFA_isomorphic_wf (nfa.\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
                            (efficient_pres_DFA_eq_ineq ineq n ks l)" 
   proof -
-    have "invar (pres_DFA_eq_ineq_impl A ineq n ks l) \<and>
-           NFA_isomorphic_wf (\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
+    have "nfa.invar (pres_DFA_eq_ineq_impl A ineq n ks l) \<and>
+           NFA_isomorphic_wf (nfa.\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
                            (NFA_remove_unreachable_states (pres_DFA_eq_ineq ineq n ks l))" 
-    unfolding pres_DFA_eq_ineq_impl_def
+      unfolding pres_DFA_eq_ineq_impl_def
       apply (rule dfa_construct_no_enc_fun_correct) 
       apply (rule pres_DFA_eq_ineq___is_well_formed)
       apply (auto simp add: pres_DFA_eq_ineq_def A_OK inj_pres_NFA_state_to_nat
                        split: pres_NFA_state.split)
     done
-    thus "invar (pres_DFA_eq_ineq_impl A ineq n ks l)"
-         "NFA_isomorphic_wf (\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
+    thus "nfa.invar (pres_DFA_eq_ineq_impl A ineq n ks l)"
+         "NFA_isomorphic_wf (nfa.\<alpha> (pres_DFA_eq_ineq_impl A ineq n ks l)) 
                            (efficient_pres_DFA_eq_ineq ineq n ks l)"
     by (simp_all add: NFA_isomorphic_wf_trans[OF _ pres_DFA_eq_ineq___isomorphic_wf])
   qed
 
   definition pres_DFA_exists_min_impl where
     "pres_DFA_exists_min_impl A AA = 
-      right_quotient_lists (list_all (\<lambda>b. \<not> b)) (minimise_Hopcroft_NFA (rename_labels_gen AA A tl))"
+      nfa.right_quotient_lists (list_all (\<lambda>b. \<not> b)) (nfa.minimise_Hopcroft_NFA (rename_labels_gen AA A tl))"
 
   lemma im_tl_eq: "tl ` {bl. length bl = Suc n} = {bl. length bl = n}"
      apply (auto simp add: image_iff length_Suc_conv)[]
@@ -931,7 +929,7 @@ begin
     shows "nfa.invar (pres_DFA_exists_min_impl A AA)"
     unfolding pres_DFA_exists_min_impl_def pres_DFA_exists_min_def pres_DFA_labels_tl_def
     apply (insert assms)
-    apply (intro nfa.correct_isomorphic conjI rename_labels_gen_correct___isomorphic)+
+    apply (intro nfa.correct_isomorphic conjI labels_gen.rename_labels_gen_correct___isomorphic)+
     apply (simp_all add: im_tl_eq)
   done
 
@@ -943,7 +941,7 @@ begin
     shows "NFA_isomorphic_wf (nfa.\<alpha> (pres_DFA_exists_min_impl A AA)) (pres_DFA_exists_min n \<A>)"
     unfolding pres_DFA_exists_min_impl_def pres_DFA_exists_min_def pres_DFA_labels_tl_def
     apply (insert assms)
-    apply (intro nfa.correct_isomorphic conjI rename_labels_gen_correct___isomorphic)+
+    apply (intro nfa.correct_isomorphic conjI labels_gen.rename_labels_gen_correct___isomorphic)+
     apply (simp_all add: im_tl_eq)
   proof -
      assume iso: "NFA_isomorphic_wf (nfa_op_\<alpha> nfa_ops AA) \<A>"
@@ -972,7 +970,7 @@ begin
 
   definition pres_DFA_forall_min_impl where
     "pres_DFA_forall_min_impl A AA = 
-     complement (pres_DFA_exists_min_impl A (complement AA))"
+     nfa.complement (pres_DFA_exists_min_impl A (nfa.complement AA))"
 
   lemma pres_DFA_forall_min_impl_correct_invar :
     assumes "nfa.invar AA" 
@@ -1012,15 +1010,15 @@ begin
     | And:    "nfa_of_pf n (And p q) c = 
                  (let (P, c') = nfa_of_pf n p c in
                   let (Q, c'') = nfa_of_pf n q c' in
-                  (bool_comb op\<and> P Q, c''))"
+                  (nfa.bool_comb (\<and>) P Q, c''))"
     | Or:     "nfa_of_pf n (Or p q) c = 
                  (let (P, c') = nfa_of_pf n p c in
                   let (Q, c'') = nfa_of_pf n q c' in
-                  (bool_comb op\<or> P Q, c''))"
+                  (nfa.bool_comb (\<or>) P Q, c''))"
     | Imp:    "nfa_of_pf n (Imp p q) c = 
                  (let (P, c') = nfa_of_pf n p c in
                   let (Q, c'') = nfa_of_pf n q c' in
-                  (bool_comb op\<longrightarrow> P Q, c''))"
+                  (nfa.bool_comb (\<longrightarrow>) P Q, c''))"
     | Exists: "nfa_of_pf n (Exist p) c = 
                  (let (c', A) = c_\<alpha> c n in
                   let (P, c'') = nfa_of_pf (Suc n) p c' in
@@ -1031,7 +1029,7 @@ begin
                   (pres_DFA_forall_min_impl A P, c''))"
     | Neg:    "nfa_of_pf n (Neg p) c = 
                  (let (P, c') = nfa_of_pf n p c in
-                  (complement P, c'))"
+                  (nfa.complement P, c'))"
 
 lemmas nfa_of_pf_induct =
   nfa_of_pf.induct [case_names Eq Le And Or Imp Exist Forall Neg]
@@ -1055,8 +1053,8 @@ next
     by (auto simp add: pres_DFA_eq_ineq_impl_correct split: prod.split)
 next
   case (And n p q c) 
-  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule PairE)
-  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule PairE)
+  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule prod.exhaust)
+  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule prod.exhaust)
 
   from And(1)[of c] And(2)[of c'] And(3)
   show ?case 
@@ -1067,8 +1065,8 @@ next
   done   
 next
   case (Or n p q c) 
-  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule PairE)
-  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule PairE)
+  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule prod.exhaust)
+  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule prod.exhaust)
 
   from Or(1)[of c] Or(2)[of c'] Or(3)
   show ?case 
@@ -1079,8 +1077,8 @@ next
   done   
 next
   case (Imp n p q c) 
-  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule PairE)
-  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule PairE)
+  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule prod.exhaust)
+  obtain Q c'' where [simp]: "nfa_of_pf n q c' = (Q, c'')" by (rule prod.exhaust)
 
   from Imp(1)[of c] Imp(2)[of c'] Imp(3)
   show ?case 
@@ -1091,8 +1089,8 @@ next
   done   
 next
   case (Exist n p c)
-  obtain c' A where [simp]: "c_\<alpha> c n = (c', A)" by (rule PairE)
-  obtain P c'' where [simp]: "nfa_of_pf (Suc n) p c' = (P, c'')" by (rule PairE)
+  obtain c' A where [simp]: "c_\<alpha> c n = (c', A)" by (rule prod.exhaust)
+  obtain P c'' where [simp]: "nfa_of_pf (Suc n) p c' = (P, c'')" by (rule prod.exhaust)
 
   from Exist(1)[of c'] Exist(2) cache_correct [of c n]
   show ?case 
@@ -1103,8 +1101,8 @@ next
   done   
 next
   case (Forall n p c)
-  obtain c' A where [simp]: "c_\<alpha> c n = (c', A)" by (rule PairE)
-  obtain P c'' where [simp]: "nfa_of_pf (Suc n) p c' = (P, c'')" by (rule PairE)
+  obtain c' A where [simp]: "c_\<alpha> c n = (c', A)" by (rule prod.exhaust)
+  obtain P c'' where [simp]: "nfa_of_pf (Suc n) p c' = (P, c'')" by (rule prod.exhaust)
 
   from Forall(1)[of c'] Forall(2) cache_correct [of c n]
   show ?case 
@@ -1115,7 +1113,7 @@ next
   done   
 next
   case (Neg n p c)
-  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule PairE)
+  obtain P c' where [simp]: "nfa_of_pf n p c = (P, c')" by (rule prod.exhaust)
 
   from Neg(1)[of c] Neg(2)
   show ?case 
@@ -1137,10 +1135,10 @@ unfolding pf_to_nfa_def
 by (simp_all add: init_cache_OK)
 
 lemma eval_pf_impl :
-  "eval_pf pf [] = accept (pf_to_nfa 0 pf) []"
+  "eval_pf pf [] = nfa.accept (pf_to_nfa 0 pf) []"
 proof -
   note equiv_wf = pf_to_nfa___correct [of 0 pf]
-  note NFA_accept_OK = accept_correct___isomorphic [OF equiv_wf, of "[]"]
+  note NFA_accept_OK = nfa.accept_correct___isomorphic [OF equiv_wf, of "[]"]
   with DFA_of_pf___correct [of 0 pf] NFA_accept_OK 
   show ?thesis by simp
 qed
@@ -1192,9 +1190,9 @@ begin
       done
     next
       case None note lookup_eq_none[simp] = this
-      obtain m' bl where [simp]: "c_\<alpha> m n = (m', bl)" by (rule PairE)
+      obtain m' bl where [simp]: "c_\<alpha> m n = (m', bl)" by (rule prod.exhaust)
 
-      def bl' \<equiv> "set_op_union s_ops (s_image (op # True) bl) (s_image (op # False) bl)"
+      define bl' where "bl' \<equiv> set_op_union s_ops (s_image ((#) True) bl) (s_image ((#) False) bl)"
 
       from ind_hyp [OF invar_m] 
       have bl'_props: "s.invar bl'" "s.\<alpha> bl' = {bs. length bs = Suc n}" and invar_m': "c_invar m'"

@@ -1,8 +1,10 @@
 theory LTSGA
-imports LTSSpec "../../Cava_Refine"
+  imports LTSSpec
+  "../..//Collections/Refine_Dflt"
+  "../../Collections/ICF/CollectionsV1"
 begin
 
-subsection {* Copy *}
+subsection \<open> Copy \<close>
 
   definition ltsga_copy ::
      "('V,'W,_,'L) lts_it \<Rightarrow> ('V,'W,'L2) lts_empty \<Rightarrow> ('V,'W,'L2) lts_add \<Rightarrow> 'L \<Rightarrow> 'L2"
@@ -42,7 +44,7 @@ subsection {* Copy *}
          "invar2 (ltsga_copy it emp add l)" by simp_all
   qed
 
-subsection{* get successor *}
+subsection\<open> get successor \<close>
 
   definition ltsga_succ where
     "ltsga_succ it l q a = iterate_sel_no_map (it l q a) (\<lambda>_. True)"
@@ -69,7 +71,7 @@ subsection{* get successor *}
       show "ltsga_succ it l v w = Some v' \<Longrightarrow> (v, w, v') \<in> \<alpha> l" by simp
     qed
   
-subsection{* add successors *}
+subsection\<open> add successors \<close>
 
   lemma ltsga_it_implies_finite :
     "lts_iterator \<alpha> invar it \<Longrightarrow>
@@ -104,7 +106,7 @@ subsection{* add successors *}
     by simp_all
   qed
 
-subsection{* connection to lists *}
+subsection\<open> connection to lists \<close>
 
   definition ltsga_from_list_aux :: 
     "'L \<Rightarrow> ('V,'W,'L) lts_add \<Rightarrow> ('V,'W,'L) lts_from_list"
@@ -160,16 +162,16 @@ subsection{* connection to lists *}
         case Nil thus ?case by (simp add: lts_empty_correct)
       next
         case (snoc x xs)
-        obtain v w v' where x_eq[simp]: "x = (v, w, v')" by (metis PairE)
+        obtain v w v' where x_eq[simp]: "x = (v, w, v')" by (metis prod.exhaust)
 
         from snoc(2) have dist_xs: "\<forall>v w v' v''. (v, w, v') \<in> set xs \<and> (v, w, v'') \<in> set xs \<longrightarrow> v' = v''"
-          apply (simp only: x_eq set_append Un_iff set.simps singleton_iff)
+          apply (simp only: x_eq set_append Un_iff set_simps singleton_iff)
           apply metis
         done
 
         from snoc(2) have x_nin: "\<And>v''. v'' \<noteq> v' \<Longrightarrow> (v, w, v'') \<notin> set xs"
-          apply (simp only: x_eq set_append Un_iff set.simps singleton_iff)
-          apply metis
+          apply (simp only: x_eq set_append Un_iff set_simps singleton_iff)
+          apply (meson list.set_intros(1))
         done
 
         let ?l = "foldl (\<lambda>l vev. a (fst vev) (fst (snd vev)) (snd (snd vev)) l) (e()) xs"
@@ -306,8 +308,8 @@ subsection{* connection to lists *}
       case (Cons vev' l') note l_eq[simp] = this
       obtain v e v' where vev'_eq [simp]: "vev' = (v, e, v')" by (cases vev', blast)
 
-      def yes \<equiv> "[vev'\<leftarrow>l' . fst vev' = v \<and> snd (snd vev') = v']"
-      def no \<equiv> "filter (Not \<circ> (\<lambda>vev'. fst vev' = v \<and> snd (snd vev') = v')) l'"
+      define yes where "yes \<equiv> [vev'\<leftarrow>l' . fst vev' = v \<and> snd (snd vev') = v']"
+      define no where "no \<equiv> filter (Not \<circ> (\<lambda>vev'. fst vev' = v \<and> snd (snd vev') = v')) l'"
 
       have step: "ltsga_list_to_collect_list l = 
           (v, e # map (fst \<circ> snd) yes, v') # ltsga_list_to_collect_list no" 
@@ -376,7 +378,7 @@ subsection{* connection to lists *}
     }
   qed
 
-subsection{* reverse *}
+subsection\<open> reverse \<close>
 
   definition ltsga_reverse :: 
     "('V, 'W, 'L2) lts_empty \<Rightarrow> 
@@ -415,7 +417,7 @@ subsection{* reverse *}
       by unfold_locales simp_all
   qed
 
-subsection{* Quantifiers *}
+subsection\<open> Quantifiers \<close>
 
   definition "ltsga_succ_ball it l P v e \<equiv> iterate_ball (it l v e) P"
   definition "ltsga_succ_bex it l P v e \<equiv> iterate_bex (it l v e) P"
@@ -466,7 +468,7 @@ subsection{* Quantifiers *}
       unfolding lts_pre_bex_def ltsga_pre_bex_def by simp
   qed
 
-subsection{* iterators *}
+subsection\<open> iterators \<close>
 
   definition ltsga_iterator where
     "ltsga_iterator it = it (\<lambda>_. True) (\<lambda>_. True) (\<lambda>_. True) (\<lambda>_. True)"
@@ -485,7 +487,7 @@ subsection{* iterators *}
   qed
 
 
-subsection{* image and filter *}
+subsection\<open> image and filter \<close>
 
   definition ltsga_image_filter where
     "ltsga_image_filter e a it f P_v1 P_e P_v2 P l = 
@@ -558,7 +560,7 @@ subsection{* image and filter *}
     assume invar: "invar1 l"
        and weak_det: "LTS_is_deterministic (f ` {(v1, e, v2). (v1, e, v2) \<in> \<alpha>1 l \<and> P_v1 v1 \<and> P_e e \<and> P_v2 v2 \<and> P (v1, e, v2)})"
 
-    def D \<equiv> "{(v1, e, v2). (v1, e, v2) \<in> \<alpha>1 l \<and> P_v1 v1 \<and> P_e e \<and> P_v2 v2 \<and> P (v1, e, v2)}"
+    define D where "D \<equiv> {(v1, e, v2). (v1, e, v2) \<in> \<alpha>1 l \<and> P_v1 v1 \<and> P_e e \<and> P_v2 v2 \<and> P (v1, e, v2)}"
 
     have it: "set_iterator (it P_v1 P_e P_v2 P l) D" 
       using lts_filter_it_correct [of l P_v1 P_e P_v2 P, OF invar] unfolding D_def .
@@ -615,7 +617,7 @@ subsection{* image and filter *}
     assume invar: "invar1 l"
        and f_inj_on: "LTS_image_filter_inj_on f {(v1, e, v2). (v1, e, v2) \<in> \<alpha>1 l \<and> P_v1 v1 \<and> P_e e \<and> P_v2 v2 \<and> P (v1, e, v2)}"
 
-    def D \<equiv> "{(v1, e, v2). (v1, e, v2) \<in> \<alpha>1 l \<and> P_v1 v1 \<and> P_e e \<and> P_v2 v2 \<and> P (v1, e, v2)}"
+    define D where "D \<equiv> {(v1, e, v2). (v1, e, v2) \<in> \<alpha>1 l \<and> P_v1 v1 \<and> P_e e \<and> P_v2 v2 \<and> P (v1, e, v2)}"
 
     have D_subset: "D \<subseteq> \<alpha>1 l" unfolding D_def by (simp add: subset_iff)
     from dlts invar have weak_det: "LTS_is_deterministic (\<alpha>1 l)"
@@ -674,11 +676,11 @@ subsection{* image and filter *}
   unfolding dlts_image_filter_def dlts_image_def ltsga_image_def by simp    
 
 
-subsection {* All successors of a set *}
+subsection \<open> All successors of a set \<close>
 
-  text {* Iterators visit each element exactly once.
+  text \<open> Iterators visit each element exactly once.
           For getting all the successors of a set of nodes, it is therefore benefitial
-          to collect the successors in a set and then later iterate over this set. *}
+          to collect the successors in a set and then later iterate over this set. \<close>
 
   definition ltsga_set_succs where
     "ltsga_set_succs 

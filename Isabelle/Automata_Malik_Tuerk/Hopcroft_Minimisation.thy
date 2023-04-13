@@ -7701,8 +7701,6 @@ proof -
     by (simp add: L_rel_def)
 qed
 
-
-
 subsection \<open> Remove Monad \<close>
 
 find_theorems set_iterator cm_it
@@ -7952,13 +7950,36 @@ interpretation hop_impl: Hopcroft_impl_locale "rs_ops :: (nat, (nat, unit) RBT.r
 setup Locale_Code.close_block
 print_theorems
 
-definition "my_hop \<equiv> hop_impl.Hopcroft_code_rename_map"
+definition "hopcroft_impl \<equiv> hop_impl.Hopcroft_code"
 
+(*
 declare [[show_abbrevs = false]]
 term hop_impl.Hopcroft_code_rename_map
+*)
+
+export_code hopcroft_impl in OCaml
 
 
-export_code my_hop in OCaml
+
+
+
+fun a_impl_\<alpha> :: "(nat, unit) RBT.rbt \<Rightarrow> ('q, 'a, 'X) NFA_rec_scheme" where
+\<comment>\<open>abstraction function from automata implementation to automata\<close>
+  "a_impl_\<alpha> \<A>\<^sub>i = undefined"
+
+definition a_impl_invar :: "(nat, unit) RBT.rbt \<Rightarrow> bool" where
+\<comment>\<open>data structure invariants of automata implementation\<close>
+  "a_impl_invar \<equiv> undefined"
+
+(* Now, we would like to write such a theorem: *)
+
+(* hopcroft_impl returns a
+((nat \<times> nat) option array \<times> nat option array \<times> nat) \<times> nat option array \<times> nat option array
+*)
+theorem Hopcroft_impl_valid_minimal:
+  assumes "a_impl_invar \<A>\<^sub>i"
+  defines "\<A>\<^sub>i' \<equiv> hopcroft_impl \<A>\<^sub>i"
+  shows "a_impl_invar \<A>\<^sub>i' \<and> DFA_is_minimal (a_impl_\<alpha> \<A>\<^sub>i') \<and>  \<L>(a_impl_\<alpha> \<A>\<^sub>i') = \<L>(a_impl_\<alpha> \<A>\<^sub>i)"
 
 
 end

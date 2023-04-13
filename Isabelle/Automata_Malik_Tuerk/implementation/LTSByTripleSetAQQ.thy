@@ -1,4 +1,4 @@
-header "Implementing Labelled Transition Systems by Maps"
+section "Implementing Labelled Transition Systems by Maps"
 theory LTSByTripleSetAQQ
 imports TripleSetSpec LTSSpec LTSGA
 begin
