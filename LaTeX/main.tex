@@ -104,12 +104,12 @@ John E. Hopcroft's algorithm for minimizing DFAs was first presented in his orig
 \SetAlgoLined
 \caption{Hopcroft's original formal algorithm}
 \label{alg:original}
-\KwData{\textbf{Input:} a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
-\KwResult{\textbf{Output:} the equivalence class of $\mathcal{Q}$ under state equivalence}
+\KwData{a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
+\KwResult{the equivalence class of $\mathcal{Q}$ under state equivalence}
 Construct $\delta^{-1}(q, a) := \{t \in \mathcal{Q}\ |\ \delta(t, a) = q\}$ for all $q \in \mathcal{Q}$ and $a \in \Sigma$ \;\label{alg:original:1}
 Construct $P_1 := \mathcal{F}$, $P_2 := \mathcal{Q} \setminus \mathcal{F}$ and $s_{a,i} := \{q \in P_i \ | \ \delta^{-1}(q, a) \neq \varnothing \}$ for all $i \in \{1, 2\}$ and $a \in \Sigma$ \;
 Let $k := 3$ \;
-For all $a \in \Sigma$, construct $L_a := \underset{0 \leq i < k}{\operatorname*{arg\,min}}\ \left| s_{a, i} \right|$ \; \label{alg:original:4}
+For all $a \in \Sigma$, construct $L_a := \underset{1 \leq i < k}{\operatorname*{arg\,min}}\ \left| s_{a, i} \right|$ \; \label{alg:original:4}
 \While{$\exists a \in \Sigma, L_a \neq \varnothing$\label{alg:original:loop}}{
     Pick $a \in \Sigma$ such that $L_a \neq \varnothing$ and $i \in L_a$ \; \label{alg:original:pick}
     $L_a := L_a \setminus \{i\}$ \;
@@ -134,19 +134,21 @@ The algorithm is now usually given in a more mathematical and formalised way\foo
 First, instead of storing indices for the blocks, we directly deal with sets and explicitly work with a partition $\mathcal{P}$ of $\mathcal{Q}$. Then, we define splitters.
 
 \begin{definition}
-    Let $\mathcal{A} = (Q, \Sigma, \delta, q_0, I, F)$ be a DFA. Let $P$ be a partition of $Q$. Let $B \in P$ and $a \in \Sigma$. We say for $C \in P$ that
-    $(a, C)$ splits $B$ if $$\exists q_1, q_2 \in B \quad \delta(q_1, a) \in C \land \delta(q_2, a) \notin C.$$
+    Let $\mathcal{A} = (Q, \Sigma, \delta, q_0, I, F)$ be a DFA. Let $P$ be a partition of $Q$. Let $B \in P$. For $a \in \Sigma$ and $C \in P$ we say that
+    $(a, C)$ splits $B$ or is a splitter of $B$ if $$\exists q_1, q_2 \in B \quad \delta(q_1, a) \in C \land \delta(q_2, a) \notin C.$$
 \end{definition}
 \begin{remark}
     If $(a, C)$ is a splitter of $B$, $P$ can be updated to $P \setminus \{B\} \cup \{B', B''\}$, where $$B' := \{q \in B \ | \ \delta(q, a) \in C\} \text{ and } B'' := B \setminus B'.$$
 \end{remark}
 
 \begin{definition}
-    For a splitter $s \in \Sigma \times \mathcal{P}$, we define its size $\| s \|$ as follows. If $s = (a, B)$, then $\| s \| := |B|$.
+    For a splitter $s \in \Sigma \times P$, we define its size $\| s \|$ as follows. If $s = (a, C)$, then $\| s \| := |C|$.
 \end{definition}
 
 
 In Algorithm \ref{alg:original}, picking an index $i \in L_a$ corresponds to picking a set $s_{a, i}$, i.e.\ the subset of $P_i$ of states having at least one predecessor. We cannot directly replace $L_a$ and $s_{a, i}$ by a set of splitters $(a, P_i)$ as is, however the next step in the algorithm is to go over all blocks in the partition that have a successor in $s_{a, i}$. If such a block $B$ is found, it is split into two blocks, namely the set of states having a successor in $s_{a, i}$ and the others. Overall, we look for $B$ such that $P_i$ has a predecessor in $B$. We add the condition that $B$ must also have at least one successor not in $P_i$ to avoid splitting $B$ into $\{B, \varnothing\}$. Since this is equivalent to splitting $B$ with $(a, P_i)$, we can replace $L_a$ by a set of splitters $(a, P_i)$. Since the symbol $a$ is chosen such that $L_a \neq \varnothing$, we can define a workset $\mathcal{W}$ of all splitters, with all symbols of $\Sigma$. Therefore, $L_a$ is empty if and only if there is no $a$-splitter in $\mathcal{W}$. Because testing emptiness is equivalent to testing membership, and because of the existential quantifier in the definition of splitters, the $s_{a, i}$ are no longer needed.
+
+We can explicitly write the trivial cases where either $\mathcal{F}$ or $\mathcal{Q}\setminus\mathcal{F}$ is empty to improve performance for this specific case. This is not done in Algorithm \ref{alg:original} but this does not produce wrong results. If one of the two sets is empty, one of the $s_{a, 1}$ or $s_{a, 2}$ will be empty for all $a \in \Sigma$, and the \textit{while} loop will be entered $|\Sigma|$ times but the inner \textit{for} loop will never be entered. This results in a useless $O(|\Sigma|)$ computation. Another difference in that case is that it would compute the partition $\{\min\{\mathcal{F}, \mathcal{Q}\setminus\mathcal{F}\}, \varnothing\}$ -- where $\min$ returns the set with the least number of elements --  which we avoid in the modern version by just returning $\mathcal{Q}$.
 
 \bigskip
 
@@ -154,15 +156,15 @@ In Algorithm \ref{alg:original}, picking an index $i \in L_a$ corresponds to pic
 \SetAlgoLined
 \caption{Hopcroft's algorithm in a modern style}
 \label{alg:modern}
-\KwData{\textbf{Input:} a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
-\KwResult{\textbf{Output:} the language partition $P_\ell$}
+\KwData{a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
+\KwResult{the language partition $P_\ell$}
 \eIf{$\mathcal{F} = \varnothing \lor \mathcal{Q} \setminus \mathcal{F} = \varnothing$}{
     \Return $\mathcal{Q}$
 }{
     $\mathcal{P} := \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F} \}$ \;
-    $\mathcal{W} := \{ (a, \min \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F}\}, a \in \Sigma \}$ \;
+    $\mathcal{W} := \{ (a, \min \{ \mathcal{F}), \mathcal{Q} \setminus \mathcal{F}\}, a \in \Sigma \}$ \;
     \While{$\mathcal{W} \neq \varnothing$}{
-        Pick $(a, B')$ from $\mathcal{W}$ \;
+        Pick $(a, B')$ from $\mathcal{W}$ and remove it\;
         \ForAll{$B \in \mathcal{P}$}{
             Split $B$ with $(a, B')$ into $B_0$ and $B_1$ \;
             $\mathcal{P} := (\mathcal{P} \setminus \{B\}) \cup \{B_0, B_1\}$ \;
@@ -188,7 +190,7 @@ The following requirements come directly from \cite{Hop71} and are specific to t
 
 \begin{requirement}
     \label{req:1}
-Sets such as $\delta^{-1}(q, a)$ and $L_a$ must be represented in a way that allows $O(1)$ time for addition and deletion in front position.
+Sets such as $\delta^{-1}(q, a)$ and $L_a$ must be represented in a way that allows $O(1)$ time for addition and deletion in ``front position''\footnote{This does not make sense for sets and is specific for a data structure. What is meant here is a bit informal and designates a position directly accessible, e.g.\ the head for a stack, the value of the root for a tree, etc.}.
 \end{requirement}
 
 \begin{requirement}
@@ -203,7 +205,7 @@ Sets such as $P_i$ must be represented in a way that allows $O(1)$ time for addi
 
 \begin{requirement}
     \label{req:4}
-For a state $q$ in a set $P_i$ or $s_{a,i}$, its position must be determined in $O(1)$ time.
+For a state $q$ in the representation of a set $P_i$ or $s_{a,i}$, its ``position'' -- in the implemented data structure -- must be determined in $O(1)$ time.
 \ednote{VT}{Maybe not necessary? This should be provable from Req.\ \ref{req:2} and Req.\ \ref{req:3}.}
 \end{requirement}
 
@@ -250,10 +252,11 @@ For a state $q$ in a set $P_i$ or $s_{a,i}$, its position must be determined in 
         \end{tikzpicture}
     \end{center}
     This set of states can be expressed via the inverse transition function:
-    $$ \{q \in P_j\ |\ \delta(q,a) \in P_i \} = \left( \bigcup_{q \in P_i} \delta^{-1}(q, a)\right) \cap P_j $$
+    $$ \{q \in P_j\ |\ \delta(q,a) \in P_i \} = \left( \bigcup_{q' \in P_i} \delta^{-1}(q', a)\right) \cap P_j $$
     Since $\delta^{-1}$ was already computed in the first step of the algorithm, we can determine using req.\ \ref{req:3} whether a state of $\bigcup_{q \in P_i} \delta^{-1}(q, a)$ is also in $P_j$ in $\Theta(1)$ time.
     
-    Thus, instead of examining $P_j$ for all $j < k$, we rather go through the table of $\delta^{-1}$ and for each state $q$ such that $\delta(q, a) \in P_i$, we know from req.\ \ref{req:4} that we can determine the index $j < k$ (because there are $k$ blocks) of the block $P_j$ containing $q$ in $\Theta(1)$ time. The sets $P'_j$ and $P''_j = P_k$ resulting from the partition can be constructed on the fly without any additional time cost. The construction of the sets $b_j$ and $b_k$ as well as the update of $L_b$ for all $b \in \Sigma$ can also be done on the fly but require $\Theta(1)$ time for each symbol $b \in \Sigma$ and thus add up to a total of $\Theta(\left| \Sigma \right|)$ time.
+    Thus, instead of examining $P_j$ for all $j < k$, we rather go through the table of $\delta^{-1}$ and for each state $q$ such that $\delta(q, a) \in P_i$, we know from req.\ \ref{req:4} that we can determine the index $j < k$ (because there are $k$ blocks) of the block $P_j$ containing $q$ in $\Theta(1)$ time. The sets $P'_j$ and $P''_j = P_k$ resulting from the partition can be constructed on the fly without any additional time cost. The construction of the sets $s_{b, j}$ and $s_{b, k}$ as well as the update of $L_b$ for all $b \in \Sigma$ can also be done on the fly but require $\Theta(1)$ time for each symbol $b \in \Sigma$ and thus add up to a total of $\Theta(\left| \Sigma \right|)$ time.
+    \ednote{VT}{the on-the-fly computation part is a little hand-waving...}
 
     Overall, one iteration of the loop runs in time
     $$\Theta \left( \left| \Sigma \right| \cdot \left| \bigcup_{q \in P_i} \delta^{-1}(q, a) \right| \right) $$
@@ -264,6 +267,8 @@ For a state $q$ in a set $P_i$ or $s_{a,i}$, its position must be determined in 
         s\ \text{splits}\ B &\iff \exists q_1, q_2 \in B, \delta(q_1, a) \in C \land \delta(q_2, a) \notin C\\
         &\iff \left(\bigcup_{q \in C} \delta^{-1}(q, a)\right)\cap B \neq \varnothing \land \left(\bigcup_{q \in B}\delta(q, a)\right)\setminus C \neq \varnothing
     \end{align*}
+    \ednote{VT}{we may express the right-hand conjunct in terms of $\delta^{-1}$ in order to prepare the paragraph that follows (But it wouldn't be the same union because you have to start from states outside $C$)}
+    \ednote{VT}{The second equation may be a little too quick, especially for the right-hand conjunct.}
     Likewise, instead of examining all blocks $B \in \mathcal{P}$, we go through $\delta^{-1}$ and we update the splitters for all symbols in $\Sigma$ and one iteration of the loop runs in time
     $$\Theta \left( \left| \Sigma \right| \cdot \left| \bigcup_{q \in C} \delta^{-1}(q, a) \right| \right) $$
 \end{proof}
@@ -272,7 +277,7 @@ For the sake of simplicity, we now denote $\displaystyle{\bigcup_{q \in C} \delt
 
 We will now justify the logarithmic factor in the time complexity. We briefly explain why a logarithm stands out and prove the statement by induction. The idea is that for each symbol $a \in \Sigma$, a state $q \in \mathcal{Q}$ can be in at most one of the splitters in $\mathcal{W}$. When the loop iterates over this splitter, it will split the block and keep the smaller one, whose size will be at most the size of the splitter divided by two. This means that a splitter $s$ can be processed at most $\log \| s \|$ times. We now properly state and prove the property by induction.
 
-% We see splitters as updatable program variables. This means that $s_{a,i}$ as a set may differ along the loop, however we know there exists some $q \in \mathcal{Q}$ such that $s_{a,i}$ is the unique set containing $q$ throughout the execution. This gives a way to characterize splitters throughout the whole execution.
+We see splitters as updatable program variables. This means that $s_{a,i}$ as a set may differ along the loop, however we know there exists some $q \in \mathcal{Q}$ such that $s_{a,i}$ is the unique set containing $q$ throughout the execution. This gives a way to characterize splitters throughout the whole execution.
 
 \bigskip
 
@@ -282,7 +287,7 @@ We will now justify the logarithmic factor in the time complexity. We briefly ex
 \begin{proof}
     We first show the following statement:
 
-    \textit{During an iteration, the chosen splitter $s$ will either be removed from the set of splitters or its size will be reduced by at least $\frac{\| s\|}{2}$ after the iteration.}
+    \textit{During an iteration, the chosen splitter $s$ will either be removed from the set of splitters or its size will be reduced by at least $\frac{\| s\|}{2}$ after the iteration\footnote{That is a bit informal because, the original splitter is actually removed and another ``similar'' splitter (cf the paragraph above the statement of the lemma) of size at most $\frac{||s||}{2}$ will be added.}.}
 
     \bigskip
     Let $\{P_1, \cdots, P_\ell\}$ be the current partition and let $s =: (a, C)$ be the picked splitter. Thus, $s$ is no longer in the set of splitters $\mathcal{W}$. Since we go over all splittable blocks, $C$ may also be split by $s$.
