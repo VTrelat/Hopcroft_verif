@@ -1441,12 +1441,15 @@ definition NFA_construct_reachable_impl where
      RETURN \<A>
    }"
 
+
+
 lemma NFA_construct_reachable_impl_correct :
 fixes D II det
 defines "I \<equiv> map q2_\<alpha> II"
 defines "invar' \<equiv> (\<lambda>A. nfa_invar_no_props A \<and> nfa_props A = nfa_props_connected det)"
 defines "R \<equiv> build_rel nfa_\<alpha> invar'"
 defines "R' \<equiv> build_rel state_map_\<alpha> state_map_invar"
+defines "R'' \<equiv> R' \<times>\<^sub>r ((build_rel d.\<alpha> d.invar) \<times>\<^sub>r (\<langle>build_rel q2_\<alpha> q2_invar\<rangle>list_rel))"
 defines "S \<equiv> accessible (LTS_forget_labels D) (set I)"
 assumes f_inj_on: "inj_on f S"
     and ff_OK: "\<And>q. q2_invar q \<Longrightarrow> q2_\<alpha> q \<in> S \<Longrightarrow> ff q = f (q2_\<alpha> q)" 
@@ -1462,43 +1465,95 @@ assumes f_inj_on: "inj_on f S"
 notes refine_rel_defs[simp]
 shows "NFA_construct_reachable_impl det S II A FFP DS \<le>
    \<Down>R (NFA_construct_reachable_abstract2_impl I (l.\<alpha> A) FP D DS')"
-unfolding NFA_construct_reachable_impl_def NFA_construct_reachable_abstract2_impl_def WORKLISTT_def
+proof-
+  {
+    fix q rm \<A> qm n Qs As DD Is Fs p r
+    assume rm_q: "rm (q2_\<alpha> q) = Some r" and
+         in_R': "((qm, n), rm) \<in> R'" and
+         in_R: "((Qs, As, DD, Is, Fs, p), \<A>) \<in> R" and
+         invar_q: "q2_invar q" and
+         q_in: "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
+    have "s.memb (the (qm.lookup (ff q) qm)) Qs = (r \<in> \<Q> \<A>)"
+    proof -
+      from q_in have q_in_S: "q2_\<alpha> q \<in> S" unfolding S_def I_def by simp
+    
+      from in_R' rm_q ff_OK[OF invar_q q_in_S] have "qm.lookup (ff q) qm = Some r"
+        unfolding R'_def by (simp add: state_map_invar_def state_map_\<alpha>_def qm.correct)
+    
+      with in_R show "s.memb (the (qm.lookup (ff q) qm)) Qs = (r \<in> \<Q> \<A>)"
+        unfolding R_def by (simp add: invar'_def nfa_invar_no_props_def
+            nfa_selectors_def s.correct)
+    qed
+  } note aux=this
+  
+  show ?thesis
+  unfolding NFA_construct_reachable_impl_def NFA_construct_reachable_abstract2_impl_def WORKLISTT_def
 using [[goals_limit = 14]]
-apply (refine_rcg)
+  supply [refine_dref_RELATES] = RELATESI[of R] RELATESI[of R'] RELATESI[of R''] RELATESI[of "build_rel q2_\<alpha> q2_invar"]
+  supply [refine] = NFA_construct_reachable_impl_step_correct
+  apply (refine_rcg)
+             apply refine_dref_type
+
 \<comment>\<open>preprocess goals\<close>
   \<comment>\<open>initialisation is OK\<close>
-  apply (unfold I_def)
+  subgoal
+  apply (unfold I_def R'_def)
   apply (rule NFA_construct_reachable_init_impl_correct)
   apply (insert f_inj_on ff_OK dist_I invar_I)[4]
   apply (simp_all add: S_def I_def)[4]
-\<comment>\<open>goal solved\<close>
-  apply (subgoal_tac "single_valued (R' \<times>\<^sub>r R)")
-  apply assumption
-  apply (simp add: prod_rel_sv R'_def R_def del: prod_rel_def br_def)
-\<comment>\<open>goal solved\<close>
-  apply (subgoal_tac "single_valued (build_rel q2_\<alpha> q2_invar)")
-  apply assumption
-  apply (simp del: br_def)
-\<comment>\<open>goal solved\<close>
-  apply (simp add: R'_def R_def nfa_invar_weak2_def invar'_def
+done
+
+  subgoal
+    apply (simp add: prod_rel_sv R'_def R_def del: prod_rel_def br_def)
+    done
+  subgoal
+    apply (simp add: R'_def R_def nfa_invar_weak2_def invar'_def
                    nfa_invar_no_props_def nfa_invar_props_def
                    s.correct d.correct_common invar_A)
-\<comment>\<open>goal solved\<close>
-  using invar_I map_in_list_rel_conv apply blast
-\<comment>\<open>goal solved\<close>
-  apply simp
-\<comment>\<open>goal solved\<close>
-  apply simp
-\<comment>\<open>goal solved\<close>
-  apply (clarify, simp)+
-  apply (rename_tac q rm \<A> qm n Qs As DD Is Fs p r)
-defer
-  apply (simp add: prod_rel_sv R'_def R_def del: prod_rel_def br_def)
-\<comment>\<open>goal solved\<close>
-  apply (simp del: br_def add: in_br_conv)
-\<comment>\<open>goal solved\<close>
-  apply (simp add: in_br_conv I_def S_def)
-\<comment>\<open>goal solved\<close>
+    done
+  subgoal
+    using invar_I map_in_list_rel_conv unfolding I_def apply blast
+    done
+  subgoal by simp
+  subgoal by simp
+        apply clarsimp
+  subgoal for am an bf y q rm \<A> qm n Qs As DD Is Fs p r
+    apply (rule aux[of rm q r qm n Qs As DD Is Fs p \<A>])
+        apply auto
+    using I_def by auto
+  
+  subgoal by (simp add: prod_rel_sv R'_def R_def del: prod_rel_def br_def)
+  subgoal by (simp del: br_def add: in_br_conv)
+  subgoal by (simp add: in_br_conv I_def S_def)
+  subgoal
+    unfolding R''_def R'_def I_def
+    apply (simp only: in_br_conv)
+    apply (rule NFA_construct_reachable_impl_step_correct)
+                    apply (clarsimp_all)
+    subgoal
+      using I_def S_def f_inj_on by auto
+    subgoal 
+      by (simp add: I_def S_def ff_OK)
+    subgoal 
+      using d_add_OK(1) by blast
+    subgoal 
+      using d_add_OK(2) by blast
+    subgoal 
+      using det_OK by presburger
+    subgoal
+      by (simp add: DS'_OK I_def S_def)
+    subgoal unfolding R_def by (simp add: in_br_conv)
+    subgoal sorry
+    subgoal sorry
+      (* by (metis Diff_cancel \<open>\<And>y \<A>. \<lbrakk>x'_ = (state_map_\<alpha> (x1b_, x2a_), s.\<alpha> x2b_); x1a_ = (x1b_, x2a_); NFA_construct_reachable_init_impl II = ((x1b_, x2a_), x2b_); e'_ = q2_\<alpha> e_; s'_ = (state_map_\<alpha> (x1e_, x2d_), x2c_); x1d_ = (x1e_, x2d_); s_ = ((x1e_, x2d_), x2e_); \<not> s.memb (the (qm.lookup (ff e_) x1e_)) (nfa_states x2e_); y \<notin> \<Q> x2c_; x1_ = state_map_\<alpha> (x1b_, x2a_); x1c_ = state_map_\<alpha> (x1e_, x2d_); state_map_\<alpha> (x1e_, x2d_) (q2_\<alpha> e_) = Some y; q2_invar e_; q2_\<alpha> e_ \<in> S; state_map_invar (x1b_, x2a_); state_map_invar (x1e_, x2d_); (x2e_, x2c_) \<in> R; q2_\<alpha> e_ \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II); NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (state_map_\<alpha> (x1e_, x2d_), x2c_); x2_ = s.\<alpha> x2b_; s.invar x2b_\<rbrakk> \<Longrightarrow> \<Delta> x2c_ = \<Delta> \<A>\<close> d.lts_add_correct(2) d.lts_delete_correct(2) d.lts_from_list_correct(1) d.lts_image_correct(2) image_constant_conv insert_not_empty nfa_\<alpha>_simp nfa_trans_simp) *)
+    subgoal sorry
+    subgoal sorry
+    subgoal using DS_OK by blast
+    subgoal sorry
+
+
+
+
   (* apply clarify *)
      (* apply (simp del: br_def add: in_br_conv S_def I_def R_def R'_def) *)
   apply (subgoal_tac "\<And>x' x1 x2 x1a x1b x2a x2b s e s' e' x1c x2c x1d x1e x2d x2e.
@@ -1595,6 +1650,10 @@ proof-
      apply (intro conjI allI impI)
         apply auto
     sorry
+  
+  find_consts name: RELATES
+  find_theorems RELATES
+
 
   moreover have "\<Q> ?A = s.\<alpha> Qs" "\<F> ?A = s.\<alpha> Fs"
     by simp+
