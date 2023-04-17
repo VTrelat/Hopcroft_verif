@@ -19,6 +19,14 @@
 
 ---
 
+<!--
+[c28]		Maximilian P. L. Haslbeck, Peter Lammich:
+Refinement with Time - Refining the Run-Time of Algorithms in Isabelle/HOL. ITP 2019: 20:1-20:18
+
+[j9]		Maximilian P. L. Haslbeck, Peter Lammich:
+For a Few Dollars More: Verified Fine-Grained Algorithm Analysis Down to LLVM. ACM Trans. Program. Lang. Syst. 44(3): 14:1-14:36 (2022)
+-->
+
 ## 27.03.2023 - 09.04.2023
 
 -   #### Notes
