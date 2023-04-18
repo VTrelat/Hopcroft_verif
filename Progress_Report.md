@@ -16,6 +16,7 @@
 
 -   #### Notes
     -   ✅ finished paper proof for time complexity (see [here](./LaTeX/main.pdf))
+    -   :x: Peter Lammich helped me to solve some subgoals in the broken parts of `NFAByLTS` but it is still broken
 
 ---
 
