@@ -1488,7 +1488,7 @@ proof-
   
   show ?thesis
   unfolding NFA_construct_reachable_impl_def NFA_construct_reachable_abstract2_impl_def WORKLISTT_def
-using [[goals_limit = 14]]
+using [[goals_limit = 17]]
   supply [refine_dref_RELATES] = RELATESI[of R] RELATESI[of R'] RELATESI[of R''] RELATESI[of "build_rel q2_\<alpha> q2_invar"]
   supply [refine] = NFA_construct_reachable_impl_step_correct
   apply (refine_rcg)
@@ -1525,11 +1525,15 @@ done
   subgoal by (simp add: prod_rel_sv R'_def R_def del: prod_rel_def br_def)
   subgoal by (simp del: br_def add: in_br_conv)
   subgoal by (simp add: in_br_conv I_def S_def)
-  subgoal
+  subgoal for v1 v2 v3 v4 v5 v6 v7 v8 q v10 q' rm As v14 qm n \<A>
     unfolding R''_def R'_def I_def
     apply (simp only: in_br_conv)
     apply (rule NFA_construct_reachable_impl_step_correct)
-                    apply (clarsimp_all)
+    prefer 13 \<comment>\<open>some variables were not instantiated so we solve this first\<close>
+    apply blast
+    apply (clarsimp_all)
+    prefer 10 \<comment>\<open>some variables were not instantiated so we solve this first\<close>
+    apply blast
     subgoal
       using I_def S_def f_inj_on by auto
     subgoal 
@@ -1543,14 +1547,81 @@ done
     subgoal
       by (simp add: DS'_OK I_def S_def)
     subgoal unfolding R_def by (simp add: in_br_conv)
-    subgoal sorry
-    subgoal sorry
-      (* by (metis Diff_cancel \<open>\<And>y \<A>. \<lbrakk>x'_ = (state_map_\<alpha> (x1b_, x2a_), s.\<alpha> x2b_); x1a_ = (x1b_, x2a_); NFA_construct_reachable_init_impl II = ((x1b_, x2a_), x2b_); e'_ = q2_\<alpha> e_; s'_ = (state_map_\<alpha> (x1e_, x2d_), x2c_); x1d_ = (x1e_, x2d_); s_ = ((x1e_, x2d_), x2e_); \<not> s.memb (the (qm.lookup (ff e_) x1e_)) (nfa_states x2e_); y \<notin> \<Q> x2c_; x1_ = state_map_\<alpha> (x1b_, x2a_); x1c_ = state_map_\<alpha> (x1e_, x2d_); state_map_\<alpha> (x1e_, x2d_) (q2_\<alpha> e_) = Some y; q2_invar e_; q2_\<alpha> e_ \<in> S; state_map_invar (x1b_, x2a_); state_map_invar (x1e_, x2d_); (x2e_, x2c_) \<in> R; q2_\<alpha> e_ \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II); NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (state_map_\<alpha> (x1e_, x2d_), x2c_); x2_ = s.\<alpha> x2b_; s.invar x2b_\<rbrakk> \<Longrightarrow> \<Delta> x2c_ = \<Delta> \<A>\<close> d.lts_add_correct(2) d.lts_delete_correct(2) d.lts_from_list_correct(1) d.lts_image_correct(2) image_constant_conv insert_not_empty nfa_\<alpha>_simp nfa_trans_simp) *)
-    subgoal sorry
-    subgoal sorry
+    subgoal
+      apply (unfold R_def)
+      apply (simp add: in_br_conv invar'_def)
+      using nfa_invar_no_props_def by blast
     subgoal using DS_OK by blast
-    subgoal sorry
+    done
+   apply (clarify)
+   apply (simp add: R_def R'_def R''_def)
+  subgoal for x1b x2a x2b q q2 qm n Qs As D0 Is Fs ps v1 v2 v3 v4 v5 r
+   apply (intro conjI impI)
+          apply (clarify)
+          apply (simp add: invar'_def nfa_invar_no_props_def nfa_selectors_def s.correct state_map_invar_def state_map_\<alpha>_def qm.correct)
+          defer
+          apply (simp add: invar'_def nfa_invar_no_props_def)
+          apply (intro conjI)
+  using s.ins_dj_correct(2) s.memb_correct apply blast
+          apply (rule_tac s.ins_dj_correct(2))
+           apply blast
+           defer
+  using FFP_OK apply blast
+         apply (simp add: invar'_def nfa_invar_no_props_def)
+         apply (intro conjI)
+  using FFP_OK apply blast
+  using FFP_OK apply blast
+  using FFP_OK apply blast
+  using FFP_OK apply blast
+      apply (simp add:  ff_OK state_map_\<alpha>_def invar'_def nfa_invar_no_props_def state_map_invar_def qm.lookup_correct s.ins_dj_correct(1))
+     apply (simp add: invar'_def nfa_by_lts_defs.nfa_invar_no_props_def s.ins_dj_correct(2) R_def R'_def state_map_invar_def state_map_\<alpha>_def I_def S_def ff_OK nfa_invar_no_props_def nfa_by_lts_defs_axioms qm.lookup_correct s.memb_correct)
+   defer
+   apply (clarsimp simp add: state_map_invar_def I_def S_def ff_OK nfa_invar_no_props_def qm.lookup_correct s.memb_correct)
+proof-
+  assume asm:
+    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)" "the (qm.\<alpha> qm (f (q2_\<alpha> q))) \<notin> s.\<alpha> Qs" "r \<notin> s.\<alpha> Qs" "state_map_\<alpha> (qm, n) (q2_\<alpha> q) = Some r" "q2_invar q"
+    "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
+    "NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D
+         (state_map_\<alpha> (qm, n), nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>))"
+    "FFP q" "FP (q2_\<alpha> q)" "qm.invar x1b" "qm.invar qm" "qm.invar v2" "\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n')" "s.invar x2b"
+    "\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n')" "\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n')" "s.invar Qs" "d.invar v4"
+    "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1" "l.invar As" "d.invar D0" "s.invar Is" "s.invar Fs" "the (qm.\<alpha> qm (f (q2_\<alpha> q))) \<in> s.\<alpha> Fs"
 
+  let ?A = "nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"\<comment>\<open>basically, we have to show that ?A is an NFA\<close>
+
+  from asm(7)[simplified NFA_construct_reachable_abstract_impl_weak_invar_def I_def[symmetric]] obtain s where
+  "NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) Map.empty (s \<union> set I \<union> {q'. \<exists>a q. q \<in> s \<and> (q, a, q') \<in> D}) (state_map_\<alpha> (qm, n)) \<and>
+        s \<subseteq> accessible (LTS_forget_labels D) (set I) \<and>
+        ?A = NFA_rename_states \<lparr>\<Q> = s, \<Sigma> = l.\<alpha> A, \<Delta> = {qsq \<in> D. fst qsq \<in> s}, \<I> = set I, \<F> = {q \<in> s. FP q}\<rparr> (the \<circ> (state_map_\<alpha> (qm, n)))"
+    by blast
+
+  hence "s.\<alpha> Qs = the ` ((NFA_construct_reachable_locale.state_map_\<alpha> qm_ops f (qm, n)) ` s)"
+        "s.\<alpha> Fs = the ` ((NFA_construct_reachable_locale.state_map_\<alpha> qm_ops f (qm, n)) ` {q \<in> s. FP q})"
+    unfolding nfa_\<alpha>_def
+    using NFA_rename_states_def[of "\<lparr>\<Q> = s, \<Sigma> = l.\<alpha> A, \<Delta> = {qsq \<in> D. fst qsq \<in> s}, \<I> = set I, \<F> = {q \<in> s. FP q}\<rparr>" "(the \<circ> (state_map_\<alpha> (qm, n)))", simplified SemiAutomaton_rename_states_ext_def]
+    by auto
+    
+
+  show False
+    sorry
+next
+  assume asm:
+    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)" "r \<notin> s.\<alpha> Qs" "qm.\<alpha> qm (f (q2_\<alpha> q)) = Some r" "q2_invar q" "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
+    "NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D
+         (qm.\<alpha> qm \<circ> f, nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>))"
+    "FFP q" "FP (q2_\<alpha> q)" "qm.invar x1b \<and> (\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n'))" "s.invar x2b"
+    "qm.invar qm \<and> (\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n'))" "s.invar Qs \<and> l.invar As \<and> d.invar D0 \<and> s.invar Is \<and> s.invar Fs"
+    "qm.invar v2 \<and> (\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n'))" "d.invar v4" "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1"
+
+  from \<open>r \<notin> s.\<alpha> Qs\<close> have r_not_in_Fs:"r \<notin> s.\<alpha> Fs"
+    sorry
+  
+  show "\<lparr>\<Q> = insert r (s.\<alpha> Qs), \<Sigma> = l.\<alpha> As, \<Delta> = d.\<alpha> v4, \<I> = s.\<alpha> Is, \<F> = insert r (s.\<alpha> Fs)\<rparr> =
+            nfa_\<alpha> (s.ins_dj r Qs, As, v4, Is, s.ins_dj r Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"
+    apply (unfold nfa_\<alpha>_def)
+    apply (simp add: s.ins_dj_correct)
+    using asm(12) asm(2) r_not_in_Fs s.ins_dj_correct(1) by blast
+qed
 
 
 
