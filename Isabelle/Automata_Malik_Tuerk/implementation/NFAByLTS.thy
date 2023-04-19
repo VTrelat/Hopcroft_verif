@@ -1579,15 +1579,23 @@ done
    apply (clarsimp simp add: state_map_invar_def I_def S_def ff_OK nfa_invar_no_props_def qm.lookup_correct s.memb_correct)
 proof-
   assume asm:
-    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)" "the (qm.\<alpha> qm (f (q2_\<alpha> q))) \<notin> s.\<alpha> Qs" "r \<notin> s.\<alpha> Qs" "state_map_\<alpha> (qm, n) (q2_\<alpha> q) = Some r" "q2_invar q"
+    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)"
+    "the (qm.\<alpha> qm (f (q2_\<alpha> q))) \<notin> s.\<alpha> Qs"
+    "r \<notin> s.\<alpha> Qs"
+    "state_map_\<alpha> (qm, n) (q2_\<alpha> q) = Some r"
+    "q2_invar q"
     "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
     "NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D
          (state_map_\<alpha> (qm, n), nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>))"
-    "FFP q" "FP (q2_\<alpha> q)" "qm.invar x1b" "qm.invar qm" "qm.invar v2" "\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n')" "s.invar x2b"
-    "\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n')" "\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n')" "s.invar Qs" "d.invar v4"
-    "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1" "l.invar As" "d.invar D0" "s.invar Is" "s.invar Fs" "the (qm.\<alpha> qm (f (q2_\<alpha> q))) \<in> s.\<alpha> Fs"
+    "FFP q" "FP (q2_\<alpha> q)" "qm.invar x1b" "qm.invar qm" "qm.invar v2" "s.invar x2b" "s.invar Qs" "d.invar v4"
+    "\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n')"
+    "\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n')"
+    "\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n')"
+    "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1"
+    "l.invar As" "d.invar D0" "s.invar Is" "s.invar Fs" "the (qm.\<alpha> qm (f (q2_\<alpha> q))) \<in> s.\<alpha> Fs"
 
   let ?A = "nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"\<comment>\<open>basically, we have to show that ?A is an NFA\<close>
+  let ?q = "the (qm.\<alpha> qm (f (q2_\<alpha> q)))"
 
   from asm(7)[simplified NFA_construct_reachable_abstract_impl_weak_invar_def I_def[symmetric]] obtain s where
   "NFA_construct_reachable_map_OK (accessible (LTS_forget_labels D) (set I)) Map.empty (s \<union> set I \<union> {q'. \<exists>a q. q \<in> s \<and> (q, a, q') \<in> D}) (state_map_\<alpha> (qm, n)) \<and>
@@ -1600,155 +1608,90 @@ proof-
     unfolding nfa_\<alpha>_def
     using NFA_rename_states_def[of "\<lparr>\<Q> = s, \<Sigma> = l.\<alpha> A, \<Delta> = {qsq \<in> D. fst qsq \<in> s}, \<I> = set I, \<F> = {q \<in> s. FP q}\<rparr>" "(the \<circ> (state_map_\<alpha> (qm, n)))", simplified SemiAutomaton_rename_states_ext_def]
     by auto
-    
 
-  show False
-    sorry
-next
-  assume asm:
-    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)" "r \<notin> s.\<alpha> Qs" "qm.\<alpha> qm (f (q2_\<alpha> q)) = Some r" "q2_invar q" "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
-    "NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D
-         (qm.\<alpha> qm \<circ> f, nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>))"
-    "FFP q" "FP (q2_\<alpha> q)" "qm.invar x1b \<and> (\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n'))" "s.invar x2b"
-    "qm.invar qm \<and> (\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n'))" "s.invar Qs \<and> l.invar As \<and> d.invar D0 \<and> s.invar Is \<and> s.invar Fs"
-    "qm.invar v2 \<and> (\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n'))" "d.invar v4" "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1"
+  with asm(2, 24)
+  have q_mem1:
+    "?q \<notin> the ` ((NFA_construct_reachable_locale.state_map_\<alpha> qm_ops f (qm, n)) ` s)"
+    "?q \<in> the ` ((NFA_construct_reachable_locale.state_map_\<alpha> qm_ops f (qm, n)) ` {q \<in> s. FP q})"
+    by blast+    
 
-  from \<open>r \<notin> s.\<alpha> Qs\<close> have r_not_in_Fs:"r \<notin> s.\<alpha> Fs"
-    sorry
+  hence q_mem2:
+        "?q \<notin> the ` ((qm.\<alpha> qm \<circ> f) ` s)"
+        "?q \<in> the ` ((qm.\<alpha> qm \<circ> f) ` {q \<in> s. FP q})"
+    by blast+
+
+  then obtain x where x_def:"x \<in> s" "FP x" "?q = the (qm.\<alpha> qm (f x))"
+    by blast
+
+  from asm(4)[unfolded state_map_\<alpha>_def] have "?q = r"
+    by simp
+
+  let ?nfa = "\<lparr>\<Q> = s, \<Sigma> = l.\<alpha> A, \<Delta> = {qsq \<in> D. fst qsq \<in> s}, \<I> = set I, \<F> = {q \<in> s. FP q}\<rparr>"
+  let ?nfa_r = "NFA_rename_states ?nfa (the \<circ> (state_map_\<alpha> (qm, n)))"
   
-  show "\<lparr>\<Q> = insert r (s.\<alpha> Qs), \<Sigma> = l.\<alpha> As, \<Delta> = d.\<alpha> v4, \<I> = s.\<alpha> Is, \<F> = insert r (s.\<alpha> Fs)\<rparr> =
-            nfa_\<alpha> (s.ins_dj r Qs, As, v4, Is, s.ins_dj r Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"
-    apply (unfold nfa_\<alpha>_def)
-    apply (simp add: s.ins_dj_correct)
-    using asm(12) asm(2) r_not_in_Fs s.ins_dj_correct(1) by blast
-qed
-
-
-
-  (* apply clarify *)
-     (* apply (simp del: br_def add: in_br_conv S_def I_def R_def R'_def) *)
-  apply (subgoal_tac "\<And>x' x1 x2 x1a x1b x2a x2b s e s' e' x1c x2c x1d x1e x2d x2e.
-       \<lbrakk>(NFA_construct_reachable_init_impl II, x') \<in> br state_map_\<alpha> state_map_invar \<times>\<^sub>r br s.\<alpha> s.invar; x' = (x1, x2); x1a = (x1b, x2a); NFA_construct_reachable_init_impl II = (x1a, x2b); (s, s') \<in> R' \<times>\<^sub>r R;
-        (e, e') \<in> br q2_\<alpha> q2_invar; True; True; s' = (x1c, x2c); x1d = (x1e, x2d); s = (x1d, x2e);
-        e' \<in> dom x1c \<and> e' \<in> accessible (LTS_forget_labels D) (set (map q2_\<alpha> II)) \<and> NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1c, x2c); \<not> s.memb (the (qm.lookup (ff e) x1e)) (nfa_states x2e);
-        the (x1c e') \<notin> \<Q> x2c; q2_invar e \<and> q2_\<alpha> e \<in> S\<rbrakk>
-       \<Longrightarrow> NFA_construct_reachable_impl_step det DS x1e x2d (nfa_trans x2e) e
-            \<le> \<Down> (br state_map_\<alpha> state_map_invar \<times>\<^sub>r br d.\<alpha> d.invar \<times>\<^sub>r \<langle>br q2_\<alpha> q2_invar\<rangle>list_rel) (NFA_construct_reachable_abstract_impl_step (accessible (LTS_forget_labels D) (set (map q2_\<alpha> II))) DS' x1c (\<Delta> x2c) e')")
-      apply blast
-     apply (clarify, simp)
-     apply (rule_tac \<A> = "nfa_\<alpha> (ay, az, bm, bn, bo, bp)" in NFA_construct_reachable_impl_step_correct[simplified])
-                     apply (metis I_def S_def f_inj_on image_set)
-                    apply (metis ff_OK I_def S_def image_set)
-  using d_add_OK(1) apply blast
-  using d_add_OK(2) apply blast
-  using det_OK apply blast
-  apply (simp add: DS'_OK I_def S_def)
-               apply (simp add: in_br_conv R'_def)
-              apply (simp add: in_br_conv R'_def)
-             apply (simp add: R_def)
-            apply (simp add: in_br_conv R_def)
-  apply (simp add: R_def invar'_def nfa_by_lts_defs.nfa_invar_no_props_def nfa_by_lts_defs_axioms)
-  apply (subgoal_tac "\<And>x1b x2a x2b e e' x1c x2c x1e x2d aj ak al am an bf x1f x1ba ea e'a x1ca x2ca x1ea x2da ay az bm bn bo bp y ya.
-       \<lbrakk>state_map_invar (x1b, x2a) \<and> s.invar x2b; x1ba = x1b; ((x1e, x2d), x1c) \<in> R' \<and> ((aj, ak, al, am, an, bf), x2c) \<in> R; e' = q2_\<alpha> e; \<not> s.memb (the (qm.lookup (ff e) x1e)) aj; y \<notin> \<Q> x2c; x1f = state_map_\<alpha> (x1b, x2a);
-        NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b); ((x1ea, x2da), x1ca) \<in> R' \<and> ((ay, az, bm, bn, bo, bp), x2ca) \<in> R; e'a = q2_\<alpha> ea; \<not> s.memb (the (qm.lookup (ff ea) x1ea)) ay; ya \<notin> \<Q> x2ca; x1c (q2_\<alpha> e) = Some y;
-        q2_invar e; q2_\<alpha> e \<in> S; x1ca (q2_\<alpha> ea) = Some ya; q2_invar ea; q2_\<alpha> ea \<in> S; q2_\<alpha> e \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
-        NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1c, x2c); q2_\<alpha> ea \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II);
-        NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (x1ca, x2ca)\<rbrakk>
-       \<Longrightarrow> x1ca (q2_\<alpha> ea) = Some ya") (* Maybe not \<open>Some ya\<close> but something like \<open>(qm.lookup (ff ea) x1ea)\<close> *)
-          apply blast
-          apply (clarify, simp add: R'_def R_def ff_OK state_map_\<alpha>_def)
-        apply blast
-       apply blast
-      apply (simp add: DS_OK)
-     apply (clarify, simp add: R_def)
-    apply (clarify)
-    apply (simp add: R_def R'_def)
-    apply (rename_tac x1b x2a x2b q q2 qm n Qs As D0 Is Fs ps v1 v2 v3 v4 v5 r)
-    apply (intro conjI impI)
-           apply (clarify)
-           apply (simp add: invar'_def nfa_invar_no_props_def nfa_selectors_def s.correct state_map_invar_def state_map_\<alpha>_def qm.correct)
-           defer
-           apply (simp add: invar'_def nfa_invar_no_props_def)
-           apply (intro conjI)
-  using s.ins_dj_correct(2) s.memb_correct apply blast
-           apply (rule_tac s.ins_dj_correct(2))
-            apply blast
-           defer
-  using FFP_OK apply blast
-          apply (simp add: invar'_def nfa_invar_no_props_def)
-          apply (intro conjI)
-  using FFP_OK apply blast
-  using FFP_OK apply blast
-  using FFP_OK apply blast
-  using FFP_OK apply blast
-       apply (simp add:  ff_OK state_map_\<alpha>_def invar'_def nfa_invar_no_props_def state_map_invar_def qm.lookup_correct s.ins_dj_correct(1))
-      apply (simp add: invar'_def nfa_by_lts_defs.nfa_invar_no_props_def nfa_by_lts_defs_axioms s.ins_dj_correct(2) s.memb_correct)
-     apply (simp add: in_br_conv R_def)
-    apply (simp add: R_def R'_def invar'_def state_map_invar_def state_map_\<alpha>_def I_def S_def ff_OK nfa_invar_no_props_def nfa_by_lts_defs_axioms qm.lookup_correct s.memb_correct)
-   apply (clarify, simp add: R_def R'_def invar'_def state_map_invar_def state_map_\<alpha>_def I_def S_def ff_OK nfa_invar_no_props_def nfa_by_lts_defs_axioms qm.lookup_correct s.memb_correct)
-   defer
-    apply (clarify, simp add: R_def R'_def invar'_def state_map_invar_def state_map_\<alpha>_def I_def[symmetric] S_def ff_OK nfa_invar_no_props_def nfa_by_lts_defs_axioms qm.lookup_correct s.memb_correct)
-proof-
-  fix x1b x2a x2b q qm n Qs As D0 Is Fs v1 v2 v3 v4 v5 r
-  assume asm:
-    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)"
-    "r \<notin> s.\<alpha> Qs"
-    "qm.\<alpha> qm (f (q2_\<alpha> q)) = Some r"
-    "q2_invar q" "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
-    "NFA_construct_reachable_abstract_impl_weak_invar I (l.\<alpha> A) FP D (qm.\<alpha> qm \<circ> f, nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>))"
-    "FFP q"
-    "FP (q2_\<alpha> q)"
-    "qm.invar x1b \<and> (\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n'))"
-    "s.invar x2b"
-    "qm.invar qm \<and> (\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n'))"
-    "qm.invar v2 \<and> (\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n'))"
-    "s.invar Qs" "d.invar v4" "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1" "l.invar As" "d.invar D0" "s.invar Is" "s.invar Fs" "r \<in> s.\<alpha> Fs"
-  let ?A = "nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"
-  have "NFA ?A"
-    unfolding nfa_\<alpha>_def NFA_def using asm
+  have "NFA ?nfa"
     apply auto
-    unfolding FinSemiAutomaton_def
-     apply (intro conjI)
-      defer
-    unfolding FinSemiAutomaton_axioms_def
-    apply simp
-    unfolding NFA_axioms_def
-     apply (intro conjI[rotated])
-      apply simp
-    apply simp
-     defer
-    unfolding SemiAutomaton_def
-     apply (intro conjI allI impI)
-        apply auto
     sorry
-  
-  find_consts name: RELATES
-  find_theorems RELATES
 
+  hence "NFA (?nfa_r)"
+    by (simp add: NFA_rename_states___is_well_formed)
 
-  moreover have "\<Q> ?A = s.\<alpha> Qs" "\<F> ?A = s.\<alpha> Fs"
-    by simp+
+  moreover from x_def(3) q_mem1 have "?q \<in> \<F> ?nfa_r"
+    by blast
+
+  moreover from q_mem1 have "?q \<notin> \<Q> ?nfa_r"
+    by blast
 
   ultimately show False
-    using asm(2, 20) NFA.\<F>_consistent[of ?A] by blast
+    by auto
 next
-  fix x1b x2a x2b q qm n Qs As D0 Is Fs v1 v2 v3 v4 v5 r
   assume asm:
-    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)" "r \<notin> s.\<alpha> Qs" "qm.\<alpha> qm (f (q2_\<alpha> q)) = Some r" "q2_invar q" "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (q2_\<alpha> ` set II)"
-    "NFA_construct_reachable_abstract_impl_weak_invar (map q2_\<alpha> II) (l.\<alpha> A) FP D (qm.\<alpha> qm \<circ> f, nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>))"
-    "FFP q" "FP (q2_\<alpha> q)" "s.invar x2b" "d.invar v4" "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1" "qm.invar x1b" "\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n')" "qm.invar qm"
-    "\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n')" "s.invar Qs" "qm.invar v2" "\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n')" "l.invar As" "d.invar D0" "s.invar Is" "s.invar Fs"
+    "NFA_construct_reachable_init_impl II = ((x1b, x2a), x2b)" "q2 = q2_\<alpha> q" "the (qm.\<alpha> qm (ff q)) \<notin> s.\<alpha> Qs" "r \<notin> s.\<alpha> Qs" "qm.\<alpha> qm (f (q2_\<alpha> q)) = Some r" "q2_invar q" "q2_\<alpha> q \<in> S"
+    "q2_\<alpha> q \<in> accessible (LTS_forget_labels D) (set I)"
+    "NFA_construct_reachable_abstract_impl_weak_invar I (l.\<alpha> A) FP D (qm.\<alpha> qm \<circ> f, nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>))"
+    "FFP q" "FP (q2_\<alpha> q)" "qm.invar x1b \<and> (\<forall>i q. qm.\<alpha> x1b i = Some q \<longrightarrow> (\<exists>n'<x2a. q = states_enumerate n'))" "s.invar x2b"
+    "qm.invar qm \<and> (\<forall>i q. qm.\<alpha> qm i = Some q \<longrightarrow> (\<exists>n'<n. q = states_enumerate n'))"
+    "s.invar Qs \<and> l.invar As \<and> d.invar D0 \<and> s.invar Is \<and> s.invar Fs \<and> ps = \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>"
+    "qm.invar v2 \<and> (\<forall>i q. qm.\<alpha> v2 i = Some q \<longrightarrow> (\<exists>n'<v3. q = states_enumerate n'))" "d.invar v4" "list_all2 (\<lambda>x x'. x' = q2_\<alpha> x \<and> q2_invar x) v5 v1"
 
-  from \<open>r \<notin> s.\<alpha> Qs\<close> have r_not_in_Fs:"r \<notin> s.\<alpha> Fs"
+  let ?q = "the (qm.\<alpha> qm (ff q))"
+  let ?nfa = "nfa_\<alpha> (Qs, As, D0, Is, Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"
+
+  have "NFA ?nfa"
+    apply auto
+    subgoal sorry
+    subgoal sorry
+    subgoal sorry
+    subgoal sorry
+    subgoal sorry
+    subgoal
+      by (simp add: asm(15))
+    subgoal
+      by (simp add: asm(15))
+    subgoal
+      by (simp add: asm(15))
+    done
+
+
+  from \<open>?q \<notin> s.\<alpha> Qs\<close> have q_not_in_Fs:"?q \<notin> s.\<alpha> Fs"\<comment>\<open>this deduction is trivial if ?nfa is an NFA\<close>
     sorry
-  
+
+  from \<open>r \<notin> s.\<alpha> Qs\<close> have r_not_in_Fs:"r \<notin> s.\<alpha> Fs"\<comment>\<open>idem\<close>
+    sorry
+
+  have qr_eq:"?q = r"
+    by (simp add: asm(5) asm(6) asm(7) ff_OK)
+
   show "\<lparr>\<Q> = insert r (s.\<alpha> Qs), \<Sigma> = l.\<alpha> As, \<Delta> = d.\<alpha> v4, \<I> = s.\<alpha> Is, \<F> = insert r (s.\<alpha> Fs)\<rparr> =
-            nfa_\<alpha> (s.ins_dj r Qs, As, v4, Is, s.ins_dj r Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"
+         nfa_\<alpha> (s.ins_dj (the (qm.\<alpha> qm (ff q))) Qs, As, v4, Is, s.ins_dj (the (qm.\<alpha> qm (ff q))) Fs, \<lparr>nfa_prop_is_complete_deterministic = det, nfa_prop_is_initially_connected = True\<rparr>)"
     apply (unfold nfa_\<alpha>_def)
-    apply (simp add: s.ins_dj_correct)
-    using s.ins_dj_correct(1)[OF \<open>s.invar Fs\<close> r_not_in_Fs] apply auto
-      by (simp add: \<open>s.invar Qs\<close> \<open>r \<notin> s.\<alpha> Qs\<close> s.ins_dj_correct(1))+
+    apply (simp add: s.ins_dj_correct qr_eq[symmetric])
+    apply (intro conjI)
+    apply (simp add: s.ins_dj_correct(1)[of Qs ?q, OF conjunct1[OF asm(15)] \<open>?q \<notin> s.\<alpha> Qs\<close>])
+    apply (simp add: s.ins_dj_correct(1)[of Fs ?q, OF conjunct1[OF conjunct2[OF conjunct2[OF conjunct2[OF conjunct2[OF asm(15)]]]]] \<open>?q \<notin> s.\<alpha> Fs\<close>])
+    done
 qed
+
 
 
 (*
