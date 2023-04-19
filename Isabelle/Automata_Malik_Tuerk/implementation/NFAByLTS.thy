@@ -1553,8 +1553,36 @@ done
       using nfa_invar_no_props_def by blast
     subgoal using DS_OK by blast
     done
+  subgoal  
+   (** Peter: I completed the proof by:
+    1. realizing that it is 'only' a refinement proof. You show that basic abstract operations are implemented by their concrete counterparts
+    2. unfolding to make visible the required invariants/abstraction functions for the operations (see lemmas s.correct, qm.correct for what is needed) 
+       I also used the FFP_OK< ff_OK which connect the concrete/abstract versions of FFP, ff
+    3. realizing that the only thing missing was that some state is not contained in \<F>. 
+      But I had a precondition that it is not in \<Q>. This is easy at the abstract level (we have \<F> \<subseteq> \<Q>), 
+        so I proved it there and added an assertion to 'transport' this knowledge to this refinement proof.        
+   *)
    apply (clarify)
    apply (simp add: R_def R'_def R''_def)
+   apply (clarsimp 
+    simp: FFP_OK ff_OK nfa_\<alpha>_def state_map_\<alpha>_def state_map_invar_def qm.correct s.correct
+    simp: invar'_def nfa_invar_no_props_def
+   )
+   done
+   
+  subgoal by simp
+
+  done
+  qed   
+   
+   find_theorems s.ins_dj
+   
+   
+   oops
+   find_theorems qm.lookup
+   
+   find_theorems FP 
+   oops
   subgoal for x1b x2a x2b q q2 qm n Qs As D0 Is Fs ps v1 v2 v3 v4 v5 r
    apply (intro conjI impI)
           apply (clarify)
@@ -1628,6 +1656,9 @@ proof-
 
   let ?nfa = "\<lparr>\<Q> = s, \<Sigma> = l.\<alpha> A, \<Delta> = {qsq \<in> D. fst qsq \<in> s}, \<I> = set I, \<F> = {q \<in> s. FP q}\<rparr>"
   let ?nfa_r = "NFA_rename_states ?nfa (the \<circ> (state_map_\<alpha> (qm, n)))"
+  
+  find_theorems NFA name: local
+  
   
   have "NFA ?nfa"
     apply auto

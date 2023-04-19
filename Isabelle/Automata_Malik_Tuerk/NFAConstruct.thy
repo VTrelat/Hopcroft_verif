@@ -560,6 +560,7 @@ definition NFA_construct_reachable_abstract2_impl where
            (RETURN ((rm, \<A>), []))
          else                    
            do {
+             ASSERT (the (rm q) \<notin> \<F> \<A>); \<^cancel>\<open>Peter: I inserted the assertion here, to justify refinement to insert-dj later\<close>
              (rm', D', N) \<leftarrow> NFA_construct_reachable_abstract_impl_step 
                  (accessible (LTS_forget_labels D) (set I)) DD rm (\<Delta> \<A>) q;
              RETURN ((rm', \<lparr> \<Q>=insert (the (rm q)) (\<Q> \<A>), \<Sigma>=\<Sigma> \<A>, \<Delta> = D', 
@@ -583,6 +584,9 @@ apply (rule single_valued_Id)
 apply (rule single_valued_Id)
 apply (simp)
 apply (simp_all add: list_all2_eq[symmetric] refine_hsimp)
+
+(** Peter: New assertion is easily proved here *)
+subgoal by (auto simp: NFA_construct_reachable_abstract_impl_weak_invar_def)
 
 apply (clarify, simp)
 apply (rename_tac q rm \<A> r)
