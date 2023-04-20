@@ -1528,32 +1528,34 @@ done
   subgoal for v1 v2 v3 v4 v5 v6 v7 v8 q v10 q' rm As v14 qm n \<A>
     unfolding R''_def R'_def I_def
     apply (simp only: in_br_conv)
-    apply (rule NFA_construct_reachable_impl_step_correct)
-    prefer 13 \<comment>\<open>some variables were not instantiated so we solve this first\<close>
-    apply blast
-    apply (clarsimp_all)
-    prefer 10 \<comment>\<open>some variables were not instantiated so we solve this first\<close>
-    apply blast
-    subgoal
-      using I_def S_def f_inj_on by auto
-    subgoal 
-      by (simp add: I_def S_def ff_OK)
-    subgoal 
-      using d_add_OK(1) by blast
-    subgoal 
-      using d_add_OK(2) by blast
-    subgoal 
-      using det_OK by presburger
-    subgoal
-      by (simp add: DS'_OK I_def S_def)
-    subgoal unfolding R_def by (simp add: in_br_conv)
-    subgoal
-      apply (unfold R_def)
-      apply (simp add: in_br_conv invar'_def)
-      using nfa_invar_no_props_def by blast
-    subgoal using DS_OK by blast
+    apply (rule NFA_construct_reachable_impl_step_correct[where r="the (rm (q2_\<alpha> q))" and \<A>=As and A=A and FP=FP])
+    using f_inj_on
+    apply (auto simp: I_def S_def ff_OK d_add_OK det_OK DS'_OK s.correct 
+      nfa_invar_no_props_def in_br_conv invar'_def R_def DS_OK) 
     done
+
+    subgoal    
+       by (clarsimp 
+        simp: R_def R'_def R''_def FFP_OK ff_OK qm.correct state_map_invar_def state_map_\<alpha>_def
+        simp: s.correct invar'_def nfa_invar_no_props_def
+       
+       )
+   subgoal by simp
+   
+   find_theorems ff f
+   
+   thm qm.correct
+   
+   oops
+   
+   find_theore ms FFP FP
+    
+    
+    
   subgoal  
+
+  
+  
    (** Peter: I completed the proof by:
     1. realizing that it is 'only' a refinement proof. You show that basic abstract operations are implemented by their concrete counterparts
     2. unfolding to make visible the required invariants/abstraction functions for the operations (see lemmas s.correct, qm.correct for what is needed) 
