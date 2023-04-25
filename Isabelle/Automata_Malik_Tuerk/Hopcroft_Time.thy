@@ -17,6 +17,7 @@ text
   Refinement of the specification for acquiring next state toward an inner loop.
     def: Hopcroft_set_f
 \<close>
+term Hopcroft_set_f
 
 text
 \<open>
@@ -24,6 +25,7 @@ text
   Precomputation of the set of predecessors of the currently chosen set.
     def: Hopcroft_precompute_step
 \<close>
+term Hopcroft_precompute_step
 
 text
 \<open>
@@ -31,6 +33,7 @@ text
   Refinement towards efficient data structures. Partition of \<Q> \<rightarrow> maps
     def: Hopcroft_map
 \<close>
+term Hopcroft_map
 
 text
 \<open>
@@ -38,5 +41,6 @@ text
   Classes as sets \<rightarrow> maps (bijection with natural numbers).
     def: Hopcroft_map2
 \<close>
+term Hopcroft_map2
 
 end
