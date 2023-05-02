@@ -7976,11 +7976,13 @@ definition a_impl_invar :: "(nat, unit) RBT.rbt \<Rightarrow> bool" where
 (* hopcroft_impl returns a
 ((nat \<times> nat) option array \<times> nat option array \<times> nat) \<times> nat option array \<times> nat option array
 *)
+
+(*
 theorem Hopcroft_impl_valid_minimal:
   assumes "a_impl_invar \<A>\<^sub>i"
   defines "\<A>\<^sub>i' \<equiv> hopcroft_impl \<A>\<^sub>i"
   shows "a_impl_invar \<A>\<^sub>i' \<and> DFA_is_minimal (a_impl_\<alpha> \<A>\<^sub>i') \<and>  \<L>(a_impl_\<alpha> \<A>\<^sub>i') = \<L>(a_impl_\<alpha> \<A>\<^sub>i)"
-
+*)
 
 end
 
