@@ -6,7 +6,7 @@
 section\<open>Hopcroft's Minimisation Algorithm\<close>
 
 theory Hopcroft_Minimisation
-  imports Main DFA
+  imports DFA
         "../Collections/ICF/CollectionsV1"
         "../Nested_Multisets_Ordinals/Multiset_More"
         "../Partition"
