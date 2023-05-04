@@ -3,7 +3,6 @@ imports
   "../lib/Sep_Algebra_Add" 
   "../lib/Frame_Infer"
   "../lib/Monad"
-  "HOL-Library.Extended_Nat" (* TODO: This gives us Complex_Main. Too much for this theory! *)
   "../basic/kernel/LLVM_Shallow" (* TODO: Just used for acostC datatype. Move this datatype! *)
   "../cost/Enat_Cost"
 begin
