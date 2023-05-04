@@ -15,9 +15,29 @@ text
 (* thm Hopcroft_abstract_def *)
 (* thm Hopcroft_abstract_f_def *)
 
-definition "state_emptiness \<equiv> undefined"
+definition "is_splitter = undefined"
+definition "split_and_update = undefined"
 
-definition "line1 \<equiv> SPECT[(\<lambda>Q. Q = {}) \<mapsto> cost ($state_emptiness)]"
+definition "Hopcroft_abstract_fT \<A> \<equiv>
+  bindT (\<lambda>(P, L). ASSERT (Hopcroft_abstract_invar \<A> (P, L)))
+  (bindT (\<lambda>a. ASSERT (L \<noteq> {}))
+  (bindT (\<lambda>_. SPECT (\<lambda>(a, p). (a, p) \<in> L))
+  (bindT ((\<lambda>(a, p). SPECT (\<lambda>(P', L'). Hopcroft_update_splitters_pred \<A> p a P L L' \<and> P' = Hopcroft_split \<A> p a {} P))
+  (\<lambda>(P', L'). RETURNT (P', L'))))))"
+
+definition Hopcroft_abstractT where
+  "Hopcroft_abstractT \<A> \<equiv>
+   (if (\<Q> \<A> = {}) then RETURNT {} else (
+    if (\<F> \<A> = {}) then RETURNT {\<Q> \<A>} else (
+       do {
+         (P, _) \<leftarrow> WHILEIT (Hopcroft_abstract_invar \<A>) Hopcroft_abstract_b
+                           (Hopcroft_abstract_f \<A>) (Hopcroft_abstract_init \<A>);
+         RETURN P
+       })))"
+
+definition "state_emptiness Q \<equiv> undefined"
+
+definition "line1 Q \<equiv> SPECT[(\<lambda>Q. if Q = {} then RETURNT {} else RETURNT Q) \<mapsto> cost ($state_emptiness Q)]"
 
 text
 \<open>
