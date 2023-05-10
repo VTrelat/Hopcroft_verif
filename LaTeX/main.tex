@@ -71,7 +71,7 @@
     \end{center}
     \begin{center}
         
-        \textbf{Final year intership report}
+        \textbf{Final year internship report}
         \vfill
 
         \large{\textbf{Verification in Isabelle/HOL of Hopcroft's algorithm for minimizing DFAs including runtime analysis}}
@@ -95,6 +95,18 @@
 \tableofcontents
 
 \pagebreak
+
+\section{Preamble}
+
+Since the whole project relies on many deeply theoretical notions such as abstraction, logic or semantics, this section only gives a brief introduction to formal methods in general and their purpose.
+
+Formal methods refer to a field of theoretical computer science whose main purpose is to provide logical links between mathematics and software engineering, so that one can state logical properties about algorithms or mathematical procedures and relate them to actual implementations. The main application of formal methods is to prove correctness of programs with respect to a specification, i.e.\ a set of rules which must hold throughout the execution of the program. Such a program is then ensured to behave in a way\footnote{In the context of industrial applications, we often differentiate between two sorts of assertions, namely safety properties and liveness properties, so that we can explicitly check that the system works (it is ``alive'') and that it is safe (it works properly).} that is intended by its specification.
+
+Such work is usually carried out using a proving assistant such as \href{https://isabelle.in.tum.de}{Isabelle}, i.e.\ a program with an implemented logic allowing reasoning with respect to that logic. Isabelle has the advantage to relie on a really light kernel, which is the only part that can only be trusted. Everything else -- i.e. librairies, called theories -- is proved using this kernel. It also has nice interface with \LaTeX syntax adding little overhead to mathematical notations.
+
+A common way to proceed when we want to prove correctness of an algorithm and generate correct executable code is to follow a top-down strategy via successive refinements. We start from the highest level -- i.e.\ with the highest level of abstraction -- and we refine towards the implementation. As an example, if an algorithm manipulates sets at the abstract level, we may use lists or trees in its implementation. When refining a level to another one, we have to give links -- and prove them -- between those, e.g. that the behavior of the refined one does not contradict the abstract one. In Peter Lammich's Refinement Framework \cite{lammich:ref}, this is done via binary relation and abstraction/concretization functions\footnote{A concretisation function maps an abstract value to a set of concrete values and conversely for an abstraction function, so that invariants can be carried and preserved through the refinements. For example, we may abstract the set $\mathbb{Z}$ of integers to $\{Neg, Zero, Pos\}$ where $Pos$ (resp.\ $Neg$) represents positive (resp.\ negative) integers and $Zero$ represents the singular set $\{0\}$.}.
+
+If formal methods allow for correctness and termination theorems, it is less trivial to analyze complexity of a program (e.g.\ in terms of time).
 
 \section{Introduction}
 \subsection{Original algorithm}
