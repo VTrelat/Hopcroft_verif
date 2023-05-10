@@ -18,6 +18,43 @@ text
 definition "is_splitter = undefined"
 definition "split_and_update = undefined"
 
+notepad
+begin
+
+definition Hopcroft_abstract_f where
+"Hopcroft_abstract_f \<A> = 
+ (\<lambda>(P, L). do {
+     ASSERT (Hopcroft_abstract_invar \<A> (P, L));                             ($check_abstract_invar)
+     ASSERT (L \<noteq> {});                                                       ($check_emptiness)
+       (a,p) \<leftarrow> SPEC (\<lambda>(a,p). (a,p) \<in> L);                                   ($pick_splitter)
+       (P', L') \<leftarrow> SPEC (\<lambda>(P', L'). Hopcroft_update_splitters_pred \<A> p a P L L' \<and>
+                                    (P' = Hopcroft_split \<A> p a {} P));      ($split + $update_partition)
+       RETURN (P', L')
+     })"
+
+definition Hopcroft_abstract_invar where
+  "Hopcroft_abstract_invar \<A> = (\<lambda>(P, L). 
+   is_weak_language_equiv_partition \<A> P \<and>
+   (\<forall>ap \<in> L. fst ap \<in> \<Sigma> \<A> \<and> snd ap \<in> P) \<and>
+   (\<forall>p1 a p2. (a \<in> \<Sigma> \<A> \<and> (\<exists>p1' \<in> P. p1 \<subseteq> p1') \<and> p2 \<in> P \<and>
+       split_language_equiv_partition_pred \<A> p1 a p2) \<longrightarrow>
+       (\<exists>p2'. (a, p2') \<in> L \<and> split_language_equiv_partition_pred \<A> p1 a p2')))"\<comment>\<open>has to be O(1)\<close>
+
+definition Hopcroft_abstract_b where
+"Hopcroft_abstract_b PL = (snd PL \<noteq> {})        ($check_emptiness)" \<comment>\<open>has to be O(1)\<close>
+
+definition Hopcroft_abstract where
+  "Hopcroft_abstract \<A> = 
+   (if (\<Q> \<A> = {}) then RETURN {} else (                                                ($check_emptiness)
+    if (\<F> \<A> = {}) then RETURN {\<Q> \<A>} else (                                            ($check_emptiness)
+       do {                                                                             ($abstract_while)
+         (P, _) \<leftarrow> WHILEIT (Hopcroft_abstract_invar \<A>) Hopcroft_abstract_b
+                           (Hopcroft_abstract_f \<A>) (Hopcroft_abstract_init \<A>);
+         RETURN P
+       })))"\<comment>\<open>has to be O(card(\<Sigma> \<A>) * card(\<Q> \<A>) * log(card(\<Q> \<A>)))\<close>
+
+end
+
 definition "Hopcroft_abstract_fT \<A> \<equiv>
   bindT (\<lambda>(P, L). ASSERT (Hopcroft_abstract_invar \<A> (P, L)))
   (bindT (\<lambda>a. ASSERT (L \<noteq> {}))
