@@ -100,17 +100,26 @@
 
 Since the whole project relies on many deeply theoretical notions such as abstraction, logic or semantics, this section only gives a brief introduction to formal methods in general and their purpose.
 
+\bigskip
+
 Formal methods refer to a field of theoretical computer science whose main purpose is to provide logical links between mathematics and software engineering, so that one can state logical properties about algorithms or mathematical procedures and relate them to actual implementations. The main application of formal methods is to prove correctness of programs with respect to a specification, i.e.\ a set of rules which must hold throughout the execution of the program. Such a program is then ensured to behave in a way\footnote{In the context of industrial applications, we often differentiate between two sorts of assertions, namely safety properties and liveness properties, so that we can explicitly check that the system works (it is ``alive'') and that it is safe (it works properly).} that is intended by its specification.
 
 Such work is usually carried out using a proving assistant such as \href{https://isabelle.in.tum.de}{Isabelle}, i.e.\ a program with an implemented logic allowing reasoning with respect to that logic. Isabelle has the advantage to relie on a really light kernel, which is the only part that can only be trusted. Everything else -- i.e. librairies, called theories -- is proved using this kernel. It also has nice interface with \LaTeX syntax adding little overhead to mathematical notations.
 
-A common way to proceed when we want to prove correctness of an algorithm and generate correct executable code is to follow a top-down strategy via successive refinements. We start from the highest level -- i.e.\ with the highest level of abstraction -- and we refine towards the implementation. As an example, if an algorithm manipulates sets at the abstract level, we may use lists or trees in its implementation. When refining a level to another one, we have to give links -- and prove them -- between those, e.g. that the behavior of the refined one does not contradict the abstract one. In Peter Lammich's Refinement Framework \cite{lammich:ref}, this is done via binary relation and abstraction/concretization functions\footnote{A concretisation function maps an abstract value to a set of concrete values and conversely for an abstraction function, so that invariants can be carried and preserved through the refinements. For example, we may abstract the set $\mathbb{Z}$ of integers to $\{Neg, Zero, Pos\}$ where $Pos$ (resp.\ $Neg$) represents positive (resp.\ negative) integers and $Zero$ represents the singular set $\{0\}$.}.
+A common way to proceed when we want to prove correctness of an algorithm and generate correct executable code is to follow a top-down strategy via successive refinements. We start from the highest level -- i.e.\ with the highest level of abstraction -- and we refine towards the implementation. As an example, if an algorithm manipulates sets at the abstract level, we may use lists or trees in its implementation. When refining a level to another one, we have to give links -- and prove them -- between those, e.g. that the behavior of the refined one does not contradict the abstract one. In Peter Lammich's Refinement Framework \cite{lammich:ref}, this is done via binary relations and abstraction/concretization functions\footnote{A concretization function maps an abstract value to a set of concrete values and conversely for an abstraction function, so that invariants can be carried and preserved through the refinements. For example, we may abstract the set $\mathbb{Z}$ of integers to $\{Neg, Zero, Pos\}$ where $Pos$ (resp.\ $Neg$) represents positive (resp.\ negative) integers and $Zero$ represents the singular set $\{0\}$.}.
 
-If formal methods allow for correctness and termination theorems, it is less trivial to analyze complexity of a program (e.g.\ in terms of time).
+\bigskip
+
+If formal methods allow for correctness and termination theorems, it is less trivial to analyze complexity of a program, e.g.\ in terms of time or memory consumption. Since complexity of a program is not a logical property, but a property of the execution of the program, a model of computation must be defined, i.e.\ a way to execute the program, and then prove that the execution of the program in this model is equivalent to the execution of the program in the real world. Maximilian Haslbeck and Peter Lammich have extended the Refinement Framework to include worst-case time complexity analysis \cite{refwithtime} in Isabelle and have also implemented a verified framework to analyze algorithms down to LLVM code \cite{fewdollarsmore}. The principle is to model costs of operations with resources and currencies and embed this new dimension in the program, where operations consume resources.
 
 \section{Introduction}
-\subsection{Original algorithm}
-John E. Hopcroft's algorithm for minimizing DFAs was first presented in his original 1971 paper \cite{Hop71} as a formal algorithm. Algorithm~\ref{alg:original} is a direct translation of the original algorithm with only slight changes in the notations.
+
+This internship report is the result of a 6-month internship at the Chair of Logic and Verification of the Technical University of Munich (TUM) under the supervision of Tobias Nipkow and Peter Lammich. The main goal of this internship was to verify Hopcroft's algorithm for minimizing DFAs in Isabelle/HOL and to analyze its worst-case time complexity using the Refinement Framework. Some considerable work has already been carried out on the proof of correctness ten years ago in an old version of Isabelle. The goal was to port this proof to the latest version of Isabelle and to extend it with a time complexity analysis.
+
+\subsection{Hopcroft's algorithm}
+John E. Hopcroft's algorithm for minimizing deterministic finite automata (DFA) was first presented in his original 1971 paper \cite{Hop71} as a formal algorithm. It has been a major breakthrough in the field of automata theory, since it allowed for minimization in linearithmic time in the worst case\footnote{Other minimization algorithms were presented prior to Hopcroft, e.g.\ by Moore (polynomial) or Brzozowski (super-polynomial).}. It is also the first algorithm to minimize a DFA in a formal way, i.e.\ by computing the equivalence class of the set of states of the DFA under state equivalence. Thanks to this, minimization has become almost free and thus this algorithm has been widely used in the field of formal verification, e.g.\ in model checking, since it allows to reduce the size of the automaton to be verified.
+
+Algorithm~\ref{alg:original} is a direct translation of the original algorithm with only slight changes in the notations.
 
 \begin{algorithm}[H]
 \SetAlgoLined
@@ -330,7 +339,7 @@ We see splitters as updatable program variables. This means that $s_{a,i}$ as a 
 
 \begin{lemma}\label{lem:bound}
     Let us consider some step in the algorithm such that $\mathcal{P}$ is the current partition. The total time spent in the loop until termination is bounded by
-    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \overset{\hookleftarrow}{C} | \log | C | + \sum_{(a, B) \in \Sigma\times \mathcal{P}\setminus \mathcal{W}} | \overset{\hookleftarrow}{B} | \log \frac{| B |}{2} \right)$$
+    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \overset{\hookleftarrow}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \overset{\hookleftarrow}{B} | \log \frac{| B |}{2} \right)$$
     where $\theta$ is the constant of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
 \end{lemma}
 \begin{proof}
