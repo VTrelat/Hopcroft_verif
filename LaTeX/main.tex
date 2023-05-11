@@ -211,13 +211,10 @@ In Algorithm \ref{alg:original}, picking an index $i \in L_a$ corresponds to pic
 
 We can explicitly write the trivial cases where either $\mathcal{F}$ or $\mathcal{Q}\setminus\mathcal{F}$ is empty to improve performance for this specific case. This is not done in Algorithm \ref{alg:original} but this does not produce wrong results. If one of the two sets is empty, one of the $s_{a, 1}$ or $s_{a, 2}$ will be empty for all $a \in \Sigma$, and the \textit{while} loop will be entered $|\Sigma|$ times but the inner \textit{for} loop will never be entered. This results in a useless $O(|\Sigma|)$ computation. Another difference in that case is that it would compute the partition $\{\min\{\mathcal{F}, \mathcal{Q}\setminus\mathcal{F}\}, \varnothing\}$ -- where $\min$ returns the set with the least number of elements --  which we avoid in the modern version by just returning $\mathcal{Q}$.
 
-\bigskip
-
-
 \section{Proof of correctness}
 \section{Time complexity analysis}
 
-We focus on the original algorithm presented in Algorithm~\ref{alg:original} in order to work on the arguments given in \cite{Hop71}. The data structures used at that time were mostly linked lists, but let us rather give some requirements for the data structures instead of actual implementations. The goal is to show that the algorithm can be executed in $O(m \cdot n \log n)$ time, where $m$ is the number of symbols in the alphabet and $n$ is the number of states in the DFA.
+In a first time, we focus on the original algorithm presented in Algorithm~\ref{alg:original} in order to work on the arguments given in \cite{Hop71}. The data structures used at that time were mostly linked lists, but let us rather give some requirements for the data structures instead of actual implementations. The goal is to show that the algorithm can be executed in $O(m \cdot n \log n)$ time, where $m$ is the number of symbols in the alphabet and $n$ is the number of states in the DFA.
 
 The following requirements come directly from \cite{Hop71} and are specific to the algorithm presented in Algorithm~\ref{alg:original}.
 
