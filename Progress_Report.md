@@ -9,21 +9,30 @@
 -   [27.03.2023 - 09.04.2023](#27032023---09042023)
 -   [10.04.2023 - 23.04.2023](#10042023---23042023)
 -   [24.04.2023 - 07.05.2023](#24042023---07052023)
+-   [08.05.2023 - 21.05.2023](#08052023---21052023)
 -   [Remarks](#remarks)
 
 ---
 
+## 08.05.2023 - 21.05.2023
+
+-   #### Notes
+    -   Started to write formal assertions on the runtime analysis with the NREST framework on paper, respectively to the paper proof
+        -   top-down strategy (abstract to implementation)
+        -   started with the abstract level, see `Hopcroft_abstract` in `Hopcroft_Minimisation.thy`
+
 ## 24.04.2023 - 07.05.2023
+
 -   #### Notes
     -   Read papers about the NREST framework and Isabelle / LLVM with time
     -   Added template theory `Hopcroft_Time`
+    -   Experimented with the NREST framework
 
 ## 10.04.2023 - 23.04.2023
 
 -   #### Notes
     -   ✅ finished paper proof for time complexity (see [here](./LaTeX/main.pdf))
     -   :x: Peter Lammich helped me to solve some subgoals in the broken parts of `NFAByLTS` but it is still broken
-    
 
 ---
 
