@@ -21,12 +21,16 @@
         -   top-down strategy (abstract to implementation)
         -   started with the abstract level, see `Hopcroft_abstract` in `Hopcroft_Minimisation.thy`
 
+---
+
 ## 24.04.2023 - 07.05.2023
 
 -   #### Notes
     -   Read papers about the NREST framework and Isabelle / LLVM with time
     -   Added template theory `Hopcroft_Time`
     -   Experimented with the NREST framework
+
+---
 
 ## 10.04.2023 - 23.04.2023
 
