@@ -481,21 +481,21 @@ The abstract algorithm is defined below:
 definition Hopcroft_abstract $\mathcal{A}$ = 
 (if ($\mathcal{Q}$ $\mathcal{A}$ = {}) then RETURN {} else (
 if ($\mathcal{F}$ $\mathcal{A}$ = {}) then RETURN {$\mathcal{Q}$ $\mathcal{A}$} else (
-    do {
-        (P, _) $\leftarrow$ WHILEIT (abstract_invar $\mathcal{A}$) abstract_b (abstract_f $\mathcal{A}$) (abstract_init $\mathcal{A}$);
-        RETURN P
-    })))
+  do {
+    (P, _) $\leftarrow$ WHILEIT (abstract_invar $\mathcal{A}$) abstract_b (abstract_f $\mathcal{A}$) (abstract_init $\mathcal{A}$);
+    RETURN P
+  })))
 \end{lstlisting}
 It makes use of some auxiliary definitions, like \texttt{abstract\_invar} which states that the current partition and the set of splitters are well formed and satisfy some properties on language equivalence. The boolean \texttt{abstract\_b} is the termination condition of the loop, namely it checks emptiness of the set of splitters, and the initial partition is defined by \texttt{abstract\_init}. The body of the loop is defined by \texttt{abstract\_f} and is given below:
 \begin{lstlisting}[language=Isabelle]
 definition abstract_f $\mathcal{A}$ = 
- ($\lambda$(P, L). do {
+  ($\lambda$(P, L). do {
     ASSERT (abstract_invar $\mathcal{A}$ (P, L));
     ASSERT (L $\neq$ {});
-        (a,p) $\leftarrow$ SPEC ($\lambda$(a,p). (a,p) $\in$ L);
-        (P', L') $\leftarrow$ SPEC ($\lambda$(P', L'). update_splitters_pred $\mathcal{A}$ p a P L L' $\land$ (P' = split $\mathcal{A}$ p a {} P));
+    (a,p) $\leftarrow$ SPEC ($\lambda$(a,p). (a,p) $\in$ L);
+    (P', L') $\leftarrow$ SPEC ($\lambda$(P', L'). update_splitters_pred $\mathcal{A}$ p a P L L' $\land$ (P' = split $\mathcal{A}$ p a {} P));
     RETURN (P', L')
-    })
+  })
 \end{lstlisting}
 Again, this definition makes use of auxiliary definitions that we do not detail here. Recall from \cite{fewdollarsmore} that spending time is modeled by using resources via resource functions, namely $\$_{s}\ n$ is a resource function using $n$ coins of the currency $s$.
 
@@ -503,14 +503,24 @@ We first analyze the body of the loop, i.e.\ we define parameters or generic cos
 We define a cost function for \texttt{abstract\_f} called $\texttt{abstract\_f}_{\texttt{cost}}$.
 
 For the first two assertions, we can define a resource function $\$_{\texttt{check\_invar}}$ and a resource function $\$_{\texttt{check\_emptiness}}$ which will be useful for other assertions.
-For the first \texttt{SPEC}, we define $\$_{\texttt{pick\_splitter}}$ and for the second \texttt{SPEC}, we define $\$_{\texttt{split\_and\_update}}$. We must not split the latter into two separate costs for the moment since both operations will be performed on the fly, see the proof of lemma \ref{lem:bound} for more details.
+For the first \texttt{SPEC}, we define $\$_{\texttt{pick\_splitter}}$ and for the second \texttt{SPEC}, we define $\$_{\texttt{split\_and\_update}}$. We must not split the latter into two separate costs for the moment since both operations will be performed on the fly, see the proof of lemma \ref{lem:time_iteration} for more details.
 To write it informally, we have:
+
 \begin{lstlisting}[language=Isabelle]
 definition abstract_f$_{cost}$ = $\$_{\texttt{check\_invar}}$ + $\$_{\texttt{check\_emptiness}}$ + $\$_{\texttt{pick\_splitter}}$ + $\$_{\texttt{split\_and\_update}}$
 \end{lstlisting}
-Informally again, the complexity lies in $\$_{\texttt{split\_and\_update}}$ and the other costs will be constant eventually.
 
-We know from lemma \ref{lem:bound} that in the end, if the loop body is executed for $\mathcal{A}$ and if the current partition and set of splitters is $(P, L)$ and some splitter $(a, C)$ is picked in the second \texttt{ASSERT}, then the implementation of the program should use at most \texttt{card($\Sigma$ $\mathcal{A}$) * card (($\lambda$ q. $\delta^{-1}$(q, a)) \textasciigrave\ C)} (with some constant factor) coins of some currency.
+Informally again, the complexity lies in $\$_{\texttt{split\_and\_update}}$ and the other costs will be constant eventually. The goal will be to eventually show -- respectively to lemma \ref{lem:time_iteration} -- that this $\$_{\texttt{split\_and\_update}}$ taken for a splitter $(a, C)$ is bounded by \texttt{card ($\Sigma$ $\mathcal{A}$) * card (($\lambda$ q. $\delta^{-1}$(q, a)) \textasciigrave\ C) * $\$_c$} where $\$_c$ is some constant, e.g.\ representing the cost of a comparison or any basic operation.
+
+\vfill
+
+{\bf NOTE (DRAFT)}: We want something like this for $\$_{\texttt{split\_and\_update}}$:
+\begin{lstlisting}[language=Isabelle]
+definition split_and_update$_{cost}$ where
+  split_and_update$_{cost}$ = $\mathcal{A}$ PL s = let (a, C) = s in $\dots$
+\end{lstlisting}
+The "$\dots$" should refer to operations performed in functions \texttt{split} and \texttt{update\_splitters\_pred}.
+
 % \printglossary[type=\acronymtype]
 
 % \addcontentsline{toc}{section}{CV}
