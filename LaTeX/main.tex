@@ -521,6 +521,15 @@ definition split_and_update$_{cost}$ where
 \end{lstlisting}
 The "$\dots$" should refer to operations performed in functions \texttt{split} and \texttt{update\_splitters\_pred}.
 
+We will enventually write something like:
+\begin{lstlisting}[language=Isabelle]
+abstract$_{spec}$ $\equiv$ SPEC ($\lambda$ P. P = Myhill_Nerode_partition $\mathcal{A}$)
+
+E$_{abs}$ $\equiv$ 0(abstract := abstract$_{cost}$)
+
+Hopcroft_abstract $\mathcal{A}$ $\le$ $\Downarrow_C$ E$_{abs}$ (abstract$_{spec}$ $\mathcal{A}$ ($\$_{abstract}$))
+\end{lstlisting}
+
 % \printglossary[type=\acronymtype]
 
 % \addcontentsline{toc}{section}{CV}
