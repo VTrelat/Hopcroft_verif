@@ -7,4 +7,4 @@ The main theory is in [Hopcroft_Minimisation.thy](./Automata_Malik_Tuerk/Hopcrof
 
 A bimonthly progress report can be found in [Progress_Report](./Progress_Report.md).
 
-A $\LaTeX$ report can be found in [main.pdf](./LaTeX/main.pdf). It contains the paper proof for time complexity.
+A $\LaTeX$ report can be found in [main.tex](./LaTeX/main.tex). It contains the paper proof for time complexity.
