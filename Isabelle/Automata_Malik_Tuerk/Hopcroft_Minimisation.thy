@@ -6,7 +6,7 @@
 section\<open>Hopcroft's Minimisation Algorithm\<close>
 
 theory Hopcroft_Minimisation
-  imports Main DFA
+  imports DFA
         "../Collections/ICF/CollectionsV1"
         "../Nested_Multisets_Ordinals/Multiset_More"
         "../Partition"
@@ -7952,6 +7952,9 @@ print_theorems
 
 definition "hopcroft_impl \<equiv> hop_impl.Hopcroft_code"
 
+thm hop_impl.Hopcroft_code_correct_full[folded hopcroft_impl_def]
+
+
 (*
 declare [[show_abbrevs = false]]
 term hop_impl.Hopcroft_code_rename_map
@@ -7960,7 +7963,9 @@ term hop_impl.Hopcroft_code_rename_map
 export_code hopcroft_impl in OCaml
 
 
+term hopcroft_impl
 
+find_theorems hop_impl.Hopcroft_code
 
 
 fun a_impl_\<alpha> :: "(nat, unit) RBT.rbt \<Rightarrow> ('q, 'a, 'X) NFA_rec_scheme" where
@@ -7976,7 +7981,8 @@ definition a_impl_invar :: "(nat, unit) RBT.rbt \<Rightarrow> bool" where
 (* hopcroft_impl returns a
 ((nat \<times> nat) option array \<times> nat option array \<times> nat) \<times> nat option array \<times> nat option array
 *)
-(*theorem Hopcroft_impl_valid_minimal:
+(*
+theorem Hopcroft_impl_valid_minimal:
   assumes "a_impl_invar \<A>\<^sub>i"
   defines "\<A>\<^sub>i' \<equiv> hopcroft_impl \<A>\<^sub>i"
   shows "a_impl_invar \<A>\<^sub>i' \<and> DFA_is_minimal (a_impl_\<alpha> \<A>\<^sub>i') \<and>  \<L>(a_impl_\<alpha> \<A>\<^sub>i') = \<L>(a_impl_\<alpha> \<A>\<^sub>i)"

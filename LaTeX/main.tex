@@ -1,6 +1,6 @@
 \documentclass[12pt, a4 paper]{article}
-\usepackage{babel}
-\usepackage{graphicx, hyperref, xcolor, fancyhdr, amssymb, amsmath, amsthm, mdframed, tikz}
+\usepackage[british]{babel}
+\usepackage{graphicx, hyperref, xcolor, fancyhdr, amssymb, amsmath, amsthm, mdframed, tikz, listings}
 \usepackage{mathrsfs}
 \usepackage[acronym, toc]{glossaries}
 \usepackage{pdfpages}
@@ -8,6 +8,52 @@
 \usepackage{algorithmic}
 \usepackage[ruled, linesnumbered]{algorithm2e}
 
+
+% Colors definition
+\definecolor{isa_red}{RGB}{255, 58, 71}
+\definecolor{isa_blue}{RGB}{0, 103, 158}
+\definecolor{isa_green}{RGB}{0, 157, 97}
+\definecolor{isa_dark_green}{RGB}{0,131, 0}
+\definecolor{isa_purple}{RGB}{174, 5, 238}
+\definecolor{isa_dark_blue}{RGB}{26, 0, 253}
+
+% Define custom language for syntax highlighting
+\lstdefinelanguage{Isabelle}{
+  % List of custom keywords
+  keywords=[1]{definition, if, then, else, let, in, case, of},
+  % Custom keyword styles
+  keywordstyle=[1]\color{isa_blue},
+  keywords=[2]{where},
+  keywordstyle=[2]\color{isa_green},
+  keywords=[3]{RETURN, WHILEIT, SPEC, ASSERT},
+  keywordstyle=[3]\color{isa_red},
+  literate={`}{\textasciigrave\ }1,
+  % Other language elements styles
+  commentstyle=\color{isa_dark_green},
+  stringstyle=\color{isa_purple},
+  numberstyle=\tiny\color{isa_dark_blue},
+  % Frame and background settings
+  frame=l,
+  framerule=3pt,
+  rulecolor=\color{black!15},
+  backgroundcolor=\color{black!5},
+  % Other settings
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  breakatwhitespace=true,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2
+}
+\lstset{%
+  language=isabelle,
+  escapeinside={&}{&},
+  columns=fixed,
+  extendedchars,
+  basewidth={0.5em,0.45em},
+  basicstyle=\ttfamily,
+  mathescape=true
+}
 
 % editorial comments in the text or in marginal notes
 % 1st argument: initials of the person making the comment,
@@ -71,7 +117,7 @@
     \end{center}
     \begin{center}
         
-        \textbf{Final year intership report}
+        \textbf{Final year internship report}
         \vfill
 
         \large{\textbf{Verification in Isabelle/HOL of Hopcroft's algorithm for minimizing DFAs including runtime analysis}}
@@ -96,9 +142,36 @@
 
 \pagebreak
 
+\section{Preamble}
+
+Since the whole project relies on many deeply theoretical notions such as abstraction, logic or semantics, this section only gives a brief introduction to formal methods in general and their purpose.
+
+\bigskip
+
+Formal methods refer to a field of theoretical computer science whose main purpose is to provide logical links between mathematics and programming languages, so that one can state logical properties about formally described algorithms or mathematical procedures and relate them to actual implementations. The main application of formal methods is to prove correctness of programs with respect to a specification, i.e.\ a set of rules which must hold throughout the execution of the program. Such a program is then ensured to behave in a way\footnote{In the context of industrial applications, we often differentiate between two sorts of assertions, namely safety properties and liveness properties, so that we can explicitly check that the system works (it is ``alive'') and that it is safe (it works properly).} that is intended by its specification.
+
+Such work is usually carried out using a proving assistant such as \href{https://isabelle.in.tum.de}{Isabelle}, i.e.\ a program with an implemented logic allowing to reason with respect to that logic. Isabelle has the advantage to relie on a really light kernel, which is the only part that can only be trusted. Everything else -- i.e. librairies, called theories -- stems from this kernel. It also has nice interface with \LaTeX syntax adding little overhead to usual mathematical notations and is very flexible in terms of syntax and semantics.
+
+A common way to proceed when we want to prove correctness of an algorithm and generate correct executable code is to follow a top-down strategy via successive refinements. We start from the highest level -- i.e.\ with the highest level of abstraction -- and we refine towards the implementation. As an example, if an algorithm manipulates sets at the abstract level, we may use lists or trees in its implementation. When performing a refinement, we have to give links -- and prove them -- between levels, e.g. that the behavior of the refined one does not contradict the abstract one. In Peter Lammich's Refinement Framework \cite{lammich:ref}, this is done via binary relations and abstraction/concretization functions\footnote{A concretization function maps an abstract value to a set of concrete values and conversely for an abstraction function, so that invariants can be carried and preserved through the refinements. For example, we may abstract the set $\mathbb{Z}$ of integers to $\{Neg, Zero, Pos\}$ where $Pos$ (resp.\ $Neg$) represents positive (resp.\ negative) integers and $Zero$ represents the singular set $\{0\}$.}.
+
+\bigskip
+
+If formal methods allow for correctness and termination theorems, it is less trivial to analyze complexity of a program, e.g.\ in terms of time or memory consumption. Since complexity of a program is not a logical property, but a property of the execution of the program, a model of computation must be defined, i.e.\ a way to execute the program, and then prove that the execution of the program in this model is equivalent to the execution of the program in the real world. Maximilian Haslbeck and Peter Lammich have extended the Refinement Framework to include worst-case time complexity analysis in Isabelle \cite{refwithtime} and have also implemented a verified framework to analyze algorithms down to LLVM code \cite{fewdollarsmore}. The principle is to model costs of operations with resources and currencies and embed this new dimension in the program, where operations consume resources.
+
+\bigskip
+
+Since the project also relies on automata theory, it is recommended to have some basic knowledge about automata theory and formal languages.
+
 \section{Introduction}
-\subsection{Original algorithm}
-John E. Hopcroft's algorithm for minimizing DFAs was first presented in his original 1971 paper \cite{Hop71} as a formal algorithm. Algorithm~\ref{alg:original} is a direct translation of the original algorithm with only slight changes in the notations.
+
+This internship report is the result of a 6-month internship at the Chair of Logic and Verification of the Technical University of Munich (TUM) under the supervision of Tobias Nipkow and Peter Lammich. The main goal of this internship was to verify Hopcroft's algorithm for minimizing DFAs in Isabelle/HOL and to analyze its worst-case time complexity using the Refinement Framework. Some considerable work had already been carried out by Peter Lammich and Thomas T\"urk on the proof of correctness ten years ago in an older version of Isabelle \cite{lammich:hop}. The goal was to port this proof to the latest version of Isabelle and to extend it with a time complexity analysis.
+
+\subsection{Hopcroft's algorithm}
+John E. Hopcroft's algorithm for minimizing deterministic finite automata (DFA) was first presented in his original 1971 paper \cite{Hop71} as a formal algorithm. It has been a major breakthrough in the field of automata theory, since it allowed for minimization in linearithmic\footnote{$O(n \log n)$} time in the worst case\footnote{Other minimization algorithms were presented prior to Hopcroft, e.g.\ by Moore (quadratic) or Brzozowski (exponential).}. Thanks to this, minimization has become almost costless and thus this algorithm has been widely used in the field of formal verification, e.g.\ in model checking, since it allows to reduce the size of the automaton to be verified.
+
+The formal idea behind the algorithm is to partition the set of states of the DFA into equivalence classes, i.e.\ sets of states that are equivalent\footnote{Two states are equivalent if they accept the same language.} with respect to the language they recognize. The algorithm starts with two partitions, namely the set of final states and the set of non-final states. Then, it iteratively refines the partitions by splitting them into smaller ones until no more refinement is possible. The algorithm is guaranteed to terminate since the number of partitions is finite and strictly decreases at each iteration. The equivalence class of the set of states of the DFA is then the set of partitions, so that any two different sets of states from that partition recognize different languages.
+
+\bigskip
 
 \begin{algorithm}[H]
 \SetAlgoLined
@@ -125,13 +198,47 @@ For all $a \in \Sigma$, construct $L_a := \underset{1 \leq i < k}{\operatorname*
 }
 \end{algorithm}
 
+\bigskip
+
+Algorithm~\ref{alg:original} is a direct translation of the original algorithm from \cite{Hop71} with only slight changes in the notations.
+
 \subsection{Modern formalisation}
 
-The algorithm is now usually given in a more mathematical and formalised way\footnote{see for example \cite{esparza2023automata}}, as presented below in Algorithm~\ref{alg:modern}. We justify this transformation.
+The algorithm is now usually given in a more mathematical and formalised way\footnote{see for example \cite{esparza2023automata}}, which loosens up the choice for an implementation. The algorithm is given below in Algorithm~\ref{alg:modern}.
 
 \bigskip
 
-First, instead of storing indices for the blocks, we directly deal with sets and explicitly work with a partition $\mathcal{P}$ of $\mathcal{Q}$. Then, we define splitters.
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \caption{Hopcroft's algorithm in a modern style}
+    \label{alg:modern}
+    \KwData{a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
+    \KwResult{the language partition $P_\ell$}
+    \eIf{$\mathcal{F} = \varnothing \lor \mathcal{Q} \setminus \mathcal{F} = \varnothing$}{
+        \Return $\mathcal{Q}$
+    }{
+        $\mathcal{P} := \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F} \}$ \;
+        $\mathcal{W} := \{ (a, \min \{ \mathcal{F}), \mathcal{Q} \setminus \mathcal{F}\}, a \in \Sigma \}$ \;
+        \While{$\mathcal{W} \neq \varnothing$}{
+            Pick $(a, B')$ from $\mathcal{W}$ and remove it\;
+            \ForAll{$B \in \mathcal{P}$}{
+                Split $B$ with $(a, B')$ into $B_0$ and $B_1$ \;
+                $\mathcal{P} := (\mathcal{P} \setminus \{B\}) \cup \{B_0, B_1\}$ \;
+                \ForAll{$b \in \Sigma$}{
+                    \eIf{$(b, B) \in \mathcal{W}$}{
+                        $\mathcal{W} := (\mathcal{W} \setminus \{(b, B)\}) \cup \{(b, B_0), (b, B_1)\}$ \;
+                    }{
+                        $\mathcal{W} := \mathcal{W} \cup \{(b, \min \{ B_0, B_1 \})\}$ \;
+                    }
+                }
+            }
+        }
+    }
+\end{algorithm}
+
+\bigskip
+
+We justify this transformation. First, instead of storing indices for the blocks, we directly deal with sets and explicitly work with a partition $\mathcal{P}$ of $\mathcal{Q}$. Then, we define splitters.
 
 \begin{definition}
     Let $\mathcal{A} = (Q, \Sigma, \delta, q_0, I, F)$ be a DFA. Let $P$ be a partition of $Q$. Let $B \in P$. For $a \in \Sigma$ and $C \in P$ we say that
@@ -142,49 +249,20 @@ First, instead of storing indices for the blocks, we directly deal with sets and
 \end{remark}
 
 \begin{definition}
-    For a splitter $s \in \Sigma \times P$, we define its size $\| s \|$ as follows. If $s = (a, C)$, then $\| s \| := |C|$.
+    For a splitter $s \in \Sigma \times P$, we define its size $\| s \|$ as the size of its second component, i.e.\ if $s = (a, C)$, then $\| s \| := |C|$.
 \end{definition}
 
 
-In Algorithm \ref{alg:original}, picking an index $i \in L_a$ corresponds to picking a set $s_{a, i}$, i.e.\ the subset of $P_i$ of states having at least one predecessor. We cannot directly replace $L_a$ and $s_{a, i}$ by a set of splitters $(a, P_i)$ as is, however the next step in the algorithm is to go over all blocks in the partition that have a successor in $s_{a, i}$. If such a block $B$ is found, it is split into two blocks, namely the set of states having a successor in $s_{a, i}$ and the others. Overall, we look for $B$ such that $P_i$ has a predecessor in $B$. We add the condition that $B$ must also have at least one successor not in $P_i$ to avoid splitting $B$ into $\{B, \varnothing\}$. Since this is equivalent to splitting $B$ with $(a, P_i)$, we can replace $L_a$ by a set of splitters $(a, P_i)$. Since the symbol $a$ is chosen such that $L_a \neq \varnothing$, we can define a workset $\mathcal{W}$ of all splitters, with all symbols of $\Sigma$. Therefore, $L_a$ is empty if and only if there is no $a$-splitter in $\mathcal{W}$. Because testing emptiness is equivalent to testing membership, and because of the existential quantifier in the definition of splitters, the $s_{a, i}$ are no longer needed.
+In Algorithm \ref{alg:original}, picking an index $i \in L_a$ corresponds to picking a set $s_{a, i}$, i.e.\ -- by definition -- the subset of $P_i$ of states having at least one predecessor. We cannot directly replace $L_a$ and $s_{a, i}$ by a set of splitters $(a, P_i)$ as is, however the next step in the algorithm is to go over all blocks in the partition that have a successor in $s_{a, i}$. If such a block $B$ is found, it is split into two blocks, namely the set of states having a successor in $s_{a, i}$ and the others. Overall, we look for $B$ such that $P_i$ has a predecessor in $B$. We add the condition that $B$ must also have at least one successor not in $P_i$ to avoid splitting $B$ into $\{B, \varnothing\}$. Since this is equivalent to splitting $B$ with $(a, P_i)$, we can replace $L_a$ by a set of splitters $(a, P_i)$. Since the symbol $a$ is chosen such that $L_a \neq \varnothing$, we can define a workset $\mathcal{W}$ of all splitters, with all symbols of $\Sigma$. Therefore, $L_a$ is empty if and only if there is no $a$-splitter in $\mathcal{W}$. Because testing emptiness is equivalent to testing membership, and because of the existential quantifier in the definition of splitters, the $s_{a, i}$ are no longer needed.
 
-We can explicitly write the trivial cases where either $\mathcal{F}$ or $\mathcal{Q}\setminus\mathcal{F}$ is empty to improve performance for this specific case. This is not done in Algorithm \ref{alg:original} but this does not produce wrong results. If one of the two sets is empty, one of the $s_{a, 1}$ or $s_{a, 2}$ will be empty for all $a \in \Sigma$, and the \textit{while} loop will be entered $|\Sigma|$ times but the inner \textit{for} loop will never be entered. This results in a useless $O(|\Sigma|)$ computation. Another difference in that case is that it would compute the partition $\{\min\{\mathcal{F}, \mathcal{Q}\setminus\mathcal{F}\}, \varnothing\}$ -- where $\min$ returns the set with the least number of elements --  which we avoid in the modern version by just returning $\mathcal{Q}$.
-
-\bigskip
-
-\begin{algorithm}[H]
-\SetAlgoLined
-\caption{Hopcroft's algorithm in a modern style}
-\label{alg:modern}
-\KwData{a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
-\KwResult{the language partition $P_\ell$}
-\eIf{$\mathcal{F} = \varnothing \lor \mathcal{Q} \setminus \mathcal{F} = \varnothing$}{
-    \Return $\mathcal{Q}$
-}{
-    $\mathcal{P} := \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F} \}$ \;
-    $\mathcal{W} := \{ (a, \min \{ \mathcal{F}), \mathcal{Q} \setminus \mathcal{F}\}, a \in \Sigma \}$ \;
-    \While{$\mathcal{W} \neq \varnothing$}{
-        Pick $(a, B')$ from $\mathcal{W}$ and remove it\;
-        \ForAll{$B \in \mathcal{P}$}{
-            Split $B$ with $(a, B')$ into $B_0$ and $B_1$ \;
-            $\mathcal{P} := (\mathcal{P} \setminus \{B\}) \cup \{B_0, B_1\}$ \;
-            \ForAll{$b \in \Sigma$}{
-                \eIf{$(b, B) \in \mathcal{W}$}{
-                    $\mathcal{W} := (\mathcal{W} \setminus \{(b, B)\}) \cup \{(b, B_0), (b, B_1)\}$ \;
-                }{
-                    $\mathcal{W} := \mathcal{W} \cup \{(b, \min \{ B_0, B_1 \})\}$ \;
-                }
-            }
-        }
-    }
-}
-
-\end{algorithm}
+We can explicitly write the trivial cases where either $\mathcal{F}$ or $\mathcal{Q}\setminus\mathcal{F}$ is empty to improve performance for this specific case. This is not done in Algorithm \ref{alg:original} but this does not produce wrong results. If one of the two sets is empty, one of the $s_{a, 1}$ or $s_{a, 2}$ will be empty for all $a \in \Sigma$, and the \textit{while} loop will be entered $|\Sigma|$ times but the inner \textit{for} loop will never be entered. This results in a useless $O(|\Sigma|)$ computation. Another difference in that case is that it would return the partition $\min\{\mathcal{F}, \mathcal{Q}\setminus\mathcal{F}\}$ -- where $\min$ returns the set with the least number of elements --  which we avoid in the modern version by just returning $\mathcal{Q}$.
 
 \section{Proof of correctness}
 \section{Time complexity analysis}
 
-We focus on the original algorithm presented in Algorithm~\ref{alg:original} in order to work on the arguments given in \cite{Hop71}. The data structures used at that time were mostly linked lists, but let us rather give some requirements for the data structures instead of actual implementations. The goal is to show that the algorithm can be executed in $O(m \cdot n \log n)$ time, where $m$ is the number of symbols in the alphabet and $n$ is the number of states in the DFA.
+\subsection{Paper proof}
+
+In a first time, we focus on the original algorithm presented in Algorithm~\ref{alg:original} in order to work on the arguments given in \cite{Hop71}. The data structures used at that time were mostly linked lists, but let us rather give some requirements for the data structures instead of actual implementations. The goal is to show that the algorithm can be executed in $O(m \cdot n \log n)$ time, where $m$ is the number of symbols in the alphabet and $n$ is the number of states in the DFA.
 
 The following requirements come directly from \cite{Hop71} and are specific to the algorithm presented in Algorithm~\ref{alg:original}.
 
@@ -318,7 +396,7 @@ We see splitters as updatable program variables. This means that $s_{a,i}$ as a 
 
 \begin{lemma}\label{lem:bound}
     Let us consider some step in the algorithm such that $\mathcal{P}$ is the current partition. The total time spent in the loop until termination is bounded by
-    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \overset{\hookleftarrow}{C} | \log | C | + \sum_{(a, B) \in \Sigma\times \mathcal{P}\setminus \mathcal{W}} | \overset{\hookleftarrow}{B} | \log \frac{| B |}{2} \right)$$
+    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \overset{\hookleftarrow}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \overset{\hookleftarrow}{B} | \log \frac{| B |}{2} \right)$$
     where $\theta$ is the constant of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
 \end{lemma}
 \begin{proof}
@@ -393,6 +471,64 @@ $$T = \theta |\Sigma| \left(| \overset{\hookleftarrow}{P_1} | \log | P_1 | + | \
 Thus, the following holds:
 $$T \leq \theta |\Sigma| (\underset{\leq 2|\overset{\hookleftarrow}{\mathcal{Q}}|}{\underbrace{|\overset{\hookleftarrow}{P_1}| + |\overset{\hookleftarrow}{P_2}|}})\log(\underset{= |\mathcal{Q}|}{\underbrace{|P_1| + |P_2|}}) \leq 2 \theta|\Sigma||\mathcal{Q}| \log |\mathcal{Q}|$$
 \end{proof}
+
+\subsection{Towards a formal proof}
+The objective of the project is to obtain a formal proof for the time complexity of the algorithm using the Refinement Framework with its extension to runtime analysis. We follow a top-down strategy, from the abstract level to the implementation.
+
+\subsubsection{Abstract level}
+The abstract algorithm is defined below:
+\begin{lstlisting}[language=Isabelle]
+definition Hopcroft_abstract $\mathcal{A}$ = 
+(if ($\mathcal{Q}$ $\mathcal{A}$ = {}) then RETURN {} else (
+if ($\mathcal{F}$ $\mathcal{A}$ = {}) then RETURN {$\mathcal{Q}$ $\mathcal{A}$} else (
+  do {
+    (P, _) $\leftarrow$ WHILEIT (abstract_invar $\mathcal{A}$) abstract_b (abstract_f $\mathcal{A}$) (abstract_init $\mathcal{A}$);
+    RETURN P
+  })))
+\end{lstlisting}
+It makes use of some auxiliary definitions, like \texttt{abstract\_invar} which states that the current partition and the set of splitters are well formed and satisfy some properties on language equivalence. The boolean \texttt{abstract\_b} is the termination condition of the loop, namely it checks emptiness of the set of splitters, and the initial partition is defined by \texttt{abstract\_init}. The body of the loop is defined by \texttt{abstract\_f} and is given below:
+\begin{lstlisting}[language=Isabelle]
+definition abstract_f $\mathcal{A}$ = 
+  ($\lambda$(P, L). do {
+    ASSERT (abstract_invar $\mathcal{A}$ (P, L));
+    ASSERT (L $\neq$ {});
+    (a,p) $\leftarrow$ SPEC ($\lambda$(a,p). (a,p) $\in$ L);
+    (P', L') $\leftarrow$ SPEC ($\lambda$(P', L'). update_splitters_pred $\mathcal{A}$ p a P L L' $\land$ (P' = split $\mathcal{A}$ p a {} P));
+    RETURN (P', L')
+  })
+\end{lstlisting}
+Again, this definition makes use of auxiliary definitions that we do not detail here. Recall from \cite{fewdollarsmore} that spending time is modeled by using resources via resource functions, namely $\$_{s}\ n$ is a resource function using $n$ coins of the currency $s$.
+
+We first analyze the body of the loop, i.e.\ we define parameters or generic costs for each operation.
+We define a cost function for \texttt{abstract\_f} called $\texttt{abstract\_f}_{\texttt{cost}}$.
+
+For the first two assertions, we can define a resource function $\$_{\texttt{check\_invar}}$ and a resource function $\$_{\texttt{check\_emptiness}}$ which will be useful for other assertions.
+For the first \texttt{SPEC}, we define $\$_{\texttt{pick\_splitter}}$ and for the second \texttt{SPEC}, we define $\$_{\texttt{split\_and\_update}}$. We must not split the latter into two separate costs for the moment since both operations will be performed on the fly, see the proof of lemma \ref{lem:time_iteration} for more details.
+To write it informally, we have:
+
+\begin{lstlisting}[language=Isabelle]
+definition abstract_f$_{cost}$ = $\$_{\texttt{check\_invar}}$ + $\$_{\texttt{check\_emptiness}}$ + $\$_{\texttt{pick\_splitter}}$ + $\$_{\texttt{split\_and\_update}}$
+\end{lstlisting}
+
+Informally again, the complexity lies in $\$_{\texttt{split\_and\_update}}$ and the other costs will be constant eventually. The goal will be to eventually show -- respectively to lemma \ref{lem:time_iteration} -- that this $\$_{\texttt{split\_and\_update}}$ taken for a splitter $(a, C)$ is bounded by \texttt{card ($\Sigma$ $\mathcal{A}$) * card (($\lambda$ q. $\delta^{-1}$(q, a)) \textasciigrave\ C) * $\$_c$} where $\$_c$ is some constant, e.g.\ representing the cost of a comparison or any basic operation.
+
+\vfill
+
+{\bf NOTE (DRAFT)}: We want something like this for $\$_{\texttt{split\_and\_update}}$:
+\begin{lstlisting}[language=Isabelle]
+definition split_and_update$_{cost}$ where
+  split_and_update$_{cost}$ = $\mathcal{A}$ PL s = let (a, C) = s in $\dots$
+\end{lstlisting}
+The "$\dots$" should refer to operations performed in functions \texttt{split} and \texttt{update\_splitters\_pred}.
+
+We will enventually write something like:
+\begin{lstlisting}[language=Isabelle]
+abstract$_{spec}$ $\equiv$ SPEC ($\lambda$ P. P = Myhill_Nerode_partition $\mathcal{A}$)
+
+E$_{abs}$ $\equiv$ 0(abstract := abstract$_{cost}$)
+
+Hopcroft_abstract $\mathcal{A}$ $\le$ $\Downarrow_C$ E$_{abs}$ (abstract$_{spec}$ $\mathcal{A}$ ($\$_{abstract}$))
+\end{lstlisting}
 
 % \printglossary[type=\acronymtype]
 
