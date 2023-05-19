@@ -1541,7 +1541,11 @@ done
        
        )
    subgoal by simp
+   done
    
+   
+ qed  
+(*   
    find_theorems ff f
    
    thm qm.correct
@@ -1725,7 +1729,7 @@ next
     done
 qed
 
-
+*)
 
 (*
 \<comment>\<open>goal solved\<close>

@@ -65,8 +65,10 @@ interpretation
   pi_rs_ro: proper_it_loc rs.rev_iterateoi rs.rev_iterateoi
   by unfold_locales (rule pi_rs)+
 
+  (*
 definition "rs_image_filter \<equiv> undefined"
 definition "rs_image \<equiv> undefined"
+  *)
 
 lemma rs_ops_unfold[code_unfold]:
     "set_op_\<alpha> rs_ops = rs.\<alpha>"

@@ -1,10 +1,23 @@
 section \<open> NFA by RBTs \<close>
 theory RBT_NFAImpl 
 imports "../../NFAByLTS" "../../NFAGA" RBT_LTS_DLTS_LTSImpl  
-        (* "HOL-Library.Efficient_Nat" *)
+        (*"HOL-Library.Code_Target_Nat"*)
 begin
 
 subsection \<open> NFAs \<close>
+
+
+setup Locale_Code.open_block
+
+interpretation rr_set_xy: g_set_xy_loc rs_ops rs_ops 
+  by unfold_locales
+
+interpretation lss_lss_set_xx: g_set_xx_loc lss_ops lss_ops 
+  by unfold_locales
+  
+  
+setup Locale_Code.close_block
+
 
 interpretation rs_nfa_defs: nfa_by_lts_defs "rs_ops :: (nat, (nat, unit) RBT.rbt) oset_ops" 
   rs_ops rs_lts_dlts_ops  
@@ -43,10 +56,10 @@ definition "rs_nfa_accept \<equiv> rs_nfa_defs.accept_impl rs_iteratei rs_lts_dl
 definition "rs_nfa_accept_nfa \<equiv> rs_nfa_defs.accept_nfa_impl rs_iteratei rs_lts_dlts_succ_it"
 definition "rs_nfa_accept_dfa \<equiv> rs_nfa_defs.accept_dfa_impl"
 
-definition "rs_nfa_rename_states \<equiv> rs_nfa_defs.rename_states_impl rs_image rs_lts_dlts_image False"
-definition "rs_nfa_rename_states_dfa \<equiv> rs_nfa_defs.rename_states_impl rs_image rs_lts_dlts_image_dlts True"
+definition "rs_nfa_rename_states \<equiv> rs_nfa_defs.rename_states_impl rr_set_xy.g_image rs_lts_dlts_image False"
+definition "rs_nfa_rename_states_dfa \<equiv> rs_nfa_defs.rename_states_impl rr_set_xy.g_image rs_lts_dlts_image_dlts True"
 definition "rs_nfa_rename_labels_gen \<equiv> rs_nfa_defs.rename_labels_impl_gen rs_lts_dlts_image"
-definition "rs_nfa_rename_labels \<equiv> rs_nfa_defs.rename_labels_impl rs_lts_dlts_image rs_image"
+definition "rs_nfa_rename_labels \<equiv> rs_nfa_defs.rename_labels_impl rs_lts_dlts_image rr_set_xy.g_image"
 definition "rs_nfa_dfa_construct_reachable \<equiv> rs_nfa_defs.NFA_construct_reachable_impl_code 
   rs_lts_dlts_add_choice rm_ops"
 definition "rs_nfa_construct_reachable \<equiv> rs_nfa_dfa_construct_reachable False"
@@ -90,20 +103,22 @@ lemma lss_lss_copy_impl :
 unfolding set_copy_def
 by simp
 
+find_consts name: iam_iteratei
+
+
 declare[[show_abbrevs=false]]
 interpretation rs_hop_ltsr :  Hopcroft_lts rm_ops rm_ops iam_ops lss_ops lss_ops 
-  id rm_iteratei iam_iteratei lss_union_list
+  id rm_iteratei CollectionsV1.iam_iteratei "lss_lss_set_xx.g_union_list"
   unfolding Hopcroft_lts_def
   apply auto
         apply (simp add: rm.StdMap_axioms)
        apply (simp add: lss.StdSet_axioms)
       apply (simp add: iam.StdMap_axioms)
-     defer
+      apply (simp add: lss_lss_set_xx.g_union_list_impl)
      apply (simp add: lss_lss_copy_impl)
     apply (simp add: rm.v1_iteratei_impl)
-  apply (simp add: lss.StdSet_axioms rm.StdMap_axioms lss_ops_unfold lss_union_list_impl
-                rm_ops_unfold lsnd.StdSet_axioms rm_iteratei_impl lsnd_ops_unfold
-                lss_lss_copy_impl iam.StdMap_axioms iam_iteratei_impl iam_ops_unfold)
+    apply (simp add: iam.v1_iteratei_impl)
+    done
 
 definition "rs_hop_lts_\<alpha> \<equiv> rs_hop_ltsr.hopcroft_lts_\<alpha>"
 definition "rs_hop_lts_invar \<equiv> rs_hop_ltsr.hopcroft_lts_invar"
@@ -130,10 +145,13 @@ interpretation rs_hop: nfa_by_lts_hop "rs_ops :: (nat, (nat, unit) RBT.rbt) oset
   rs_ops rs_lts_dlts_ops lss_\<alpha> lss_invar iam_ops iam_ops iam_ops iam_ops rm_ops rs_iteratei rs_iteratei lss_iteratei lss_iteratei rm_iteratei
   by unfold_locales
 
-definition "rs_nfa_sm_update \<equiv> rs_hop.sm_update"
+find_consts name: sm_update  
+  
+  
+definition "rs_nfa_sm_update \<equiv> hop_impl.sm_update"
 definition "rs_nfa_Hopcroft \<equiv> rs_hop.Hopcroft_minimise_impl rs_hop_lts_empty
    rs_hop_lts_add rs_hop_lts_get_succs rs_hop_lts_copy
-   rs_image rs_lts_dlts_it rs_lts_dlts_image_dlts"
+   rr_set_xy.g_image rs_lts_dlts_it rs_lts_dlts_image_dlts"
 
 definition "rs_nfa_Hopcroft_NFA \<equiv> \<lambda>A. rs_nfa_Hopcroft (rs_nfa_determinise A)"
 
@@ -200,7 +218,7 @@ lemmas rs_nfa_accepting_code[code] = rs_nfa_defs.nfa_accepting_def[folded rs_nfa
 lemmas rs_nfa_props_code[code] = rs_nfa_defs.nfa_props_simp[folded rs_nfa_defs]
 
 lemmas rs_nfa_impl = rs_nfa_defs.nfa_by_lts_correct [folded rs_nfa_defs]
-interpretation rs_nfa!: nfa rs_nfa_\<alpha> rs_nfa_invar  
+interpretation rs_nfa: nfa rs_nfa_\<alpha> rs_nfa_invar  
   using rs_nfa_impl .
 
 lemmas rs_nfa_construct_gen_code[code] = rs_nfa_defs.nfa_construct_gen.simps 
@@ -209,20 +227,20 @@ lemmas rs_nfa_construct_gen_code[code] = rs_nfa_defs.nfa_construct_gen.simps
 lemmas rs_nfa_construct_code[code] = rs_nfa_defs.nfa_construct_def [folded rs_nfa_defs]
 lemmas rs_dfa_construct_code[code] = rs_nfa_defs.dfa_construct_def [folded rs_nfa_defs]
 lemmas rs_nfa_construct_impl = rs_nfa_defs.nfa_construct_correct[folded rs_nfa_defs]
-interpretation rs_nfa!: nfa_from_list rs_nfa_\<alpha> rs_nfa_invar rs_nfa_construct 
+interpretation rs_nfa: nfa_from_list rs_nfa_\<alpha> rs_nfa_invar rs_nfa_construct 
   using rs_nfa_construct_impl .
 lemmas rs_dfa_construct_impl = rs_nfa_defs.dfa_construct_correct[folded rs_nfa_defs]
-interpretation rs_nfa!: dfa_from_list rs_nfa_\<alpha> rs_nfa_invar rs_dfa_construct 
+interpretation rs_nfa: dfa_from_list rs_nfa_\<alpha> rs_nfa_invar rs_dfa_construct 
   using rs_dfa_construct_impl .
 
 lemmas rs_nfa_destruct_code[code] = rs_nfa_defs.nfa_destruct.simps [folded rs_nfa_defs]
 lemmas rs_nfa_destruct_impl = rs_nfa_defs.nfa_destruct_correct[folded rs_nfa_defs]
-interpretation rs_nfa!: nfa_to_list rs_nfa_\<alpha> rs_nfa_invar rs_nfa_destruct 
+interpretation rs_nfa: nfa_to_list rs_nfa_\<alpha> rs_nfa_invar rs_nfa_destruct 
   using rs_nfa_destruct_impl .
 
 lemmas rs_nfa_destruct_simple_code[code] = rs_nfa_defs.nfa_destruct_simple.simps [folded rs_nfa_defs]
 lemmas rs_nfa_destruct_simple_impl = rs_nfa_defs.nfa_destruct_simple_correct[folded rs_nfa_defs]
-interpretation rs_nfa!: nfa_to_list_simple rs_nfa_\<alpha> rs_nfa_invar rs_nfa_destruct_simple
+interpretation rs_nfa: nfa_to_list_simple rs_nfa_\<alpha> rs_nfa_invar rs_nfa_destruct_simple
   using rs_nfa_destruct_simple_impl .
 
 lemmas rs_nfa_states_no_code[code] = rs_nfa_defs.nfa_states_no.simps [folded rs_nfa_defs]
@@ -233,7 +251,7 @@ lemmas rs_nfa_initial_no_code[code] = rs_nfa_defs.nfa_initial_no.simps [folded r
 
 lemmas rs_nfa_stats_impl = rs_nfa_defs.nfa_stats_correct[unfolded rs_lts_dlts_ops_unfold rs_dlts_ops_unfold, 
     OF rs_lts_dlts_it_impl, folded rs_nfa_defs]
-interpretation rs_nfa!:  nfa_stats rs_nfa_\<alpha> rs_nfa_invar rs_nfa_states_no 
+interpretation rs_nfa:  nfa_stats rs_nfa_\<alpha> rs_nfa_invar rs_nfa_states_no 
   rs_nfa_labels_no rs_nfa_trans_no rs_nfa_initial_no rs_nfa_final_no 
   using rs_nfa_stats_impl .
 
