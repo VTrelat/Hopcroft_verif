@@ -170,5 +170,4 @@ For a Few Dollars More: Verified Fine-Grained Algorithm Analysis Down to LLVM. A
 -   `br_single_valued` --> `br_sv`
 -   `rprod` --> `prod_rel`, adjusted with `prod_rel_syn`
 -   `pair_collapse` --> `prod.collapse`
--   syntax of the form `xs[i := x]` for list updates --> `list_update xs i x`
 -   `strong_UN_cong` --> `SUP_cong_simp`
