@@ -118,7 +118,7 @@ next
     unfolding Hopcroft_abstractT_def check_states_empty_spec_def check_final_states_empty_spec_def
       init_spec_def check_b_spec_def
 
-    apply (refine_vcg \<open>simp\<close> rules: gwp_bindT_I)
+(*     apply (refine_vcg \<open>simp\<close> rules: gwp_bindT_I) *)
 
     apply (refine_vcg \<open>simp\<close> rules: gwp_monadic_WHILEIET If_le_rule)
     subgoal
