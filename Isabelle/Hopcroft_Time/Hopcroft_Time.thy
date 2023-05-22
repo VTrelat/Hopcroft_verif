@@ -7,7 +7,7 @@ section \<open>Running-time analysis of Hopcroft's algorithm\<close>
 
 theory Hopcroft_Time
   imports
-    "../isabelle_llvm_time/thys/nrest/NREST_Main"
+    "Isabelle_LLVM_Time.NREST_Main"
     Hopcroft_Thms
 begin
 
@@ -75,8 +75,14 @@ definition mop_partition_empty :: "('a set set, _) nrest" where
 definition mop_partition_singleton :: "'a set \<Rightarrow> ('a set set, _) nrest" where
   [simp]: "mop_partition_singleton s \<equiv> consume (RETURNT {s}) (cost ''part_singleton'' 1)"
 
+  
+definition "estimate1 \<A> \<equiv> \<lambda>(P,L). undefined P L :: nat"
+  
+definition "cost_1_iteration \<equiv> 
+  cost ''call'' 1 + (cost ''check_l_empty'' 1 + cost ''if'' 1) + cost ''pick_splitter'' 1 + cost ''update_split'' 1"
+  
 definition cost_iteration where
-  "cost_iteration \<A> s \<equiv> let (a, C) = s in cost ''iteration'' 1"
+  "cost_iteration \<A> PL \<equiv> estimate1 \<A> PL *m cost_1_iteration"
 
 definition Hopcroft_abstractT where
   "Hopcroft_abstractT \<A> \<equiv>
@@ -89,6 +95,41 @@ definition Hopcroft_abstractT where
          RETURNT P
        })))"
        
+       
+lemma costmult_right_mono_nat:
+  fixes a :: nat
+  shows "a \<le> a' \<Longrightarrow> a *m c \<le> a' *m c"
+  unfolding costmult_def less_eq_acost_def
+  by (auto simp add: mult_right_mono)  
+       
+       
+lemma est1_aux:
+  assumes "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" 
+  "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
+  assumes "Hopcroft_update_splitters_pred \<A> p a P L L'"
+  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L') + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate1 \<A> (P,L)"  
+  sorry
+  
+  
+lemma   
+  assumes "estimate1 \<A> (Hopcroft_split \<A> ba aa {} a, bb) + f aa ba < estimate1 \<A> (a, b)"
+  shows "lift_acost c1 +
+           cost ''update_split'' (enat (f aa ba)) +
+           lift_acost
+            (estimate1 \<A> (Hopcroft_split \<A> ba aa {} a, bb) *m
+             (c1 + cost ''update_split'' 1))
+           \<le> lift_acost
+               (estimate1 \<A> (a, b) *m
+                (c1 +
+                 cost ''update_split'' 1))"  
+proof -
+  find_theorems lift_acost "(*m)"
+
+
+
+    
+  
+  
 lemma (in DFA) Hopcroft_abstract_correct :
   fixes t
   assumes [simp]: " cost ''part_empty'' 1 + (cost ''if'' 1 + cost ''check_states_empty'' 1) \<le> t"
@@ -120,15 +161,67 @@ next
 
 (*     apply (refine_vcg \<open>simp\<close> rules: gwp_bindT_I) *)
 
+    (* Some t \<le>  gwp f ?   *)
+
+    find_theorems gwp monadic_WHILEIET
+    
+    
     apply (refine_vcg \<open>simp\<close> rules: gwp_monadic_WHILEIET If_le_rule)
     subgoal
       apply (rule wfR2_If_if_wfR2) (* Should we add something in Hopcroft_abstract_invar? *)
+      (* Just states that estimation must use finitely many currencies *)
       sorry
     subgoal
-      unfolding Hopcroft_abstract_f_def pick_splitter_spec_def
+      unfolding Hopcroft_abstract_f_def pick_splitter_spec_def SPEC_REST_emb'_conv update_split_spec_def
       apply (refine_vcg \<open>simp\<close> rules: gwp_ASSERT_bind_I)
+      apply (rule loop_body_conditionI)
+      subgoal
+        apply clarsimp
+        apply (rule lift_acost_mono)
+        unfolding cost_iteration_def
+        apply (rule costmult_right_mono_nat)
+        sorry
+      apply clarsimp
+      unfolding cost_iteration_def cost_1_iteration_def
+      apply (drule (4) est1_aux)
+      
+      apply (rule lift_acost_mono)
+      
+      oops
+      apply sc_solve
+      apply auto []
+      
+      
+      oops
+      ci(state) \<ge> const1 + const2*cpreds(splitter) + ci(split(splitter,state))
+      
+      
+      estimate1(state) > estimate1(split(splitter,state)) + cpreds(splitter)
+      
+      
+      
+      unfolding cost_iteration_def cost_1_iteration_def
+      
+      apply sc_solve
+      apply simp
+        
+      subgoal  
+        
+        
+    apply clarsimp  
+    subgoal for P L
+        
+      
+      find_theorems "_ *m _" "(\<le>)"
+      
+      term lift_acost
+      
+      find_theorems "SPEC _ (\<lambda>_. ?a)"
+      
       subgoal
         apply (simp add: SPEC_def loop_body_condition_def)
+        
+        
         sorry
       subgoal
         apply (simp add: Hopcroft_abstract_b_def)

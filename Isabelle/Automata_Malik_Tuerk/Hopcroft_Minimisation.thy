@@ -4174,6 +4174,9 @@ qed
 
 *)
 
+definition "pre_states \<A> P a i \<equiv> {q. \<exists>q'. q' \<in> partition_index_map P i \<and> (q, a, q') \<in> \<Delta> \<A>}"
+
+
 definition Hopcroft_map_f where
 "Hopcroft_map_f \<A> = 
  (\<lambda>(P, L). do {
@@ -4181,7 +4184,7 @@ definition Hopcroft_map_f where
        ASSERT (L \<noteq> {});
        (a,i) \<leftarrow> SPEC (\<lambda>(a,i). (a,i) \<in> L);
        ASSERT (i \<in> dom (fst P));
-       let pre = {q. \<exists>q'. q' \<in> partition_index_map P i \<and> (q, a, q') \<in> \<Delta> \<A>};
+       let pre = pre_states \<A> P a i;
        (P', L') \<leftarrow> Hopcroft_map_step \<A> i a pre P L;
        RETURN (P', L')
      })"
@@ -4237,9 +4240,10 @@ proof -
         unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def by auto
       define pre where "pre \<equiv> {q. \<exists>q'. q' \<in> p' \<and> (q, a, q') \<in> \<Delta> \<A>}"
 
-      have "Hopcroft_map_step \<A> i a {q. \<exists>q'. q' \<in> partition_index_map P i \<and> (q, a, q') \<in> \<Delta> \<A>} P L
+      have "Hopcroft_map_step \<A> i a (pre_states \<A> P a i) P L
        \<le> \<Down> Hopcroft_map_state_rel
           (Hopcroft_precompute_step \<A> p' a' {q. \<exists>q'. q' \<in> p' \<and> (q, a', q') \<in> \<Delta> \<A>} P' L')" 
+        unfolding pre_states_def
         apply (unfold pre_def[symmetric] p'_eq[symmetric] a'_eq)          
         apply (rule_tac Hopcroft_map_step_correct)
         apply (insert PL_OK, simp)[]
@@ -4250,8 +4254,7 @@ proof -
       done
       also note Hopcroft_precompute_step_correct
       also note Hopcroft_set_step_correct
-      finally show "Hopcroft_map_step \<A> i a
-        {q. \<exists>q'. q' \<in> partition_index_map P i \<and> (q, a, q') \<in> \<Delta> \<A>} P L
+      finally show "Hopcroft_map_step \<A> i a (pre_states \<A> P a i) P L
        \<le> \<Down> Hopcroft_map_state_rel
           (SPEC (\<lambda>(P'', L'').
                     Hopcroft_update_splitters_pred \<A> p' a' P' L' L'' \<and>
@@ -6411,6 +6414,16 @@ proof -
 qed
 
 
+term class_map_\<alpha>
+thm class_map_\<alpha>_def
+
+term partition_index_map
+thm partition_index_map_def
+
+definition "pre_range \<A> a im \<equiv> \<lambda>(l,u). {q . \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> {the (im i) |i::nat. l \<le> i \<and> i \<le> u}}" 
+
+
+
 definition Hopcroft_map2_f where
 "Hopcroft_map2_f \<A> = 
  (\<lambda>((P, L), cm). do {
@@ -6424,6 +6437,8 @@ definition Hopcroft_map2_f where
      })"
 
 
+xxx, ctd here: try to understand the refinements of pre. And how is pre_fun implemented later? WHy is it separated out?     
+     
 lemma (in DFA) Hopcroft_map2_f_correct:
 assumes PL_OK: "(PLc, PL') \<in> Hopcroft_map2_state_rel_full (\<Q> \<A>)"
     and invar_P': "partition_map_invar (fst PL')"
@@ -7590,6 +7605,63 @@ definition Hopcroft_impl_f where
     RETURN (PL', cm')
  })"
 
+ 
+term "(pre_fun,pre_range \<A>) \<in> Id \<rightarrow> pim_rel \<rightarrow> (nat_rel \<times> nat_rel) \<rightarrow> s2_rel"
+
+typ 'a
+
+
+lemma Hopcroft_impl_f_correct :
+assumes P_OK: "(P, P') \<in> part_rel"
+    and L_OK: "(L, L') \<in> L_rel"
+    and cm_OK: "(cm, cm') \<in> (pm_rel \<times>\<^sub>r pim_rel)"
+    and AL_OK: "distinct AL" "set AL = \<Sigma> \<A>"
+    and pre_fun_OK': "(pre_fun,pre_range \<A>) \<in> Id \<rightarrow> pim_rel \<rightarrow> (nat_rel \<times>\<^sub>r nat_rel) \<rightarrow> s2_rel"
+    (*and pre_fun_OK: "\<And>a pim u l. 
+                      (s2_invar (pre_fun a pim (l, u)) \<and> (s2_\<alpha> (pre_fun a pim (l, u)) = 
+                         {q . \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> {the (pim.lookup i pim) |i. l \<le> i \<and> i \<le> u}}))"*)
+notes refine_hsimp[simp]
+shows "(Hopcroft_impl_f pre_fun AL ((P,L), cm))  \<le> \<Down>((part_rel \<times>\<^sub>r L_rel) \<times>\<^sub>r (pm_rel \<times>\<^sub>r pim_rel))
+       (Hopcroft_map2_f \<A> ((P', L'), cm'))"
+proof -
+
+  have pre_fun_OK: "pim.invar pim \<Longrightarrow> 
+                      (s2_invar (pre_fun a pim (l, u)) \<and> (s2_\<alpha> (pre_fun a pim (l, u)) = 
+                         {q . \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> {the (pim.lookup i pim) |i. l \<le> i \<and> i \<le> u}}))"
+    for a pim u l                         
+    using pre_fun_OK'[
+      THEN fun_relD, OF IdI[of a], 
+      THEN fun_relD, of pim "pim.\<alpha> pim",
+      THEN fun_relD, of "(l,u)" "(l,u)"
+    ]
+    unfolding pre_range_def
+    by (auto simp: pim_rel_def s2_rel_def build_rel_def)
+                             
+
+  show ?thesis       
+  unfolding Hopcroft_impl_f_def Hopcroft_map2_f_def
+  (* using [[goals_limit = 1]] *)
+  apply (refine_rcg)
+  \<comment>\<open>preprocess goals\<close>
+    apply (insert L_OK)[]
+    apply (simp add: L_rel_def in_br_conv)
+  \<comment>\<open>goal solved\<close>
+    apply (insert P_OK L_OK cm_OK)[]
+    apply (clarify, simp add: in_br_conv)+
+  thm Hopcroft_impl_step_correct
+    apply (rule Hopcroft_impl_step_correct)
+    apply (simp_all add: AL_OK RELATES_def)
+    \<comment>\<open>process subgoals\<close>
+      apply (cases L)
+      apply (simp_all add: L_rel_def in_br_conv)
+  
+      apply (simp add: s2_rel_def pre_fun_OK part_rel_def im_rel_def im.correct
+                       partition_index_map_def class_map_\<alpha>_def pim.correct pim_rel_def in_br_conv)
+      apply blast
+  done
+qed
+
+
 lemma Hopcroft_impl_f_correct :
 assumes P_OK: "(P, P') \<in> part_rel"
     and L_OK: "(L, L') \<in> L_rel"
@@ -7653,6 +7725,10 @@ definition Hopcroft_impl where
          })))
     })" 
 
+    
+term s2_rel    
+    
+    
 lemma Hopcroft_impl_correct :
 assumes Q_in_rel: "(Q, \<Q> \<A>) \<in> s_rel"
     and F_in_rel: "(F, \<F> \<A>) \<in> s_rel"

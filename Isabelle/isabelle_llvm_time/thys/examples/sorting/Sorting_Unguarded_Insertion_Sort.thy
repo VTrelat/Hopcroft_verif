@@ -3,7 +3,7 @@
 section \<open>Unguarded Insertion Sort\<close>
 theory Sorting_Unguarded_Insertion_Sort
 imports Sorting_Setup Sorting_Partially_Sorted
-begin
+begin          
 
 paragraph \<open>Summary\<close>
 text \<open>This theory implements insertion sort by repeated calls of the insert operation.

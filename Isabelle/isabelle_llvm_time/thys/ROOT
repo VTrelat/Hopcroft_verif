@@ -15,7 +15,6 @@ session Isabelle_LLVM_Time = "HOL-Analysis" +
     "basic/preproc"
     ds
     examples
-    "examples/sorting"
     "examples/dynarray"
     lib
     sepref
@@ -27,22 +26,19 @@ session Isabelle_LLVM_Time = "HOL-Analysis" +
     "sepref/IICF/Intf"
     "sepref/Lib"
     vcg
-(*
-  theories
-    "ds/LLVM_DS_NArray"
 
   theories
-    "sepref/IICF/IICF"  
-    *)
+    "sepref/Hnr_Primitives_Experiment"
+    "nrest/Refine_Heuristics"
+    "nrest/NREST_Automation"
+    "sepref/Sepref"
+
+
+session Isabelle_LLVM_Time_Sorting in "examples/sorting" = Isabelle_LLVM_Time +
+  options [browser_info]
+  
+  sessions
+    "HOL-Library"
+
   theories
-    "examples/sorting/Sorting_Results"
-(*    
-    "examples/sorting/Sorting_Heapsort"
-    "examples/sorting/Sorting_Final_insertion_Sort"
-    "examples/sorting/Sorting_Insertion_Sort"
-*)    
-(*
-    "examples/Bin_Search"
-    "examples/KMP"
-    "examples/LLVM_Examples"
-*)
+    "Sorting_Results"

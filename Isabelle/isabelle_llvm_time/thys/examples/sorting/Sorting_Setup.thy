@@ -2,8 +2,8 @@
 \<^marker>\<open>contributor "Maximilian P. L. Haslbeck"\<close>
 section \<open>Sorting Setup\<close>
 theory Sorting_Setup
-  imports "../../sepref/Hnr_Primitives_Experiment" Sorting_Misc "../../nrest/Refine_Heuristics"
-  "../../nrest/NREST_Automation"
+  imports Sorting_Misc "Isabelle_LLVM_Time.Refine_Heuristics"
+  "Isabelle_LLVM_Time.NREST_Automation"
 begin
   hide_const (open) Word.slice
 

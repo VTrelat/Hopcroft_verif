@@ -2,7 +2,7 @@
 \<^marker>\<open>contributor "Maximilian P. L. Haslbeck"\<close>
 section \<open>Additional Basic Theorems for Verifying Sorting Algorithms\<close>
 theory Sorting_Misc
-imports "../../sepref/Sepref" "../../sepref/Hnr_Primitives_Experiment" "HOL-Library.Discrete"
+imports "Isabelle_LLVM_Time.Sepref" "Isabelle_LLVM_Time.Hnr_Primitives_Experiment" "HOL-Library.Discrete"
 begin
 hide_const (open) pi Word.slice
 
