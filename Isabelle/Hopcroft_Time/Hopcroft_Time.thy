@@ -75,7 +75,8 @@ definition mop_partition_empty :: "('a set set, _) nrest" where
 definition mop_partition_singleton :: "'a set \<Rightarrow> ('a set set, _) nrest" where
   [simp]: "mop_partition_singleton s \<equiv> consume (RETURNT {s}) (cost ''part_singleton'' 1)"
 
-
+definition cost_iteration where
+  "cost_iteration \<A> s \<equiv> let (a, C) = s in cost ''iteration'' 1"
 
 definition Hopcroft_abstractT where
   "Hopcroft_abstractT \<A> \<equiv>
@@ -83,13 +84,10 @@ definition Hopcroft_abstractT where
     if\<^sub>N (check_final_states_empty_spec \<A>) then mop_partition_singleton (\<Q> \<A>) else (
        do {
          PL \<leftarrow> init_spec \<A>;
-         (P, _) \<leftarrow> monadic_WHILEIET (Hopcroft_abstract_invar \<A>) (\<lambda>_. cost ''while_loop'' 1) check_b_spec
+         (P, _) \<leftarrow> monadic_WHILEIET (Hopcroft_abstract_invar \<A>) (\<lambda>s. cost_iteration \<A> s) check_b_spec
                            (Hopcroft_abstract_f \<A>) PL;
          RETURNT P
        })))"
-   
-       
-find_theorems gwp SPECT     
        
 lemma (in DFA) Hopcroft_abstract_correct :
   fixes t
@@ -119,7 +117,9 @@ next
 
     unfolding Hopcroft_abstractT_def check_states_empty_spec_def check_final_states_empty_spec_def
       init_spec_def check_b_spec_def
-    
+
+    apply (refine_vcg \<open>simp\<close> rules: gwp_bindT_I)
+
     apply (refine_vcg \<open>simp\<close> rules: gwp_monadic_WHILEIET If_le_rule)
     subgoal
       apply (rule wfR2_If_if_wfR2) (* Should we add something in Hopcroft_abstract_invar? *)
@@ -127,14 +127,30 @@ next
     subgoal
       unfolding Hopcroft_abstract_f_def pick_splitter_spec_def
       apply (refine_vcg \<open>simp\<close> rules: gwp_ASSERT_bind_I)
-    subgoal sorry
+      subgoal
+        apply (simp add: SPEC_def loop_body_condition_def)
+        sorry
+      subgoal
+        apply (simp add: Hopcroft_abstract_b_def)
+        done
+      done
 
+  subgoal
+    unfolding loop_exit_condition_def
+    apply simp
+    sorry
+
+  subgoal by (simp add: Hopcroft_abstract_invar_init)
+
+
+    find_theorems SPEC SPECT
     find_theorems whileIET
     find_theorems monadic_WHILEIET
     find_theorems "_ \<Longrightarrow> wfR2 _"
     find_theorems "_ \<Longrightarrow> Some _ \<le> gwp (monadic_WHILEIET _ _ _ _ _) _"
-    find_theorems "_ \<Longrightarrow> Some _ \<le> gwp _ _"
-   
+    find_theorems "_ \<Longrightarrow> Some _ \<le> gwp (SPECT _) _"
+    find_theorems "_ \<Longrightarrow> Some _ \<le> gwp (bind _ _) _"
+qed 
    
 definition "is_splitter = undefined"
 definition "split_and_update = undefined"
