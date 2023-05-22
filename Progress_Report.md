@@ -10,16 +10,28 @@
 -   [10.04.2023 - 23.04.2023](#10042023---23042023)
 -   [24.04.2023 - 07.05.2023](#24042023---07052023)
 -   [08.05.2023 - 21.05.2023](#08052023---21052023)
+-   [22.05.2023 - 04.06.2023](#22052023---04062023)
 -   [Remarks](#remarks)
+
+---
+
+## 22.05.2023 - 04.06.2023
+
+-   #### Notes
 
 ---
 
 ## 08.05.2023 - 21.05.2023
 
 -   #### Notes
+
     -   Started to write formal assertions on the runtime analysis with the NREST framework on paper, respectively to the paper proof
+
         -   top-down strategy (abstract to implementation)
         -   started with the abstract level, see `Hopcroft_abstract` in `Hopcroft_Minimisation.thy`
+
+    -   Started to build Isabelle theories for time analysis (see [Hopcroft_Time](./Isabelle/Hopcroft_Time/))
+        -   Peter helped me to get started with the abstract level
 
 ---
 
