@@ -83,7 +83,7 @@ definition Hopcroft_abstractT where
     if\<^sub>N (check_final_states_empty_spec \<A>) then mop_partition_singleton (\<Q> \<A>) else (
        do {
          PL \<leftarrow> init_spec \<A>;
-         (P, _) \<leftarrow> monadic_WHILEIET (Hopcroft_abstract_invar \<A>) (undefined ''E'') check_b_spec
+         (P, _) \<leftarrow> monadic_WHILEIET (Hopcroft_abstract_invar \<A>) (\<lambda>_. cost ''while_loop'' 1) check_b_spec
                            (Hopcroft_abstract_f \<A>) PL;
          RETURNT P
        })))"
@@ -101,9 +101,7 @@ lemma (in DFA) Hopcroft_abstract_correct :
   
   shows "Hopcroft_abstractT \<A> \<le> SPEC (\<lambda>P. P = Myhill_Nerode_partition \<A>) (\<lambda>_. t)"
 proof (cases "\<Q> \<A> = {} \<or> \<F> \<A> = {}")
-  case True thus ?thesis
-    (*unfolding Hopcroft_abstractT_def*)
-    
+  case True thus ?thesis    
     unfolding SPEC_def
     apply -
     apply(rule gwp_specifies_I)
@@ -113,23 +111,29 @@ proof (cases "\<Q> \<A> = {} \<or> \<F> \<A> = {}")
     supply [simp] = \<Q>_not_Emp Myhill_Nerode_partition___\<F>_emp
     apply (refine_vcg \<open>simp\<close> rules: gwp_monadic_WHILEIET If_le_rule)
     done
-    
-    
 next
   case False thus ?thesis
     unfolding SPEC_def
     apply -
     apply(rule gwp_specifies_I)
-    
-    
+
     unfolding Hopcroft_abstractT_def check_states_empty_spec_def check_final_states_empty_spec_def
       init_spec_def check_b_spec_def
     
     apply (refine_vcg \<open>simp\<close> rules: gwp_monadic_WHILEIET If_le_rule)
-       
-   
+    subgoal
+      apply (rule wfR2_If_if_wfR2) (* Should we add something in Hopcroft_abstract_invar? *)
+      sorry
+    subgoal
+      unfolding Hopcroft_abstract_f_def pick_splitter_spec_def
+      apply (refine_vcg \<open>simp\<close> rules: gwp_ASSERT_bind_I)
+    subgoal sorry
+
+    find_theorems whileIET
     find_theorems monadic_WHILEIET
-    
+    find_theorems "_ \<Longrightarrow> wfR2 _"
+    find_theorems "_ \<Longrightarrow> Some _ \<le> gwp (monadic_WHILEIET _ _ _ _ _) _"
+    find_theorems "_ \<Longrightarrow> Some _ \<le> gwp _ _"
    
    
 definition "is_splitter = undefined"
