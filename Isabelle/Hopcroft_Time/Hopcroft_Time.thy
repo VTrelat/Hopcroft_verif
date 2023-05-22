@@ -1,8 +1,12 @@
+(* authors:
+    Vincent Trélat <vincent.trelat@depinfonancy.net>
+    Peter Lammich  <lammich@in.tum.de>
+*)
+
 section \<open>Running-time analysis of Hopcroft's algorithm\<close>
 
 theory Hopcroft_Time
   imports
-    (* Hopcroft_Minimisation *) (* Errors due to duplicate theories? Should we merge things?*)
     "../isabelle_llvm_time/thys/nrest/NREST_Main"
     Hopcroft_Thms
 begin
@@ -65,8 +69,8 @@ definition "check_final_states_empty_spec \<A> \<equiv> consume (RETURNT (\<F> \
 
 
 
-definition mop_partition_empty :: "('a set set, _) nrest" 
-  where [simp]: "mop_partition_empty \<equiv> consume (RETURNT {}) (cost ''part_empty'' 1)"
+definition mop_partition_empty :: "('a set set, _) nrest" where
+  [simp]: "mop_partition_empty \<equiv> consume (RETURNT {}) (cost ''part_empty'' 1)"
 
 definition mop_partition_singleton :: "'a set \<Rightarrow> ('a set set, _) nrest" where
   [simp]: "mop_partition_singleton s \<equiv> consume (RETURNT {s}) (cost ''part_singleton'' 1)"
