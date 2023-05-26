@@ -21,22 +21,13 @@ abbreviation monadic_WHILEIET ::
   where "monadic_WHILEIET I E b f s \<equiv> NREST.monadic_WHILEIET I E b f s"
 
 
-
 text
 \<open>
   Abstract level I
     def: Hopcroft_abstract
 \<close>
-(* thm Hopcroft_abstract_def *)
-(* thm Hopcroft_abstract_f_def *)
-
-
-find_consts name: pred
-find_theorems "(\<Delta> _)\<inverse>"
 
 definition "preds \<A> a C \<equiv> {q. \<exists>q'. (q,a,q')\<in>\<Delta> \<A> \<and> q'\<in>C }"
-
-
 
 definition "pick_splitter_spec \<equiv> \<lambda>(P,L). do {
   ASSERT (L \<noteq> {});
@@ -124,8 +115,8 @@ lemma
                  cost ''update_split'' 1))"  
 proof -
   find_theorems lift_acost "(*m)"
-
-
+  
+  oops
 
     
   
@@ -157,18 +148,11 @@ next
     apply(rule gwp_specifies_I)
 
     unfolding Hopcroft_abstractT_def check_states_empty_spec_def check_final_states_empty_spec_def
-      init_spec_def check_b_spec_def
-
-(*     apply (refine_vcg \<open>simp\<close> rules: gwp_bindT_I) *)
-
-    (* Some t \<le>  gwp f ?   *)
-
-    find_theorems gwp monadic_WHILEIET
-    
+      init_spec_def check_b_spec_def    
     
     apply (refine_vcg \<open>simp\<close> rules: gwp_monadic_WHILEIET If_le_rule)
     subgoal
-      apply (rule wfR2_If_if_wfR2) (* Should we add something in Hopcroft_abstract_invar? *)
+      apply (rule wfR2_If_if_wfR2)
       (* Just states that estimation must use finitely many currencies *)
       sorry
     subgoal
@@ -193,10 +177,10 @@ next
       
       
       oops
-      ci(state) \<ge> const1 + const2*cpreds(splitter) + ci(split(splitter,state))
+(*       ci(state) \<ge> const1 + const2*cpreds(splitter) + ci(split(splitter,state)) *)
       
       
-      estimate1(state) > estimate1(split(splitter,state)) + cpreds(splitter)
+(*       estimate1(state) > estimate1(split(splitter,state)) + cpreds(splitter) *)
       
       
       
@@ -235,69 +219,7 @@ next
 
   subgoal by (simp add: Hopcroft_abstract_invar_init)
 
-
-    find_theorems SPEC SPECT
-    find_theorems whileIET
-    find_theorems monadic_WHILEIET
-    find_theorems "_ \<Longrightarrow> wfR2 _"
-    find_theorems "_ \<Longrightarrow> Some _ \<le> gwp (monadic_WHILEIET _ _ _ _ _) _"
-    find_theorems "_ \<Longrightarrow> Some _ \<le> gwp (SPECT _) _"
-    find_theorems "_ \<Longrightarrow> Some _ \<le> gwp (bind _ _) _"
-qed 
-   
-definition "is_splitter = undefined"
-definition "split_and_update = undefined"
-
-notepad
-begin
-
-definition Hopcroft_abstract_f where
-"Hopcroft_abstract_f \<A> = 
- (\<lambda>(P, L). do {
-     ASSERT (Hopcroft_abstract_invar \<A> (P, L));                             ($check_abstract_invar)
-     ASSERT (L \<noteq> {});                                                       ($check_emptiness)
-       (a,p) \<leftarrow> SPEC (\<lambda>(a,p). (a,p) \<in> L);                                   ($pick_splitter)
-       (P', L') \<leftarrow> SPEC (\<lambda>(P', L'). Hopcroft_update_splitters_pred \<A> p a P L L' \<and>
-                                    (P' = Hopcroft_split \<A> p a {} P));      ($split + $update_partition)
-       RETURN (P', L')
-     })"
-
-
-definition Hopcroft_abstract_b where
-"Hopcroft_abstract_b PL = (snd PL \<noteq> {})        ($check_emptiness)" \<comment>\<open>has to be O(1)\<close>
-
-definition Hopcroft_abstract where
-  "Hopcroft_abstract \<A> = 
-   (if (\<Q> \<A> = {}) then RETURN {} else (                                                ($check_emptiness)
-    if (\<F> \<A> = {}) then RETURN {\<Q> \<A>} else (                                            ($check_emptiness)
-       do {                                                                             ($abstract_while)
-         (P, _) \<leftarrow> WHILEIT (Hopcroft_abstract_invar \<A>) Hopcroft_abstract_b
-                           (Hopcroft_abstract_f \<A>) (Hopcroft_abstract_init \<A>);
-         RETURN P
-       })))"\<comment>\<open>has to be O(card(\<Sigma> \<A>) * card(\<Q> \<A>) * log(card(\<Q> \<A>)))\<close>
-
-end
-
-definition "Hopcroft_abstract_fT \<A> \<equiv>
-  bindT (\<lambda>(P, L). ASSERT (Hopcroft_abstract_invar \<A> (P, L)))
-  (bindT (\<lambda>a. ASSERT (L \<noteq> {}))
-  (bindT (\<lambda>_. SPECT (\<lambda>(a, p). (a, p) \<in> L))
-  (bindT ((\<lambda>(a, p). SPECT (\<lambda>(P', L'). Hopcroft_update_splitters_pred \<A> p a P L L' \<and> P' = Hopcroft_split \<A> p a {} P))
-  (\<lambda>(P', L'). RETURNT (P', L'))))))"
-
-definition Hopcroft_abstractT where
-  "Hopcroft_abstractT \<A> \<equiv>
-   (if (\<Q> \<A> = {}) then RETURNT {} else (
-    if (\<F> \<A> = {}) then RETURNT {\<Q> \<A>} else (
-       do {
-         (P, _) \<leftarrow> WHILEIT (Hopcroft_abstract_invar \<A>) Hopcroft_abstract_b
-                           (Hopcroft_abstract_f \<A>) (Hopcroft_abstract_init \<A>);
-         RETURN P
-       })))"
-
-definition "state_emptiness Q \<equiv> undefined"
-
-definition "line1 Q \<equiv> SPECT[(\<lambda>Q. if Q = {} then RETURNT {} else RETURNT Q) \<mapsto> cost ($state_emptiness Q)]"
+qed
 
 text
 \<open>
