@@ -66,8 +66,18 @@ definition mop_partition_empty :: "('a set set, _) nrest" where
 definition mop_partition_singleton :: "'a set \<Rightarrow> ('a set set, _) nrest" where
   [simp]: "mop_partition_singleton s \<equiv> consume (RETURNT {s}) (cost ''part_singleton'' 1)"
 
-  
-definition "estimate1 \<A> \<equiv> \<lambda>(P,L). undefined P L :: nat"
+
+text
+\<open>
+Formula in the paper proof:
+For \<A>, (P, L),
+\<Sum>{card (preds \<A> a C) * \<lfloor>log (real (card C))\<rfloor>. (a, C) \<in> L} + \<Sum>{card (preds \<A> a B) * \<lfloor>log (real (card B) / 2)\<rfloor>. (a, B) \<in> ((\<Sigma> \<A>)\<times>P) - L)}
+\<close>
+definition "Log2_nat \<equiv> \<lambda>x. int_encode \<lfloor>ln (real x) / ln 10\<rfloor>"
+
+definition "estimate1 \<A> \<equiv> \<lambda>(P,L).
+  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Log2_nat (card (snd s))) | s. s \<in> L} +
+  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Log2_nat (card (snd s) div 2)) | s. s \<in> \<Sigma> \<A> \<times> P - L}"
   
 definition "cost_1_iteration \<equiv> 
   cost ''call'' 1 + (cost ''check_l_empty'' 1 + cost ''if'' 1) + cost ''pick_splitter'' 1 + cost ''update_split'' 1"
@@ -94,15 +104,17 @@ lemma costmult_right_mono_nat:
   by (auto simp add: mult_right_mono)  
        
        
-lemma est1_aux:
-  assumes "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" 
+lemma estimate1_progress:
+  assumes (* "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" *) 
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
   assumes "Hopcroft_update_splitters_pred \<A> p a P L L'"
-  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L') + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate1 \<A> (P,L)"  
+  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L') + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate1 \<A> (P,L)" 
+  unfolding estimate1_def preds_def Hopcroft_split_def split_language_equiv_partition_set_def
+    split_language_equiv_partition_def split_set_def
+  apply auto
   sorry
   
-  
-lemma   
+lemma estimate1_progress_decrease:
   assumes "estimate1 \<A> (Hopcroft_split \<A> ba aa {} a, bb) + f aa ba < estimate1 \<A> (a, b)"
   shows "lift_acost c1 +
            cost ''update_split'' (enat (f aa ba)) +
