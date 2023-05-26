@@ -30,6 +30,7 @@
   literate={`}{\textasciigrave\ }1,
   % Other language elements styles
   commentstyle=\color{isa_dark_green},
+  string=[b]{''},
   stringstyle=\color{isa_purple},
   numberstyle=\tiny\color{isa_dark_blue},
   % Frame and background settings
@@ -46,8 +47,7 @@
   tabsize=2
 }
 \lstset{%
-  language=isabelle,
-  escapeinside={&}{&},
+  language=Isabelle,
   columns=fixed,
   extendedchars,
   basewidth={0.5em,0.45em},
@@ -550,6 +550,7 @@ For the sake of simplicity and since names are rather self-explanatory, we only 
 definition check_states_empty_spec $\mathcal{A}$ $\equiv$
   consume (RETURNT ($\mathcal{Q}$ $\mathcal{A}$ = {})) (cost ''check_states_empty'' 1)
 \end{lstlisting}
+The purpose of using currencies is to be able to give an abstract description of the costs, and then to instantiate them with concrete values in the implementation which will be expressed in terms of concrete elementary costs like the number of comparisons or assignments. For example, if the set of states is represented as a tree \texttt{t}, there should be a method or an attribute \texttt{t.isempty} kept up to date during the execution of the algorithm, so that the cost of checking emptiness is equal to the cost of a function call plus the cost for reading memory at the location of the boolean \texttt{t.isempty}, that is constant time.
 
 The \textit{while} loop requires to be provided with an invariant, an estimation\edmargin{VT}{To be detailed} of the total amount of resource -- here time -- to be consumed, the loop condition, the function to be executed in the loop body and the initial state.
 The loop body defined in \texttt{Hopcroft\_abstract\_f} is given below:
@@ -572,7 +573,7 @@ definition update_split_spec $\color{isa_dark_blue}\mathcal{A}$ $\equiv$ $\lambd
     Hopcroft_update_splitters_pred $\color{isa_dark_blue}\mathcal{A}$ p a P L L'  $\land$ P' = Hopcroft_split $\color{isa_dark_blue}\mathcal{A}$ p a {} P
   ) ($\lambda$_. cost ''update_split'' (enat ($|\Sigma$ $\color{isa_dark_blue}\mathcal{A}|$ * $|$ preds $\color{isa_dark_blue}\mathcal{A}$ a p $|$)))
 \end{lstlisting}
-where \texttt{preds $\mathcal{A}$ a p} represents the set of all predecessors $\bigcup_{q \in p} \delta^{-1}(q, a) = \overset{\hookleftarrow}{p}$ of all states of $p$ labelled by $a$. The cost specified by this definition stems from the result of lemma \ref{lem:time_iteration}.
+where \texttt{preds $\mathcal{A}$ a p} represents the set of all predecessors $\bigcup_{q \in p} \delta^{-1}(q, a) = \overset{\hookleftarrow}{p}$ of all states of $p$ labelled by $a$. The cost specified by this definition stems from the result of lemma \ref{lem:time_iteration}, namely that the cost for splitting and updating the partition and the workset is $\Theta(|\Sigma| \cdot |\overset{\hookleftarrow}{p}|)$.
 
 
 % \printglossary[type=\acronymtype]
