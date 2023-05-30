@@ -1635,9 +1635,8 @@ by simp
 
 definition Hopcroft_update_splitters_pred ::
   "('q, 'a, 'x) NFA_rec_scheme \<Rightarrow> 'q set \<Rightarrow> 'a \<Rightarrow> ('q set) set \<Rightarrow>
-           ('a \<times> 'q set) set \<Rightarrow> ('a \<times> 'q set) set \<Rightarrow> bool"
-where
- "Hopcroft_update_splitters_pred \<A> pp aa P L L' \<longleftrightarrow> 
+           ('a \<times> 'q set) set \<Rightarrow> ('a \<times> 'q set) set \<Rightarrow> bool" where
+ "Hopcroft_update_splitters_pred \<A> pp aa P L L' \<equiv>
   Hopcroft_update_splitters_pred_aux (\<Sigma> \<A>) (Hopcroft_splitted \<A> pp aa {} P) P 
     (L - {(aa, pp)}) L'"
 

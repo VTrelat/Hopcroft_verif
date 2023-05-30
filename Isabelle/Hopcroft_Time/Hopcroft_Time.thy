@@ -77,7 +77,7 @@ For \<A>, (P, L),
 
 definition "estimate1 \<A> \<equiv> \<lambda>(P,L).
   \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Discrete.log (card (snd s))) | s. s \<in> L} +
-  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Discrete.log (card (snd s) div 2)) | s. s \<in> \<Sigma> \<A> \<times> P - L}"
+  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Discrete.log (card (snd s) div 2)) | s. s \<in> \<Sigma> \<A> \<times> P - L}"\<comment>\<open>@{term s} is a splitter (a, C).}\<close>
   
 definition "cost_1_iteration \<equiv> 
   cost ''call'' 1 +
@@ -115,10 +115,15 @@ lemma estimate1_progress:
   assumes "Hopcroft_update_splitters_pred \<A> p a P L L'"
   shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L')
           + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate1 \<A> (P,L)" 
-  unfolding estimate1_def preds_def Hopcroft_split_def split_language_equiv_partition_set_def
-    split_language_equiv_partition_def split_set_def
-  apply auto
-  sorry
+  unfolding estimate1_def preds_def
+  apply simp
+proof -
+  show "\<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * Discrete.log (card b) |a b. (a, b) \<in> L'} +
+    \<Sum> {card {q. \<exists>q'. (q, aa, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * (Discrete.log (card b) - Suc 0) |aa b. aa \<in> \<Sigma> \<A> \<and> b \<in> Hopcroft_split \<A> p a {} P \<and> (aa, b) \<notin> L'} +
+    card (\<Sigma> \<A>) * card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> p}
+    < \<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * Discrete.log (card b) |a b. (a, b) \<in> L} +
+      \<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * (Discrete.log (card b) - Suc 0) |a b. a \<in> \<Sigma> \<A> \<and> b \<in> P \<and> (a, b) \<notin> L}"
+qed
   
 lemma estimate1_progress_decrease:
   assumes "estimate1 \<A> (Hopcroft_split \<A> ba aa {} a, bb) + f aa ba < estimate1 \<A> (a, b)"
