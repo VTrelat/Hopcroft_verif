@@ -389,7 +389,7 @@ For a state $q$ in the representation of a set $P_i$ or $s_{a,i}$, its ``positio
     $$\Theta \left( \left| \Sigma \right| \cdot \left| \bigcup_{q \in C} \delta^{-1}(q, a) \right| \right) $$
 \end{proof}
 
-For the sake of simplicity, we now denote $\displaystyle{\bigcup_{q \in C} \delta^{-1}(q, a)}$ by $\overset{\hookleftarrow}{C}$.
+For the sake of simplicity, we now denote $\displaystyle{\bigcup_{q \in C} \delta^{-1}(q, a)}$ by $\overset{\hookleftarrow a}{C}$.
 
 We will now justify the logarithmic factor in the time complexity.
 We briefly explain why a logarithm stands out and prove the statement by induction.
@@ -444,7 +444,7 @@ This gives a way to characterize splitters throughout the whole execution.
 \begin{lemma}\label{lem:bound}
     Let us consider some step in the algorithm such that $\mathcal{P}$ is the current partition.
     The total time spent in the loop until termination is bounded by
-    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \overset{\hookleftarrow}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \overset{\hookleftarrow}{B} | \log \frac{| B |}{2} \right)$$
+    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \overset{\hookleftarrow a}{C}_a | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \overset{\hookleftarrow a}{B} | \log \frac{| B |}{2} \right)$$
     where $\theta$ is the constant of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
 \end{lemma}
 \begin{proof}
@@ -453,21 +453,21 @@ This gives a way to characterize splitters throughout the whole execution.
     \bigskip
     \textbf{Base case:} the current partition is $\{P_1, P_2\}$ and we may assume w.l.o.g.\ that $P_1$ is the smaller set, so that $\mathcal{W} = \{(a, P_1), a \in \Sigma\}$.
     We have to show that the total time spent in the loop is bounded by
-    $$T = \theta |\Sigma| \left(| \overset{\hookleftarrow}{P_1} | \log | P_1 | + | \overset{\hookleftarrow}{P_2} | \log \frac{| P_2 |}{2}\right)$$
+    $$T = \theta |\Sigma| \left(| \overset{\hookleftarrow a}{P_1} | \log | P_1 | + | \overset{\hookleftarrow a}{P_2} | \log \frac{| P_2 |}{2}\right)$$
     
-    We know from lemma \ref{lem:time_iteration} that an iteration of the loop for $(a, P_i)$ takes $\theta | \overset{\hookleftarrow}{P_i} | $ time.
+    We know from lemma \ref{lem:time_iteration} that an iteration of the loop for $(a, P_i)$ takes $\theta | \overset{\hookleftarrow a}{P_i} | $ time.
     \begin{itemize}
         \item From lemma \ref{lem:log}, for all $a\in\Sigma$, $(a, P_1)$ can be processed at most $\log \| (a, P_1) \| = \log |P_1|$ times\footnote{We drop the floor operator for simplicity.
-        Note that since we are giving upper bounds, this is completely valid.}, hence the total time for $(a, P_1)$ is bounded by $\theta | \overset{\hookleftarrow}{P_1} | \log | P_1 |$ and thus the total time for splitters with block $P_1$ is bounded by
-        $$\theta |\Sigma| | \overset{\hookleftarrow}{P_1} | \log | P_1 |$$
+        Note that since we are giving upper bounds, this is completely valid.}, hence the total time for $(a, P_1)$ is bounded by $\theta | \overset{\hookleftarrow a}{P_1} | \log | P_1 |$ and thus the total time for splitters with block $P_1$ is bounded by
+        $$\theta |\Sigma| | \overset{\hookleftarrow a}{P_1} | \log | P_1 |$$
 
         \item From lemma \ref{lem:log_non_splitter}, for all $a\in\Sigma$, $(a, P_2)$ can be processed at most $\log \frac{\| (a, P_2) \|}{2} = \log \frac{| P_2 |}{2}$ times. Thus, the total time for non splitters with block $P_2$ is bounded by
-        $$ \theta |\Sigma| | \overset{\hookleftarrow}{P_2} | \log \frac{| P_2 |}{2}$$
+        $$ \theta |\Sigma| | \overset{\hookleftarrow a}{P_2} | \log \frac{| P_2 |}{2}$$
     \end{itemize}
     
     \textbf{Inductive step:} Let $\{P_1, \cdots, P_\ell\} := \mathcal{P}$ be the current partition.
     The induction hypothesis states that the total time spent in the loop until termination for $a$ is bounded by
-    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \overset{\hookleftarrow}{C} | \log | C | + \sum_{(a, B) \in \Sigma\times \mathcal{P}\setminus \mathcal{W}} | \overset{\hookleftarrow}{B} | \log \frac{| B |}{2} \right)$$
+    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \overset{\hookleftarrow a}{C} | \log | C | + \sum_{(a, B) \in \Sigma\times \mathcal{P}\setminus \mathcal{W}} | \overset{\hookleftarrow a}{B} | \log \frac{| B |}{2} \right)$$
     By going through one more step, some blocks of $\mathcal{P}$ may be split and we define a new time $\hat{T}$ over this new partition and we have to show that $\hat{T} \leq T$.
 
     Suppose some $B \in \mathcal{P}$ is split into $B'$ and $B''$ by any splitter.
@@ -476,35 +476,35 @@ This gives a way to characterize splitters throughout the whole execution.
     \begin{itemize}
         \item $(a, B) \in \mathcal{W}$: $\mathcal{W}$ is updated as follows:
         $$ \mathcal{W} := \mathcal{W} \setminus \{(a, B)\} \cup \{(a, B'), (a, B'')\}$$
-        Thus, instead of taking a time $\theta | \overset{\hookleftarrow}{B} | \log | B |$ time for $(a, B)$, it now takes a time bounded by:
-        $$\theta | \overset{\hookleftarrow}{B'} | \log | B' | + \theta | \overset{\hookleftarrow}{B''} | \log | B'' |$$
+        Thus, instead of taking a time $\theta | \overset{\hookleftarrow a}{B} | \log | B |$ time for $(a, B)$, it now takes a time bounded by:
+        $$\theta | \overset{\hookleftarrow a}{B'} | \log | B' | + \theta | \overset{\hookleftarrow a}{B''} | \log | B'' |$$
         Finally, we show the following:
         \begin{equation*}
-            | \overset{\hookleftarrow}{B'} | \log | B' | + | \overset{\hookleftarrow}{B''} | \log | B'' | \leq | \overset{\hookleftarrow}{B} | \log | B |
+            | \overset{\hookleftarrow a}{B'} | \log | B' | + | \overset{\hookleftarrow a}{B''} | \log | B'' | \leq | \overset{\hookleftarrow a}{B} | \log | B |
         \end{equation*}
-        From $B = B' \cup B''$, we get $|B| = |B'| + |B''|$ and $| \overset{\hookleftarrow}{B} | = | \overset{\hookleftarrow}{B'} | + | \overset{\hookleftarrow}{B''} |$, hence:
+        From $B = B' \cup B''$, we get $|B| = |B'| + |B''|$ and $| \overset{\hookleftarrow a}{B} | = | \overset{\hookleftarrow a}{B'} | + | \overset{\hookleftarrow a}{B''} |$, hence:
         \begin{align*}
-            & |\overset{\hookleftarrow}{B'} | \log | B' | + | \overset{\hookleftarrow}{B''} | \log | B'' | - | \overset{\hookleftarrow}{B} | \log | B | \\
-            &= | \overset{\hookleftarrow}{B'} | \log | B' | + (| \overset{\hookleftarrow}{B} | - | \overset{\hookleftarrow}{B'}|) \log \left(|B|-|B'|\right) - | \overset{\hookleftarrow}{B} | \log | B | \\
-            &= | \overset{\hookleftarrow}{B'} | \log \frac{|B'|}{|B|-|B'|} + | \overset{\hookleftarrow}{B} | \log \frac{|B|-|B'|}{|B|} \\
-            &\leq | \overset{\hookleftarrow}{B'} | \log \frac{|B|}{|B|-|B'|} + | \overset{\hookleftarrow}{B} | \log \frac{|B|-|B'|}{|B|} \\
-            &= (| \overset{\hookleftarrow}{B}| - |\overset{\hookleftarrow}{B'} |) \log \underset{\leq 1}{\underbrace{\frac{|B|-|B'|}{|B|}}} \leq 0
+            & |\overset{\hookleftarrow a}{B'} | \log | B' | + | \overset{\hookleftarrow a}{B''} | \log | B'' | - | \overset{\hookleftarrow a}{B} | \log | B | \\
+            &= | \overset{\hookleftarrow a}{B'} | \log | B' | + (| \overset{\hookleftarrow a}{B} | - | \overset{\hookleftarrow a}{B'}|) \log \left(|B|-|B'|\right) - | \overset{\hookleftarrow a}{B} | \log | B | \\
+            &= | \overset{\hookleftarrow a}{B'} | \log \frac{|B'|}{|B|-|B'|} + | \overset{\hookleftarrow a}{B} | \log \frac{|B|-|B'|}{|B|} \\
+            &\leq | \overset{\hookleftarrow a}{B'} | \log \frac{|B|}{|B|-|B'|} + | \overset{\hookleftarrow a}{B} | \log \frac{|B|-|B'|}{|B|} \\
+            &= (| \overset{\hookleftarrow a}{B}| - |\overset{\hookleftarrow a}{B'} |) \log \underset{\leq 1}{\underbrace{\frac{|B|-|B'|}{|B|}}} \leq 0
         \end{align*}
 
         \item $(a, B) \notin \mathcal{W}$: $(a, \min\{B', B''\})$ is added to the set of splitters. We may assume w.l.o.g.\ that $B'$ is the smaller set.
-        Thus, the corresponding term in the sum $|\overset{\hookleftarrow}{B}| \log \frac{| B |}{2}$ is updated as follows:
+        Thus, the corresponding term in the sum $|\overset{\hookleftarrow a}{B}| \log \frac{| B |}{2}$ is updated as follows:
         \begin{equation*}
-            \theta | \underset{\text{lemma \ref{lem:log}}}{\underbrace{\overset{\hookleftarrow}{B'} | \log | B' |}} + \theta \underset{\text{lemma \ref{lem:log_non_splitter}}}{\underbrace{|\overset{\hookleftarrow}{B''} | \log \left(\frac{| B'' |}{2}\right)}}
+            \theta | \underset{\text{lemma \ref{lem:log}}}{\underbrace{\overset{\hookleftarrow a}{B'} | \log | B' |}} + \theta \underset{\text{lemma \ref{lem:log_non_splitter}}}{\underbrace{|\overset{\hookleftarrow a}{B''} | \log \left(\frac{| B'' |}{2}\right)}}
         \end{equation*}
         Since $B = B' \cup B''$, the sum above can be written as:
         \begin{equation*}
-            \theta | \overset{\hookleftarrow}{B'} | \log | B' | + \theta (| \overset{\hookleftarrow}{B} | - | \overset{\hookleftarrow}{B'} |) \log \left(\frac{|B|-|B'|}{2}\right)
+            \theta | \overset{\hookleftarrow a}{B'} | \log | B' | + \theta (| \overset{\hookleftarrow a}{B} | - | \overset{\hookleftarrow a}{B'} |) \log \left(\frac{|B|-|B'|}{2}\right)
         \end{equation*}
         By using the fact that $\displaystyle{| B' | \leq \frac{|B|}{2}}$, we have:
         \begin{align*}
-            & | \overset{\hookleftarrow}{B'} | \log | B'| + (| \overset{\hookleftarrow}{B} | - | \overset{\hookleftarrow}{B'}|)\log \left(\frac{| B | - |B'|}{2} \right) - |\overset{\hookleftarrow}{B}| \log \frac{|B|}{2} \\
-            & \leq | \overset{\hookleftarrow}{B'}| \log \frac{| B |}{2} + (| \overset{\hookleftarrow}{B}| - | \overset{\hookleftarrow}{B'}|) \log \left(\frac{|B| - |B'|}{2}\right) - | \overset{\hookleftarrow}{B}| \log \frac{| B |}{2} \\
-            & \leq (| \overset{\hookleftarrow}{B}| - | \overset{\hookleftarrow}{B'} |) \log \left(\frac{| B | - | B' |}{| B |}\right) \leq 0
+            & | \overset{\hookleftarrow a}{B'} | \log | B'| + (| \overset{\hookleftarrow a}{B} | - | \overset{\hookleftarrow a}{B'}|)\log \left(\frac{| B | - |B'|}{2} \right) - |\overset{\hookleftarrow a}{B}| \log \frac{|B|}{2} \\
+            & \leq | \overset{\hookleftarrow a}{B'}| \log \frac{| B |}{2} + (| \overset{\hookleftarrow a}{B}| - | \overset{\hookleftarrow a}{B'}|) \log \left(\frac{|B| - |B'|}{2}\right) - | \overset{\hookleftarrow a}{B}| \log \frac{| B |}{2} \\
+            & \leq (| \overset{\hookleftarrow a}{B}| - | \overset{\hookleftarrow a}{B'} |) \log \left(\frac{| B | - | B' |}{| B |}\right) \leq 0
         \end{align*}
 
         Overall, splitting any block of $\mathcal{P}$ does not increase the total time spent over the loop.
@@ -520,9 +520,9 @@ This gives a way to characterize splitters throughout the whole execution.
 \end{theorem}
 \begin{proof}
 From lemma \ref{lem:bound}, we obtain in particular that for the initial partition the time spent in the loop until termination is bounded by:
-$$T = \theta |\Sigma| \left(| \overset{\hookleftarrow}{P_1} | \log | P_1 | + | \overset{\hookleftarrow}{P_2} | \log \frac{| P_2 |}{2}\right)$$
-Thus, the following holds:
-$$T \leq \theta |\Sigma| (\underset{\leq 2|\overset{\hookleftarrow}{\mathcal{Q}}|}{\underbrace{|\overset{\hookleftarrow}{P_1}| + |\overset{\hookleftarrow}{P_2}|}})\log(\underset{= |\mathcal{Q}|}{\underbrace{|P_1| + |P_2|}}) \leq 2 \theta|\Sigma||\mathcal{Q}| \log |\mathcal{Q}|$$
+$$T = \theta \cdot \sum_{a \in \Sigma}\left(| \overset{\hookleftarrow a}{P_1} | \log | P_1 | + | \overset{\hookleftarrow a}{P_2} | \log \frac{| P_2 |}{2}\right)$$
+Thus using concavity of the logarithm, the following holds:
+$$T \leq \theta \sum_{a \in \Sigma} (\underset{\leq 2|\overset{\hookleftarrow a}{\mathcal{Q}}|}{\underbrace{|\overset{\hookleftarrow a}{P_1}| + |\overset{\hookleftarrow a}{P_2}|}})\log(\underset{= |\mathcal{Q}|}{\underbrace{|P_1| + |P_2|}}) \leq 2 \theta|\Sigma||\mathcal{Q}| \log |\mathcal{Q}|$$
 \end{proof}
 
 \subsection{Towards a formal proof}
@@ -573,7 +573,7 @@ definition update_split_spec $\color{isa_dark_blue}\mathcal{A}$ $\equiv$ $\lambd
     Hopcroft_update_splitters_pred $\color{isa_dark_blue}\mathcal{A}$ p a P L L'  $\land$ P' = Hopcroft_split $\color{isa_dark_blue}\mathcal{A}$ p a {} P
   ) ($\lambda$_. cost ''update_split'' (enat ($|\Sigma$ $\color{isa_dark_blue}\mathcal{A}|$ * $|$ preds $\color{isa_dark_blue}\mathcal{A}$ a p $|$)))
 \end{lstlisting}
-where \texttt{preds $\mathcal{A}$ a p} represents the set of all predecessors $\bigcup_{q \in p} \delta^{-1}(q, a) = \overset{\hookleftarrow}{p}$ of all states of $p$ labelled by $a$. The cost specified by this definition stems from the result of lemma \ref{lem:time_iteration}, namely that the cost for splitting and updating the partition and the workset is $\Theta(|\Sigma| \cdot |\overset{\hookleftarrow}{p}|)$.
+where \texttt{preds $\mathcal{A}$ a p} represents the set of all predecessors $\bigcup_{q \in p} \delta^{-1}(q, a) = \overset{\hookleftarrow a}{p}$ of all states of $p$ labelled by $a$. The cost specified by this definition stems from the result of lemma \ref{lem:time_iteration}, namely that the cost for splitting and updating the partition and the workset is $\Theta(|\Sigma| \cdot |\overset{\hookleftarrow a}{p}|)$.
 
 
 % \printglossary[type=\acronymtype]
