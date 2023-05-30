@@ -9,6 +9,7 @@ theory Hopcroft_Time
   imports
     "Isabelle_LLVM_Time.NREST_Main"
     Hopcroft_Thms
+    "HOL-Library.Discrete"
 begin
 
 
@@ -73,17 +74,20 @@ Formula in the paper proof:
 For \<A>, (P, L),
 \<Sum>{card (preds \<A> a C) * \<lfloor>log (real (card C))\<rfloor>. (a, C) \<in> L} + \<Sum>{card (preds \<A> a B) * \<lfloor>log (real (card B) / 2)\<rfloor>. (a, B) \<in> ((\<Sigma> \<A>)\<times>P) - L)}
 \<close>
-definition "Log2_nat \<equiv> \<lambda>x. int_encode \<lfloor>ln (real x) / ln 10\<rfloor>"
 
 definition "estimate1 \<A> \<equiv> \<lambda>(P,L).
-  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Log2_nat (card (snd s))) | s. s \<in> L} +
-  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Log2_nat (card (snd s) div 2)) | s. s \<in> \<Sigma> \<A> \<times> P - L}"
+  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Discrete.log (card (snd s))) | s. s \<in> L} +
+  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Discrete.log (card (snd s) div 2)) | s. s \<in> \<Sigma> \<A> \<times> P - L}"
   
 definition "cost_1_iteration \<equiv> 
-  cost ''call'' 1 + (cost ''check_l_empty'' 1 + cost ''if'' 1) + cost ''pick_splitter'' 1 + cost ''update_split'' 1"
+  cost ''call'' 1 +
+  cost ''check_l_empty'' 1 +
+  cost ''if'' 1 +
+  cost ''pick_splitter'' 1 +
+  cost ''update_split'' 1"
   
-definition cost_iteration where
-  "cost_iteration \<A> PL \<equiv> estimate1 \<A> PL *m cost_1_iteration"
+definition estimate_iteration where
+  "estimate_iteration \<A> PL \<equiv> estimate1 \<A> PL *m cost_1_iteration"
 
 definition Hopcroft_abstractT where
   "Hopcroft_abstractT \<A> \<equiv>
@@ -91,8 +95,9 @@ definition Hopcroft_abstractT where
     if\<^sub>N (check_final_states_empty_spec \<A>) then mop_partition_singleton (\<Q> \<A>) else (
        do {
          PL \<leftarrow> init_spec \<A>;
-         (P, _) \<leftarrow> monadic_WHILEIET (Hopcroft_abstract_invar \<A>) (\<lambda>s. cost_iteration \<A> s) check_b_spec
-                           (Hopcroft_abstract_f \<A>) PL;
+         (P, _) \<leftarrow> monadic_WHILEIET (Hopcroft_abstract_invar \<A>) (\<lambda>s. estimate_iteration \<A> s)
+                     check_b_spec
+                     (Hopcroft_abstract_f \<A>) PL;
          RETURNT P
        })))"
        
@@ -108,7 +113,8 @@ lemma estimate1_progress:
   assumes (* "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" *) 
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
   assumes "Hopcroft_update_splitters_pred \<A> p a P L L'"
-  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L') + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate1 \<A> (P,L)" 
+  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L')
+          + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate1 \<A> (P,L)" 
   unfolding estimate1_def preds_def Hopcroft_split_def split_language_equiv_partition_set_def
     split_language_equiv_partition_def split_set_def
   apply auto
@@ -116,23 +122,19 @@ lemma estimate1_progress:
   
 lemma estimate1_progress_decrease:
   assumes "estimate1 \<A> (Hopcroft_split \<A> ba aa {} a, bb) + f aa ba < estimate1 \<A> (a, b)"
-  shows "lift_acost c1 +
-           cost ''update_split'' (enat (f aa ba)) +
-           lift_acost
-            (estimate1 \<A> (Hopcroft_split \<A> ba aa {} a, bb) *m
-             (c1 + cost ''update_split'' 1))
-           \<le> lift_acost
-               (estimate1 \<A> (a, b) *m
-                (c1 +
-                 cost ''update_split'' 1))"  
+  shows
+    "lift_acost c1 + cost ''update_split'' (enat (f aa ba)) +
+      lift_acost (estimate1 \<A> (Hopcroft_split \<A> ba aa {} a, bb) *m (c1 + cost ''update_split'' 1)) 
+    \<le> lift_acost (estimate1 \<A> (a, b) *m (c1 + cost ''update_split'' 1))"
 proof -
   find_theorems lift_acost "(*m)"
-  
-  oops
+  show ?thesis sorry
+qed
 
-    
-  
-  
+lemma finite_sum_positive_cost:"finite {a. the_acost (cost n m) a > (0::nat)}"
+  using finite_sum_nonzero_cost[of n m]
+  by simp
+
 lemma (in DFA) Hopcroft_abstract_correct :
   fixes t
   assumes [simp]: " cost ''part_empty'' 1 + (cost ''if'' 1 + cost ''check_states_empty'' 1) \<le> t"
@@ -165,21 +167,26 @@ next
     apply (refine_vcg \<open>simp\<close> rules: gwp_monadic_WHILEIET If_le_rule)
     subgoal
       apply (rule wfR2_If_if_wfR2)
-      (* Just states that estimation must use finitely many currencies *)
-      sorry
+      apply (simp add: wfR2_def estimate_iteration_def cost_1_iteration_def
+          costmult_def the_acost_propagate Collect_conj_eq)
+      apply (intro impI conjI)
+      apply (rule finite_sum_positive_cost)+
+      done
+
     subgoal
-      unfolding Hopcroft_abstract_f_def pick_splitter_spec_def SPEC_REST_emb'_conv update_split_spec_def
+      unfolding Hopcroft_abstract_f_def pick_splitter_spec_def
+        SPEC_REST_emb'_conv update_split_spec_def
       apply (refine_vcg \<open>simp\<close> rules: gwp_ASSERT_bind_I)
       apply (rule loop_body_conditionI)
       subgoal
         apply clarsimp
         apply (rule lift_acost_mono)
-        unfolding cost_iteration_def
+        unfolding estimate_iteration_def
         apply (rule costmult_right_mono_nat)
         sorry
       apply clarsimp
-      unfolding cost_iteration_def cost_1_iteration_def
-      apply (drule (4) est1_aux)
+      unfolding estimate_iteration_def cost_1_iteration_def
+      apply (drule (4) estimate1_progress_decrease)
       
       apply (rule lift_acost_mono)
       

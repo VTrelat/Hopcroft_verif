@@ -302,3 +302,4 @@ TSWLatexianTemp*
 .DS_Store
 *~
 *.ist
+*.thy#
