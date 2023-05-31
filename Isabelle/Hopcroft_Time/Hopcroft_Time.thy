@@ -108,7 +108,16 @@ lemma costmult_right_mono_nat:
   unfolding costmult_def less_eq_acost_def
   by (auto simp add: mult_right_mono)  
        
-       
+
+lemma estimate1_diff:
+  assumes (* "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" *) 
+  "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
+  assumes "Hopcroft_update_splitters_pred \<A> p a P L L'"
+  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L') < estimate1 \<A> (P,L)"
+  unfolding estimate1_def preds_def
+  apply simp
+  sorry
+
 lemma estimate1_progress:
   assumes (* "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" *) 
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
