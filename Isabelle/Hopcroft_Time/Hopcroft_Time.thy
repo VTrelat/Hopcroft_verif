@@ -107,13 +107,69 @@ lemma costmult_right_mono_nat:
   shows "a \<le> a' \<Longrightarrow> a *m c \<le> a' *m c"
   unfolding costmult_def less_eq_acost_def
   by (auto simp add: mult_right_mono)  
-       
 
-lemma estimate1_diff:
+
+definition split_pred where
+\<comment>\<open>@{term "(a, C)"} is a splitter of B and the result of the split is @{term "{B', B''}"}\<close>
+  "split_pred \<A> P B a C B' B'' \<equiv>
+    B \<in> P \<and>
+    (\<exists> q1 q2. q1 \<in> B \<and> q2 \<in> B \<and>
+      (\<exists> q1'. (q1, a, q1') \<in> \<Delta> \<A> \<and> q1' \<in> C) \<and>
+      (\<exists> q2'. (q2, a, q2') \<in> \<Delta> \<A> \<and> q2' \<notin> C)) \<and>
+    (B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P"
+
+find_theorems "Hopcroft_splitted" "Hopcroft_split"
+
+lemma (in DFA) split_block_in_partition_prop1:
+  assumes "P' = Hopcroft_split \<A> C a {} P" "is_partition (\<Q> \<A>) P"
+  shows "(B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P \<Longrightarrow> B' \<in> P' \<and> B'' \<in> P' \<and> B \<notin> P'"
+  apply (simp add: assms(1))
+  unfolding Hopcroft_splitted_def Hopcroft_split_def split_language_equiv_partition_set_def
+  apply (simp, intro conjI)
+    apply fastforce+
+  unfolding split_language_equiv_partition_def split_set_def
+  by blast
+
+lemma (in DFA) split_block_in_partition_prop2:
+  assumes "split_pred \<A> P B a C B' B''" "Hopcroft_abstract_invar \<A> (P, L)"
+  defines "P' \<equiv> Hopcroft_split \<A> C a {} P"
+  shows "B' \<in> P' \<and> B'' \<in> P' \<and> B \<notin> P'"
+  apply (rule split_block_in_partition_prop1[of P' C a P B B' B''])
+    apply (simp add: P'_def)
+    apply (simp add: case_prodD[OF assms(2)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]])
+    apply (simp add: assms(1)[simplified split_pred_def])
+  done
+
+lemma (in DFA) split_block_not_in_workset:
+  assumes "(b, C) \<in> L" "split_pred \<A> P B b C B' B''" "(a, B) \<in> L" "a \<in> \<Sigma> \<A>"
+          "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_update_splitters_pred \<A> C b P L L'"
+        shows "(a, B) \<notin> L' \<and> (a, B') \<in> L' \<and> (a, B'') \<in> L'"
+proof (cases "(b, C) = (a, B)")
+  case True
+  then show ?thesis sorry
+next
+  case False
+  show ?thesis
+  apply (rule conjI)
+  subgoal sorry
+  subgoal
+    apply (rule Hopcroft_update_splitters_pred___in_splitted_in_L[of \<A> C b P L L' a B])
+       apply (simp add: assms(6))
+      apply (simp add: assms(4))
+     apply (simp add: assms(2)[simplified split_pred_def])
+    using False assms(3)
+    apply blast
+    done
+  done
+qed
+
+
+lemma estimate1_decrease:
   assumes (* "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" *) 
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
-  assumes "Hopcroft_update_splitters_pred \<A> p a P L L'"
-  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L') < estimate1 \<A> (P,L)"
+  "Hopcroft_update_splitters_pred \<A> p a P L L'"
+  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L') \<le> estimate1 \<A> (P,L)"
+    (is "estimate1 \<A> (?P', L') \<le> estimate1 \<A> (P, L)")
   unfolding estimate1_def preds_def
   apply simp
   sorry
@@ -121,7 +177,7 @@ lemma estimate1_diff:
 lemma estimate1_progress:
   assumes (* "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" *) 
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
-  assumes "Hopcroft_update_splitters_pred \<A> p a P L L'"
+  "Hopcroft_update_splitters_pred \<A> p a P L L'"
   shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L')
           + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate1 \<A> (P,L)" 
   unfolding estimate1_def preds_def
@@ -132,6 +188,7 @@ proof -
     card (\<Sigma> \<A>) * card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> p}
     < \<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * Discrete.log (card b) |a b. (a, b) \<in> L} +
       \<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * (Discrete.log (card b) - Suc 0) |a b. a \<in> \<Sigma> \<A> \<and> b \<in> P \<and> (a, b) \<notin> L}"
+    sorry
 qed
   
 lemma estimate1_progress_decrease:

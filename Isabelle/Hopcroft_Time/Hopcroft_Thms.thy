@@ -531,7 +531,7 @@ text \<open> Given two sets of states @{text p1}, @{text p2} of an automaton
         @{text \<A>} and a label @{text a}. The set @{text p1} is split according to whether
         a state in @{text p2} is reachable by @{text a}.\<close>
 definition split_language_equiv_partition where
-  "split_language_equiv_partition \<A> p1 a p2 = \<comment>\<open>(a, p2) splits p1.\<close>
+  "split_language_equiv_partition \<A> p1 a p2 = \<comment>\<open>split p1 with (a, p2).\<close>
    split_set (\<lambda>q. \<exists>q' \<in> p2. (q, a, q') \<in> \<Delta> \<A>) p1"
 
 text \<open> Hopcroft's algorithm operates on deterministic automata. Exploiting the property, that
