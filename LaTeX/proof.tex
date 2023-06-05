@@ -1,0 +1,559 @@
+\documentclass[12pt, a4 paper]{article}
+\usepackage[british]{babel}
+\usepackage{graphicx, hyperref, xcolor, fancyhdr, amssymb, amsmath, amsthm, mdframed, tikz, listings}
+\usepackage{mathrsfs}
+\usepackage[acronym, toc]{glossaries}
+\usepackage{pdfpages}
+\usepackage{svg}
+\usepackage{algorithmic}
+\usepackage[ruled, linesnumbered]{algorithm2e}
+
+
+% Colors definition
+\definecolor{isa_red}{RGB}{255, 58, 71}
+\definecolor{isa_blue}{RGB}{0, 103, 158}
+\definecolor{isa_green}{RGB}{0, 157, 97}
+\definecolor{isa_dark_green}{RGB}{0,131, 0}
+\definecolor{isa_purple}{RGB}{174, 5, 238}
+\definecolor{isa_dark_blue}{RGB}{26, 0, 253}
+
+% Define custom language for syntax highlighting
+\lstdefinelanguage{Isabelle}{
+  % List of custom keywords
+  keywords=[1]{definition, if, then, else, let, in, case, of, do},
+  % Custom keyword styles
+  keywordstyle=[1]\color{isa_blue},
+  keywords=[2]{where},
+  keywordstyle=[2]\color{isa_green},
+  keywords=[3]{RETURNT, monadic_WHILEIET, SPEC, ASSERT, consume, cost},
+  keywordstyle=[3]\color{isa_red},
+  literate={`}{\textasciigrave\ }1,
+  % Other language elements styles
+  commentstyle=\color{isa_dark_green},
+  string=[b]{''},
+  stringstyle=\color{isa_purple},
+  numberstyle=\tiny\color{isa_dark_blue},
+  % Frame and background settings
+  frame=l,
+  framerule=3pt,
+  rulecolor=\color{black!15},
+  backgroundcolor=\color{black!5},
+  % Other settings
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  breakatwhitespace=true,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2
+}
+\lstset{%
+  language=Isabelle,
+  columns=fixed,
+  extendedchars,
+  basewidth={0.5em,0.45em},
+  basicstyle=\ttfamily,
+  mathescape=true
+}
+
+% editorial comments in the text or in marginal notes
+% 1st argument: initials of the person making the comment,
+% 2nd argument: comment to insert
+\long\def\ednote#1#2{\par\noindent\framebox{\begin{minipage}{.98\linewidth}\linespread{.7}\footnotesize #1: #2\end{minipage}}\par}
+\newcommand{\edmargin}[2]{\marginpar{\raggedright\linespread{.7}\tiny #1: #2}}
+
+% redefine proof environment with grey background and black square at the end
+\renewenvironment{proof}[1][Proof]{\begin{mdframed}[backgroundcolor=black!5, topline=false, rightline=false, bottomline=false, linecolor=black!15, linewidth=3pt]{\noindent\textit{#1.}\ }}{\noindent\par\hfill$\blacksquare$\end{mdframed}}
+
+% \usepackage{times}
+
+\hypersetup{
+    colorlinks,
+    linkcolor={red!60!black},
+    citecolor={blue!80!black},
+    urlcolor={blue!80!black}
+}
+
+% \pagestyle{fancy}
+% \renewcommand\headrulewidth{.5pt}
+% \fancyhead[L]{
+%     V. Trélat
+% }
+
+% \fancyhead[C]{
+%     \textbf{Verification in Isabelle/HOL of Hopcroft's algorithm for minimizing DFAs including runtime analysis}
+% }
+
+% \fancyhead[R]{
+%     % Current section
+%     \ifnum\c@secnumdepth>0
+%         \thesection
+% }
+
+% theorems
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{remark}{Remark}
+\newtheorem{definition}{Definition}
+\newtheorem{requirement}{Requirement}
+
+% Glossary
+
+\makeglossaries
+
+% \newacronym{tiaa}{TIAA}{This Is An Acronym}
+
+\begin{document}
+
+\begin{titlepage}
+    \vspace*{4cm}
+    \begin{center}
+        \Large{Verification in Isabelle/HOL of Hopcroft's algorithm for minimizing DFAs including runtime analysis}
+    \end{center}
+    
+    \vspace{2cm}
+    
+    \begin{center}
+        Vincent Trélat
+        
+        \vspace{1cm}
+        \textit{\today}
+    \end{center}
+    \vfill
+\end{titlepage}
+
+\tableofcontents
+
+\pagebreak
+
+\section{Introduction}
+The goal of this project was to verify Hopcroft's algorithm for minimizing DFAs in Isabelle/HOL and to analyze its worst-case time complexity using the Refinement Framework.
+Some considerable work had already been carried out by Peter Lammich and Thomas T\"urk on the proof of correctness ten years ago in an older version of Isabelle \cite{lammich:hop}.
+The goal was to port this proof to the latest version of Isabelle and to extend it with a time complexity analysis.
+
+\subsection{Hopcroft's algorithm}
+John E. Hopcroft's algorithm for minimizing deterministic finite automata (DFA) was first presented in his original 1971 paper \cite{Hop71} as a formal algorithm.
+It has been a major breakthrough in the field of automata theory, since it allowed for minimization in linearithmic\footnote{$O(n \log n)$} time in the worst case\footnote{Other minimization algorithms were presented prior to Hopcroft, e.g.\ by Moore (quadratic) or Brzozowski (exponential).}.
+Thanks to this, minimization has become almost costless and thus this algorithm has been widely used in the field of formal verification, e.g.\ in model checking, since it allows to reduce the size of the automaton to be verified.
+
+The formal idea behind the algorithm is to partition the set of states of the DFA into equivalence classes, i.e.\ sets of states that are equivalent\footnote{Two states are equivalent if they accept the same language.} with respect to the language they recognize.
+The algorithm starts with two partitions, namely the set of final states and the set of non-final states.
+Then, it iteratively refines the partitions by splitting them into smaller ones until no more refinement is possible.
+The algorithm is guaranteed to terminate since the number of partitions is finite and strictly decreases at each iteration.
+The equivalence class of the set of states of the DFA is then the set of partitions, so that any two different sets of states from that partition recognize different languages.
+
+\bigskip
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\caption{Hopcroft's original formal algorithm}
+\label{alg:original}
+\KwData{a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
+\KwResult{the equivalence class of $\mathcal{Q}$ under state equivalence}
+Construct $\delta^{-1}(q, a) := \{t \in \mathcal{Q}\ |\ \delta(t, a) = q\}$ for all $q \in \mathcal{Q}$ and $a \in \Sigma$ \;\label{alg:original:1}
+Construct $P_1 := \mathcal{F}$, $P_2 := \mathcal{Q} \setminus \mathcal{F}$ and $s_{a,i} := \{q \in P_i \ | \ \delta^{-1}(q, a) \neq \varnothing \}$ for all $i \in \{1, 2\}$ and $a \in \Sigma$ \;
+Let $k := 3$ \;
+For all $a \in \Sigma$, construct $L_a := \underset{1 \leq i < k}{\operatorname*{arg\,min}}\ \left| s_{a, i} \right|$ \; \label{alg:original:4}
+\While{$\exists a \in \Sigma, L_a \neq \varnothing$\label{alg:original:loop}}{
+    Pick $a \in \Sigma$ such that $L_a \neq \varnothing$ and $i \in L_a$ \; \label{alg:original:pick}
+    $L_a := L_a \setminus \{i\}$ \;
+    \ForAll{$j < k, \exists q \in P_j, \delta(q, a) \in s_{a,i}$}{
+        $P'_j := \{t \in P_j\ |\ \delta(t, a) \in s_{a,i} \}$ and $P''_j := P_j \setminus P'_j$ \;
+        $P_j := P'_j$ and $P_{k} := P''_j$; construct $s_{a,j}$ and $s_{a,k}$ for all $a \in \Sigma$ accordingly \;
+        For all $a \in \Sigma$, $L_a := \begin{cases}
+        L_a \cup \{j\} & \text{if $j \notin L_a \land \left| s_{a,j} \right| \leq \left| s_{a,k} \right|$} \\
+        L_a \cup \{k\} & \text{otherwise}
+        \end{cases}$ \;
+        $k := k + 1$ \;
+    }
+}
+\end{algorithm}
+
+\bigskip
+
+Algorithm~\ref{alg:original} is a direct translation of the original algorithm from \cite{Hop71} with only slight changes in the notations.
+
+\subsection{Modern formalisation}
+
+The algorithm is now usually given in a more mathematical and formalised way\footnote{see for example \cite{esparza2023automata}}, which loosens up the choice for an implementation.
+The algorithm is given below in Algorithm~\ref{alg:modern}.
+
+\bigskip
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \caption{Hopcroft's algorithm in a modern style}
+    \label{alg:modern}
+    \KwData{a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
+    \KwResult{the language partition $P_\ell$}
+    \eIf{$\mathcal{F} = \varnothing \lor \mathcal{Q} \setminus \mathcal{F} = \varnothing$}{
+        \Return $\mathcal{Q}$
+    }{
+        $\mathcal{P} := \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F} \}$ \;
+        $\mathcal{W} := \{ (a, \min \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F}\}), a \in \Sigma \}$ \;
+        \While{$\mathcal{W} \neq \varnothing$}{
+            Pick $(a, B')$ from $\mathcal{W}$ and remove it\;
+            \ForAll{$B \in \mathcal{P}$}{
+                Split $B$ with $(a, B')$ into $B_0$ and $B_1$ \;
+                $\mathcal{P} := (\mathcal{P} \setminus \{B\}) \cup \{B_0, B_1\}$ \;
+                \ForAll{$b \in \Sigma$}{
+                    \eIf{$(b, B) \in \mathcal{W}$}{
+                        $\mathcal{W} := (\mathcal{W} \setminus \{(b, B)\}) \cup \{(b, B_0), (b, B_1)\}$ \;
+                    }{
+                        $\mathcal{W} := \mathcal{W} \cup \{(b, \min \{ B_0, B_1 \})\}$ \;
+                    }
+                }
+            }
+        }
+    }
+\end{algorithm}
+
+\bigskip
+
+We justify this transformation.
+First, instead of storing indices for the blocks, we directly deal with sets and explicitly work with a partition $\mathcal{P}$ of $\mathcal{Q}$.
+Then, we define splitters.
+
+\begin{definition}
+    Let $\mathcal{A} = (Q, \Sigma, \delta, q_0, I, F)$ be a DFA. Let $P$ be a partition of $Q$. Let $B \in P$. For $a \in \Sigma$ and $C \in P$ we say that
+    $(a, C)$ splits $B$ or is a splitter of $B$ if $$\exists q_1, q_2 \in B \quad \delta(q_1, a) \in C \land \delta(q_2, a) \notin C.$$
+\end{definition}
+\begin{remark}
+    If $(a, C)$ is a splitter of $B$, $P$ can be updated to $P \setminus \{B\} \cup \{B', B''\}$, where $$B' := \{q \in B \ | \ \delta(q, a) \in C\} \text{ and } B'' := B \setminus B'.$$
+\end{remark}
+
+\begin{definition}
+    For a splitter $s \in \Sigma \times P$, we define its size $\| s \|$ as the size of its second component, i.e.\ if $s = (a, C)$, then $\| s \| := |C|$.
+\end{definition}
+
+
+In Algorithm \ref{alg:original}, picking an index $i \in L_a$ corresponds to picking a set $s_{a, i}$, i.e.\ -- by definition -- the subset of $P_i$ of states having at least one predecessor.
+We cannot directly replace $L_a$ and $s_{a, i}$ by a set of splitters $(a, P_i)$ as is, however the next step in the algorithm is to go over all blocks in the partition that have a successor in $s_{a, i}$.
+If such a block $B$ is found, it is split into two blocks, namely the set of states having a successor in $s_{a, i}$ and the others.
+Overall, we look for $B$ such that $P_i$ has a predecessor in $B$. We add the condition that $B$ must also have at least one successor not in $P_i$ to avoid splitting $B$ into $\{B, \varnothing\}$.
+Since this is equivalent to splitting $B$ with $(a, P_i)$, we can replace $L_a$ by a set of splitters $(a, P_i)$.
+Since the symbol $a$ is chosen such that $L_a \neq \varnothing$, we can define a workset $\mathcal{W}$ of all splitters, with all symbols of $\Sigma$. Therefore, $L_a$ is empty if and only if there is no $a$-splitter in $\mathcal{W}$.
+Because testing emptiness is equivalent to testing membership, and because of the existential quantifier in the definition of splitters, the $s_{a, i}$ are no longer needed.
+
+We can explicitly write the trivial cases where either $\mathcal{F}$ or $\mathcal{Q}\setminus\mathcal{F}$ is empty to improve performance for this specific case.
+This is not done in Algorithm \ref{alg:original} but this does not produce wrong results.
+If one of the two sets is empty, one of the $s_{a, 1}$ or $s_{a, 2}$ will be empty for all $a \in \Sigma$, and the \textit{while} loop will be entered $|\Sigma|$ times but the inner \textit{for} loop will never be entered.
+This results in a useless $O(|\Sigma|)$ computation.
+Another difference in that case is that it would return the partition $\min\{\mathcal{F}, \mathcal{Q}\setminus\mathcal{F}\}$ -- where $\min$ returns the set with the least number of elements --  which we avoid in the modern version by just returning $\mathcal{Q}$.
+
+\section{Proof of correctness}
+Since the proof of correctness is not the purpose of this paper, we do not go into details. John E. Hopcroft's original paper \cite{Hop71} contains a proof of correctness for his low-level algorithm, however the ideas behind the invariants are the same for the formalisation. 
+
+The proof of correctness for Hopcroft's algorithm for DFA minimization typically involves two main components: partition refinement and equivalence checking.
+
+The basic idea of the proof is to show that the algorithm correctly partitions the states of the input DFA into equivalence classes, where states within the same class are indistinguishable from each other with respect to the language recognized by the DFA. This partition represents the minimal DFA that recognizes the same language as the input DFA.
+
+The algorithm starts with an initial partition that distinguishes accepting states from non-accepting states. Then, it iteratively refines this partition by considering pairs of states that are currently in different equivalence classes and determining if they can be distinguished by a symbol from the input alphabet.
+
+During each iteration, the algorithm examines each symbol in the alphabet and checks if it distinguishes any pair of states in different equivalence classes. If a symbol does distinguish a pair, it splits the equivalence class containing those states into two new classes. This process continues until no more splits can be made, and the resulting partition represents the minimal DFA.
+
+To prove the correctness of Hopcroft's algorithm, one needs to demonstrate two key properties:
+\begin{itemize}
+    \item the resulting partition is a valid equivalence relation, meaning it satisfies the properties of reflexivity, symmetry, and transitivity,
+    \item the resulting partition is indeed the minimal partition that correctly distinguishes states based on their language equivalence.
+\end{itemize}
+
+The proof typically involves reasoning about the behavior of the algorithm during each iteration, considering how the partition is refined inductively and ensuring that it converges to the minimal partition.
+
+In the Refinement Framework, the algorithm is first described at the abstract level, so its correctness can be proved independently of any implementation details. Then, the algorithm is progressively refined into a concrete implementation, and the correctness of each refinement until the implementation is proved by showing that it refines the abstract algorithm.
+
+\section{Time complexity analysis}
+
+\subsection{Paper proof}
+
+In a first time, we focus on the original algorithm presented in Algorithm~\ref{alg:original} in order to work on the arguments given in \cite{Hop71}.
+The data structures used at that time were mostly linked lists, but let us rather give some requirements for the data structures instead of actual implementations.
+The goal is to show that the algorithm can be executed in $O(m \cdot n \log n)$ time, where $m$ is the number of symbols in the alphabet and $n$ is the number of states in the DFA.
+
+The following requirements come directly from \cite{Hop71} and are specific to the algorithm presented in Algorithm~\ref{alg:original}.
+
+\begin{requirement}
+    \label{req:1}
+Sets such as $\delta^{-1}(q, a)$ and $L_a$ must be represented in a way that allows $O(1)$ time for addition and deletion in ``front position''\footnote{This does not make sense for sets and is specific for a data structure. What is meant here is a bit informal and designates a position directly accessible, e.g.\ the head for a stack, the value of the root for a tree, etc.}.
+\end{requirement}
+
+\begin{requirement}
+    \label{req:2}
+Vectors must be maintained to indicate whether a state is in a given set.
+\end{requirement}
+
+\begin{requirement}
+    \label{req:3}
+Sets such as $P_i$ must be represented in a way that allows $O(1)$ time for addition and deletion at any given position.
+\end{requirement}
+
+\begin{remark}
+    \label{req:4}
+From Req.\ \ref{req:2} and Req.\ \ref{req:3}, we can show that for a state $q$ in the representation of a set $P_i$ or $s_{a,i}$, its ``position'' -- in the implemented data structure -- must be determined in $O(1)$ time.
+\end{remark}
+
+\bigskip
+
+\begin{lemma}
+    In Algorithm \ref{alg:original}, lines \ref{alg:original:1} to \ref{alg:original:4} can be executed in $O(\left| \Sigma \right| \cdot \left| \mathcal{Q} \right|)$ time.
+\end{lemma}
+\begin{proof}
+    The non trivial part is the computation of the inverse transition function $\delta^{-1}(q, a)$, for all $q \in \mathcal{Q}$ and $a \in \Sigma$. This can be done in $O(\left| \Sigma \right| \cdot \left| \mathcal{Q} \right|)$ time by iterating over $\Sigma$ and traversing the automaton (e.g.\ with a DFS) while keeping track of the predecessor at each step.
+\end{proof}
+
+\bigskip
+
+\begin{lemma}\label{lem:time_iteration}
+    An iteration of the while loop in both algorithms for a splitter $s = (a, C)$ takes a time proportional to the number of transitions terminating in $C$ and the number of symbols in the alphabet, i.e. $\Theta\left(\left| \Sigma \right| \cdot \left| \delta^{-1}(C, a) \right| \right)$ time.
+\end{lemma}
+\begin{proof}
+    We start by showing it for Algorithm \ref{alg:original}. We pick $a \in \Sigma$ such that $L_a \neq \varnothing$ and an $i \in L_a$. We need to examine all $j < k$ such that $\exists q \in P_j, \delta(q, a) \in s_{a,i}$ to construct the sets corresponding to splitting the block $P_j$ w.r.t.\ $a$ and $P_i$.
+
+    Let $j < k$. From the definition of $s_{a,i}$, we obtain the following:
+    \begin{align*}
+        \exists q \in P_j, \delta(q, a) \in s_{a,i} &\iff \exists q \in P_j, \delta(q, a) \in P_i \land \underset{\text{true}}{\underbrace{\delta^{-1}(\delta(q, a), a) \neq \varnothing}} \\
+        & \iff \exists q \in P_j, \delta(q, a) \in P_i
+    \end{align*}
+    Which corresponds to finding states in $P_j$ having an outgoing $a$-transition to a state in $P_i$, as represented in the following scheme:
+    \begin{center}
+        \begin{tikzpicture}
+            \definecolor{color1}{RGB}{213, 216, 224}
+            \definecolor{color2}{RGB}{202, 222, 200}
+            
+            \fill[color=color1] (0,0) ellipse (1.8cm and 1.4cm);
+            \draw[dashed] (-0.5,-1.35) -- (0,1.4);
+            \fill[color=color2] (5,0) ellipse (2cm and 1cm);
+            
+            \node at (-2.1,0) {$P_j$};
+            \node at (-1,0) {$P''_j$};
+            \node at (0.5,0) {$P'_j$};
+            \node at (7.3,0) {$P_i$};
+
+            \draw[->] (0, 0.8) to[in=160, out=20] node[above]{$a$} (5,0.5);
+            \draw[->] (1,0) to[in=180, out=10] node[above]{$a$} (5,0.5);
+            \draw[->] (-.2,-1) to[in=210, out=-20] node[above]{$a$} (4,-.2);
+        \end{tikzpicture}
+    \end{center}
+    This set of states can be expressed via the inverse transition function:
+    $$ \{q \in P_j\ |\ \delta(q,a) \in P_i \} = \left( \bigcup_{q' \in P_i} \delta^{-1}(q', a)\right) \cap P_j $$
+    Since $\delta^{-1}$ was already computed in the first step of the algorithm, we can determine using req.\ \ref{req:3} whether a state of $\bigcup_{q \in P_i} \delta^{-1}(q, a)$ is also in $P_j$ in $\Theta(1)$ time.
+    
+    Thus, instead of examining $P_j$ for all $j < k$, we rather go through the table of $\delta^{-1}$ and for each state $q$ such that $\delta(q, a) \in P_i$, we know from req.\ \ref{req:4} that we can determine the index $j < k$ (because there are $k$ blocks) of the block $P_j$ containing $q$ in $\Theta(1)$ time.
+    The sets $P'_j$ and $P''_j = P_k$ resulting from the partition can be constructed on the fly without any additional time cost. The construction of the sets $s_{b, j}$ and $s_{b, k}$ as well as the update of $L_b$ for all $b \in \Sigma$ can also be done on the fly but require $\Theta(1)$ time for each symbol $b \in \Sigma$ and thus add up to a total of $\Theta(\left| \Sigma \right|)$ time.
+    \ednote{VT}{the on-the-fly computation part is a little hand-waving...}
+
+    Overall, one iteration of the loop runs in time
+    $$\Theta \left( \left| \Sigma \right| \cdot \left| \bigcup_{q \in P_i} \delta^{-1}(q, a) \right| \right) $$
+
+    \bigskip
+    We now show the result for Algorithm \ref{alg:modern}. A splitter ${s =: (a, C)}$ is picked from $\mathcal{W}$.
+    Then, we iterate over all blocks $B \in \mathcal{P}$ that may be split with $s$. Let $B \in \mathcal{P}$.
+    \begin{align*}
+        s\ \text{splits}\ B &\iff \exists q_1, q_2 \in B, \delta(q_1, a) \in C \land \delta(q_2, a) \notin C\\
+        &\iff \left(\bigcup_{q \in C} \delta^{-1}(q, a)\right)\cap B \neq \varnothing \land \left(\bigcup_{q \in B}\delta(q, a)\right)\setminus C \neq \varnothing
+    \end{align*}
+    \ednote{VT}{we may express the right-hand conjunct in terms of $\delta^{-1}$ in order to prepare the paragraph that follows (But it wouldn't be the same union because you have to start from states outside $C$)}
+    \ednote{VT}{The second equation may be a little too quick, especially for the right-hand conjunct.}
+    Likewise, instead of examining all blocks $B \in \mathcal{P}$, we go through $\delta^{-1}$ and we update the splitters for all symbols in $\Sigma$ and one iteration of the loop runs in time
+    $$\Theta \left( \left| \Sigma \right| \cdot \left| \bigcup_{q \in C} \delta^{-1}(q, a) \right| \right) $$
+\end{proof}
+
+\newcommand{\preds}[2]{\ensuremath{\overset{\hookleftarrow {#1}}{#2}}}
+
+For the sake of simplicity, we now denote $\displaystyle{\bigcup_{q \in C} \delta^{-1}(q, a)}$ by $\preds{a}{C}$.
+
+We will now justify the logarithmic factor in the time complexity.
+We briefly explain why a logarithm stands out and prove the statement by induction.
+The idea is that for each symbol $a \in \Sigma$, a state $q \in \mathcal{Q}$ can be in at most one of the splitters in $\mathcal{W}$.
+When the loop iterates over this splitter, it will split the block and keep the smaller one, whose size will be at most the size of the splitter divided by two.
+This means that a splitter $s$ can be processed at most $\log \| s \|$ times.
+We now properly state and prove the property by induction.
+
+We see splitters as updatable program variables.
+This means that $s_{a,i}$ as a set may differ along the loop, however we know there exists some $q \in \mathcal{Q}$ such that $s_{a,i}$ is the unique set containing $q$ throughout the execution.
+This gives a way to characterize splitters throughout the whole execution.
+
+\bigskip
+
+\begin{lemma}\label{lem:log}
+    Any splitter in the workset $s \in \mathcal{W}$ is processed -- i.e.\ picked at the beginning of the \textit{while} loop -- at most $\lfloor \log \| s \| \rfloor$ times.
+\end{lemma}
+\begin{proof}
+    We first show the following statement:
+
+    \textit{During an iteration, the chosen splitter $s$ will either be removed from the set of splitters or its size will be reduced by at least $\frac{\| s\|}{2}$ after the iteration\footnote{That is a bit informal because, the original splitter is actually removed and another ``similar'' splitter (cf the paragraph above the statement of the lemma) of size at most $\frac{||s||}{2}$ will be added.}.}
+
+    \bigskip
+    Let $\{P_1, \cdots, P_\ell\}$ be the current partition and let $s =: (a, C)$ be the picked splitter. Thus, $s$ is no longer in the set of splitters $\mathcal{W}$. Since we go over all splittable blocks, $C$ may also be split by $s$.
+    \begin{itemize}
+        \item If $C$ is not split by $s$, then $s$ was already removed from the splitters. Note that it can be added again later if it is split by another splitter.
+        \item If $C$ is split into $C'$ and $C''$, then $(a, \min\{C', C''\})$ is added to the splitters and its size is at most $\frac{\| s \|}{2}$.
+    \end{itemize}
+    Therefore, since a splitter cannot be empty, $s$ can be processed at most $m$ times where $m$ is such that
+    $$ 1 \leq \frac{\| s \|}{2^m} < 2$$
+    which is equivalent to
+    $$ m \leq \log \| s \| < m + 1 \quad \text{i.e.}\quad \left\lfloor\log \| s \|\right\rfloor = m $$
+\end{proof}
+
+\bigskip
+
+\begin{lemma}\label{lem:log_non_splitter}
+    Any block $B$ resulting from a split and not added as a splitter is processed at most $\lfloor \log \frac{| B |}{2} \rfloor$ times.
+\end{lemma}
+\begin{proof}
+    Let $P \in \mathcal{P}$ be a block in the partition and $s =: (a, C)$ be a splitter such that $s$ splits $P$ into $S$ and $B$ so that $(a, S)$ is added to the workset and $B$ is not.
+    In order for $B$ to be processed, some $(b, B)$ must be added to the workset.
+    
+    Since the only way to create a fresh splitter is to split $B$, this means that there exists some later step in the loop such that some splitter $(b, B')$ splits $B$ into $B_1$ and $B_2$ and $(b, \min\{B_1, B_2\})$ is added to the workset.
+
+    From lemma \ref{lem:log}, we know that this splitter can be processed at most $\lfloor\log |\min \{B_1,B_2\}|\rfloor$ times.
+    Since $|\min\{B_1, B_2\}| \leq \frac{| B |}{2}$ and since there is no splitter containing $B$ in the workset, we obtain that $B$ can be processed at most $\lfloor\log \frac{| B |}{2}\rfloor$ times.
+\end{proof}
+
+\bigskip
+
+\begin{lemma}\label{lem:bound}
+    Let us consider some step in the algorithm such that $\mathcal{P}$ is the current partition. We give an estimation of the total time spent in the loop until termination as an upper bound:
+    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \preds{a}{B} | \log \frac{| B |}{2} \right)$$
+    where $\theta$ is the constant of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
+\end{lemma}
+\begin{proof}
+    We show the result by induction over the steps.
+
+    \bigskip
+    \textbf{Base case:} the current partition is $\{P_1, P_2\}$ and we may assume w.l.o.g.\ that $P_1$ is the smaller set, so that $\mathcal{W} = \{(a, P_1), a \in \Sigma\}$.
+    We have to show that the total time spent in the loop is bounded by
+    $$T = \theta \cdot \sum_{a \in \Sigma} \left(| \preds{a}{P_1} | \log | P_1 | + | \preds{a}{P_2} | \log \frac{| P_2 |}{2}\right)$$
+    
+    We know from lemma \ref{lem:time_iteration} that an iteration of the loop for $(a, P_i)$ takes $\theta | \preds{a}{P_i} | $ time.
+    \begin{itemize}
+        \item From lemma \ref{lem:log}, for all $a\in\Sigma$, $(a, P_1)$ can be processed at most $\log \| (a, P_1) \| = \log |P_1|$ times\footnote{We drop the floor operator for simplicity.
+        Note that since we are giving upper bounds, this is completely valid.}, hence the total time for $(a, P_1)$ is bounded by $\theta | \preds{a}{P_1} | \log | P_1 |$ and thus the total time for any splitter $(a, P_1)$ is bounded by:
+        $$\theta | \preds{a}{P_1} | \log | P_1 |$$
+
+        \item From lemma \ref{lem:log_non_splitter}, for all $a\in\Sigma$, $(a, P_2)$ can be processed at most $\log \frac{\| (a, P_2) \|}{2} = \log \frac{| P_2 |}{2}$ times. Thus, the total time for any non-splitter $(a, P_2)$ is bounded by:
+        $$ \theta | \preds{a}{P_2} | \log \frac{| P_2 |}{2}$$
+    \end{itemize}
+    
+    \textbf{Inductive step:} Let $\{P_1, \cdots, P_\ell\} := \mathcal{P}$ be the current partition.
+    The induction hypothesis states that the estimate for the total time spent in the loop until termination for $a$ is bounded by
+    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in \Sigma\times \mathcal{P}\setminus \mathcal{W}} | \preds{a}{B} | \log \frac{| B |}{2} \right)$$
+    By going through one more step, some blocks of $\mathcal{P}$ may be split and we define a new estimate $\hat{T}$ over this new partition and we have to show that $\hat{T} \leq T$.
+
+    Suppose some $B \in \mathcal{P}$ is split into $B'$ and $B''$ by any splitter.
+    We have to consider the cases where $(a , B)$ is a splitter or not for all $a \in \Sigma$.
+    Let $a \in \Sigma$.
+    \begin{itemize}
+        \item $(a, B) \in \mathcal{W}$: $\mathcal{W}$ is updated as follows:
+        $$ \mathcal{W} := \mathcal{W} \setminus \{(a, B)\} \cup \{(a, B'), (a, B'')\}$$
+        Thus, instead of taking a time $\theta | \preds{a}{B} | \log | B |$ time for $(a, B)$, it now takes a time bounded by:
+        $$\theta | \preds{a}{B'} | \log | B' | + \theta | \preds{a}{B''} | \log | B'' |$$
+        Finally, we show the following:
+        \begin{equation*}
+            | \preds{a}{B'} | \log | B' | + | \preds{a}{B''} | \log | B'' | \leq | \preds{a}{B} | \log | B |
+        \end{equation*}
+        From $B = B' \cup B''$ and because the automaton is deterministic, we get $|B| = |B'| + |B''|$ and $| \preds{a}{B} | = | \preds{a}{B'} | + | \preds{a}{B''} |$, hence:
+        \begin{align*}
+            & |\preds{a}{B'} | \log | B' | + | \preds{a}{B''} | \log | B'' | - | \preds{a}{B} | \log | B | \\
+            &= | \preds{a}{B'} | \log | B' | + (| \preds{a}{B} | - | \preds{a}{B'}|) \log \left(|B|-|B'|\right) - | \preds{a}{B} | \log | B | \\
+            &= | \preds{a}{B'} | \log \frac{|B'|}{|B|-|B'|} + | \preds{a}{B} | \log \frac{|B|-|B'|}{|B|} \\
+            &\leq | \preds{a}{B'} | \log \frac{|B|}{|B|-|B'|} + | \preds{a}{B} | \log \frac{|B|-|B'|}{|B|} \\
+            &= (| \preds{a}{B}| - |\preds{a}{B'} |) \log \underset{\leq 1}{\underbrace{\frac{|B|-|B'|}{|B|}}} \leq 0
+        \end{align*}
+
+        \item $(a, B) \notin \mathcal{W}$: $(a, \min\{B', B''\})$ is added to the set of splitters. We may assume w.l.o.g.\ that $B'$ is the smaller set.
+        Thus, the corresponding term in the sum $|\preds{a}{B}| \log \frac{| B |}{2}$ is updated as follows:
+        \begin{equation*}
+            \theta | \underset{\text{lemma \ref{lem:log}}}{\underbrace{\preds{a}{B'} | \log | B' |}} + \theta \underset{\text{lemma \ref{lem:log_non_splitter}}}{\underbrace{|\preds{a}{B''} | \log \left(\frac{| B'' |}{2}\right)}}
+        \end{equation*}
+        Since $B = B' \cup B''$, the sum above can be written as:
+        \begin{equation*}
+            \theta | \preds{a}{B'} | \log | B' | + \theta (| \preds{a}{B} | - | \preds{a}{B'} |) \log \left(\frac{|B|-|B'|}{2}\right)
+        \end{equation*}
+        By using the fact that $\displaystyle{| B' | \leq \frac{|B|}{2}}$, we have:
+        \begin{align*}
+            & | \preds{a}{B'} | \log | B'| + (| \preds{a}{B} | - | \preds{a}{B'}|)\log \left(\frac{| B | - |B'|}{2} \right) - |\preds{a}{B}| \log \frac{|B|}{2} \\
+            & \leq | \preds{a}{B'}| \log \frac{| B |}{2} + (| \preds{a}{B}| - | \preds{a}{B'}|) \log \left(\frac{|B| - |B'|}{2}\right) - | \preds{a}{B}| \log \frac{| B |}{2} \\
+            & \leq (| \preds{a}{B}| - | \preds{a}{B'} |) \log \left(\frac{| B | - | B' |}{| B |}\right) \leq 0
+        \end{align*}
+
+        Overall, splitting any block of $\mathcal{P}$ does not increase the total time spent over the loop.
+        By iterating over all blocks, we obtain that the total time $\hat{T}$ spent in the loop from this new iteration until termination is such that $\hat{T} \leq T$.
+    \end{itemize}
+\end{proof}
+
+\bigskip
+
+\begin{theorem}
+    \label{thm:complexity}
+    Algorithm \ref{alg:original} and Algorithm \ref{alg:modern} run in $O\left(|\Sigma|\cdot|\mathcal{Q}| \log |\mathcal{Q}|\right)$ time.
+\end{theorem}
+\begin{proof}
+From lemma \ref{lem:bound}, we obtain in particular that for the initial partition the time spent in the loop until termination is bounded by:
+$$T = \theta \cdot \sum_{a \in \Sigma}\left(| \preds{a}{P_1} | \log | P_1 | + | \preds{a}{P_2} | \log \frac{| P_2 |}{2}\right)$$
+Thus using concavity of the logarithm, the following holds:
+$$T \leq \theta \sum_{a \in \Sigma} (\underset{\leq 2|\preds{a}{\mathcal{Q}}|}{\underbrace{|\preds{a}{P_1}| + |\preds{a}{P_2}|}})\log(\underset{= |\mathcal{Q}|}{\underbrace{|P_1| + |P_2|}}) \leq 2 \theta|\Sigma||\mathcal{Q}| \log |\mathcal{Q}|$$
+\end{proof}
+
+\subsection{Towards a formal proof}
+The objective of the project is to obtain a formal proof for the time complexity of the algorithm using the Refinement Framework with its extension to runtime analysis.
+We follow a top-down strategy, from the abstract level to the implementation.
+
+\subsubsection{Abstract level}
+The purpose of this section is to explain how the analysis at the abstract level is structured without adding too many details.
+First, we define the algorithm on the abstract level using the NREST framework as shown below:
+\begin{lstlisting}[language=Isabelle]
+definition Hopcroft_abstractT where
+Hopcroft_abstractT $\color{isa_dark_blue}\mathcal{A}$ $\equiv$
+  if (check_states_empty_spec $\color{isa_dark_blue}\mathcal{A}$) then mop_partition_empty else 
+  if (check_final_states_empty_spec $\color{isa_dark_blue}\mathcal{A}$) then mop_partition_singleton ($\mathcal{Q}$ $\color{isa_dark_blue}\mathcal{A}$) else
+    do {
+      PL $\leftarrow$ init_spec $\color{isa_dark_blue}\mathcal{A}$;
+      (P, _) $\leftarrow$ monadic_WHILEIET (Hopcroft_abstract_invar $\color{isa_dark_blue}\mathcal{A}$) 
+          ($\lambda$ s. cost_iteration $\color{isa_dark_blue}\mathcal{A}$ s) check_b_spec (Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$) PL;
+      RETURNT P
+    }
+\end{lstlisting}
+It is parameterized by abstract costs for each operation, like checking emptiness, returning an empty partition or a singleton, initializing the state\footnote{States in this setting are tuples $(P, L)$ where $P$ is a partition of the set of states $\mathcal{Q}$ of $\mathcal{A}$ together with a workset $L$ of splitters.}, etc.
+For the sake of simplicity and since names are rather self-explanatory, we only give the definition of \texttt{check\_states\_empty\_spec} as an example and detail the \textit{while} loop. Checking emptiness for the set of states costs one coin of the currency \texttt{check\_states\_empty} and can be defined as follows:
+\begin{lstlisting}[language=Isabelle]
+definition check_states_empty_spec $\mathcal{A}$ $\equiv$
+  consume (RETURNT ($\mathcal{Q}$ $\mathcal{A}$ = {})) (cost ''check_states_empty'' 1)
+\end{lstlisting}
+The purpose of using currencies is to be able to give an abstract description of the costs, and then to instantiate them with concrete values in the implementation which will be expressed in terms of concrete elementary costs like the number of comparisons or assignments. For example, if the set of states is represented as a tree \texttt{t}, there should be a method or an attribute \texttt{t.isempty} kept up to date during the execution of the algorithm, so that the cost of checking emptiness is equal to the cost of a function call plus the cost for reading memory at the location of the boolean \texttt{t.isempty}, that is constant time.
+
+The \textit{while} loop requires to be provided with an invariant, an estimation\edmargin{VT}{To be detailed} of the total amount of resource -- here time -- to be consumed, the loop condition, the function to be executed in the loop body and the initial state.
+The loop body defined in \texttt{Hopcroft\_abstract\_f} is given below:
+\begin{lstlisting}[language=Isabelle]
+definition Hopcroft_abstract_f where
+Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$ = 
+  $\lambda$PL. do {
+    ASSERT (Hopcroft_abstract_invar $\color{isa_dark_blue}\mathcal{A}$ PL);                             
+    (a,p) $\leftarrow$ pick_splitter_spec PL;
+    PL' $\leftarrow$ update_split_spec $\color{isa_dark_blue}\mathcal{A}$ PL a p;
+    RETURNT PL'
+  }
+\end{lstlisting}
+The main operation, i.e.\ splitting blocks of the partition and updating the workset accordingly is specified in \texttt{update\_split\_spec}.
+As written in the informal paper proof of lemma \ref{lem:time_iteration}, this operation is a bit tricky since both splitting and updating are performed on-the-fly at the same time, thus they are gathered together for the moment.
+The definition of \texttt{update\_split\_spec} is given below:
+\begin{lstlisting}[language=Isabelle]
+definition update_split_spec $\color{isa_dark_blue}\mathcal{A}$ $\equiv$ $\lambda$(P,L) a p.
+  SPEC ($\lambda$(P', L').
+    Hopcroft_update_splitters_pred $\color{isa_dark_blue}\mathcal{A}$ p a P L L'  $\land$ P' = Hopcroft_split $\color{isa_dark_blue}\mathcal{A}$ p a {} P
+  ) ($\lambda$_. cost ''update_split'' (enat ($|\Sigma$ $\color{isa_dark_blue}\mathcal{A}|$ * $|$ preds $\color{isa_dark_blue}\mathcal{A}$ a p $|$)))
+\end{lstlisting}
+where \texttt{preds $\mathcal{A}$ a p} represents the set of all predecessors $\bigcup_{q \in p} \delta^{-1}(q, a) = \preds{a}{p}$ of all states of $p$ labelled by $a$. The cost specified by this definition stems from the result of lemma \ref{lem:time_iteration}, namely that the cost for splitting and updating the partition and the workset is $\Theta(|\Sigma| \cdot |\preds{a}{p}|)$.
+
+
+% \printglossary[type=\acronymtype]
+
+% \addcontentsline{toc}{section}{CV}
+% \includepdf{cv.pdf}
+
+\pagebreak
+% bibliography
+\bibliographystyle{alpha}
+\bibliography{ref}
+
+\end{document}
