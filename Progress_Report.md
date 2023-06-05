@@ -11,13 +11,22 @@
 -   [24.04.2023 - 07.05.2023](#24042023---07052023)
 -   [08.05.2023 - 21.05.2023](#08052023---21052023)
 -   [22.05.2023 - 04.06.2023](#22052023---04062023)
+-   [05.06.2023 - 18.06.2023](#05062023---18062023)
 -   [Remarks](#remarks)
 
 ---
 
+## 05.06.2023 - 18.06.2023
+
+-   #### Notes
+
 ## 22.05.2023 - 04.06.2023
 
 -   #### Notes
+    -   Work on the estimate for the time spent in the loop
+        -   Work on paper and in Isabelle: I tried to define some predicates from which I could be able to derive the time spent in the loop
+        -   Struggling to formalize my ideas from the paper proof to Isabelle
+    -   Started to prove some lemmas
 
 ---
 
