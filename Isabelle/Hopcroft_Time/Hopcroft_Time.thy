@@ -141,27 +141,68 @@ lemma (in DFA) split_block_in_partition_prop2:
   done
 
 lemma (in DFA) split_block_not_in_workset:
-  assumes "(b, C) \<in> L" "split_pred \<A> P B b C B' B''" "(a, B) \<in> L" "a \<in> \<Sigma> \<A>"
+  assumes "(b, C) \<in> L" "(b, C) \<noteq> (a, B)" "split_pred \<A> P B b C B' B''" "(a, B) \<in> L" "a \<in> \<Sigma> \<A>"
           "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_update_splitters_pred \<A> C b P L L'"
-        shows "(a, B) \<notin> L' \<and> (a, B') \<in> L' \<and> (a, B'') \<in> L'"
-proof (cases "(b, C) = (a, B)")
-  case True
-  then show ?thesis sorry
-next
-  case False
-  show ?thesis
+        shows "(b, C) \<notin> L' \<and> (a, B) \<notin> L' \<and> (a, B') \<in> L' \<and> (a, B'') \<in> L'"
   apply (rule conjI)
-  subgoal sorry
+  subgoal
+  proof (rule ccontr)
+    assume "\<not> (b, C) \<notin> L'" hence asm:"(b, C) \<in> L'" by simp
+    from asm assms(7) assms(5) have "(b, C) \<in> L - {(b, C)} \<and> (\<forall>pa pb. (C, pa, pb) \<notin> Hopcroft_splitted \<A> C b {} P) \<or> (\<exists>p' pa pb. (p', pa, pb) \<in> Hopcroft_splitted \<A> C b {} P \<and> a \<in> \<Sigma> \<A> \<and> (C = pa \<or> C = pb))"
+        unfolding Hopcroft_update_splitters_pred_def
+                  Hopcroft_update_splitters_pred_aux_def
+                  Hopcroft_update_splitters_pred_aux_upper_def
+        by blast
+      then obtain p' pa pb where
+        part_def:"(p', pa, pb) \<in> Hopcroft_splitted \<A> C b {} P" "C = pa \<or> C = pb"
+        by blast
+      with Hopcroft_splitted_aux[OF part_def(1)] obtain C' where
+        C_part:"p' = C \<union> C'" "C \<inter> C' = {}" "C' \<noteq> {}" "p' \<in> P"
+        by blast
+      moreover from assms(1) assms(6) have "C \<in> P" "p' \<inter> C \<noteq> {}"
+        unfolding Hopcroft_abstract_invar_def
+         using Hopcroft_splitted_aux[OF part_def(1)] part_def(2) by (fastforce, blast)
+      moreover from assms(6) have "is_partition (\<Q> \<A>) P"
+        unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
+        by simp
+    ultimately show False
+      unfolding is_partition_def by blast
+  qed
+  apply (rule conjI)
+  subgoal
+  proof (rule ccontr)
+    assume "\<not> (a, B) \<notin> L'" hence asm:"(a, B) \<in> L'" by simp
+    from asm assms(7) assms(5) have "(a, B) \<in> L - {(b, C)} \<and> (\<forall>pa pb. (B, pa, pb) \<notin> Hopcroft_splitted \<A> C b {} P) \<or> (\<exists>p' pa pb. (p', pa, pb) \<in> Hopcroft_splitted \<A> C b {} P \<and> a \<in> \<Sigma> \<A> \<and> (B = pa \<or> B = pb))"
+      unfolding Hopcroft_update_splitters_pred_def
+                  Hopcroft_update_splitters_pred_aux_def
+                  Hopcroft_update_splitters_pred_aux_upper_def
+      by blast
+    then obtain p' pa pb where
+      part_def:"(p', pa, pb) \<in> Hopcroft_splitted \<A> C b {} P" "B = pa \<or> B = pb"
+      using assms(3) unfolding split_pred_def
+      by blast
+      with Hopcroft_splitted_aux[OF part_def(1)] obtain BB where
+        C_part:"p' = B \<union> BB" "B \<inter> BB = {}" "BB \<noteq> {}" "p' \<in> P"
+        by blast
+      moreover from assms(1) assms(3) assms(6) have "B \<in> P" "p' \<inter> B \<noteq> {}"
+        unfolding split_pred_def apply blast
+        unfolding Hopcroft_abstract_invar_def
+        using Hopcroft_splitted_aux[OF part_def(1)] part_def(2) by blast
+      moreover from assms(6) have "is_partition (\<Q> \<A>) P"
+        unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
+        by simp
+      ultimately show False
+        unfolding is_partition_def by blast
+  qed
   subgoal
     apply (rule Hopcroft_update_splitters_pred___in_splitted_in_L[of \<A> C b P L L' a B])
-       apply (simp add: assms(6))
-      apply (simp add: assms(4))
-     apply (simp add: assms(2)[simplified split_pred_def])
-    using False assms(3)
+       apply (simp add: assms(7))
+      apply (simp add: assms(5))
+     apply (simp add: assms(3)[simplified split_pred_def])
+    using assms(2) assms(4)
     apply blast
     done
   done
-qed
 
 
 lemma estimate1_decrease:
