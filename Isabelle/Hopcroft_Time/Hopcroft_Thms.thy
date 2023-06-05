@@ -2191,6 +2191,11 @@ using invar
 unfolding Hopcroft_set_step_invar_def
   by simp
 
+lemma Hopcroft_splitted_aux:"(B, B', B'') \<in> Hopcroft_splitted \<A> C b {} P \<Longrightarrow>
+  B \<in> P \<and> B = B' \<union> B'' \<and> B' \<inter> B'' = {} \<and> B' \<noteq> {} \<and> B'' \<noteq> {}"
+  unfolding Hopcroft_splitted_def split_language_equiv_partition_def split_set_def
+  by blast
+
 
 
 end
