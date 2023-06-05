@@ -27,6 +27,9 @@
         -   Work on paper and in Isabelle: I tried to define some predicates from which I could be able to derive the time spent in the loop
         -   Struggling to formalize my ideas from the paper proof to Isabelle
     -   Started to prove some lemmas
+    -   Split document `main.tex` into `report.tex` and `proof.tex`
+        -   `proof.tex` will contain the detailed paper proof for the time complexity
+        -   `report.tex` will contain the report for the internship with fewer details
 
 ---
 
