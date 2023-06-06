@@ -131,6 +131,20 @@ The goal of this project was to verify Hopcroft's algorithm for minimizing DFAs 
 Some considerable work had already been carried out by Peter Lammich and Thomas T\"urk on the proof of correctness ten years ago in an older version of Isabelle \cite{lammich:hop}.
 The goal was to port this proof to the latest version of Isabelle and to extend it with a time complexity analysis.
 
+\subsection{Setting up the environment}
+In order to be able to comfortably browse the theories and inspect the proofs, it is recommended to use Isabelle\footnote{The project was carried out using \href{https://isabelle.in.tum.de/}{Isabelle2022}.}/jEdit. Yet, the project is not part of the \href{https://www.isa-afp.org/}{Archive of Formal Proofs} (AFP) and can only be downloaded from the \href{https://github.com/VTrelat/Hopcroft_Verif}{GitHub repository}.
+
+Then, building an image of the main framework is strongly recommended, as it will greatly speed up the compilation of the theories, especially for the time complexity analysis. This may take a few minutes, but only needs to be done once:
+\begin{lstlisting}[language=bash]
+cd Hopcroft_Verif/Hopcroft_Time
+isabelle build -d . -l Isabelle_LLVM_Time Hopcroft_Time.thy
+\end{lstlisting}
+
+Isabelle may then be launched with jEdit by running the following command. This will open the main theory file \texttt{Hopcroft\_Time.thy} in jEdit and should take less than a minute:
+\begin{lstlisting}[language=bash]
+isabelle jedit -d . -l Isabelle_LLVM_Time Hopcroft_Time.thy
+\end{lstlisting}
+
 \subsection{Hopcroft's algorithm}
 John E. Hopcroft's algorithm for minimizing deterministic finite automata (DFA) was first presented in his original 1971 paper \cite{Hop71} as a formal algorithm.
 It has been a major breakthrough in the field of automata theory, since it allowed for minimization in linearithmic\footnote{$O(n \log n)$} time in the worst case\footnote{Other minimization algorithms were presented prior to Hopcroft, e.g.\ by Moore (quadratic) or Brzozowski (exponential).}.
