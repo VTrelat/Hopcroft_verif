@@ -2196,6 +2196,8 @@ lemma Hopcroft_splitted_aux:"(B, B', B'') \<in> Hopcroft_splitted \<A> C b {} P 
   unfolding Hopcroft_splitted_def split_language_equiv_partition_def split_set_def
   by blast
 
-
+lemma conj_commute1:
+  "(P \<and> Q) \<Longrightarrow> (Q \<and> P)"
+  by simp
 
 end
