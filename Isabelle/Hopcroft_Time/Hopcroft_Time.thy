@@ -116,11 +116,11 @@ definition split_pred where
     (\<exists> q1 q2. q1 \<in> B \<and> q2 \<in> B \<and>
       (\<exists> q1'. (q1, a, q1') \<in> \<Delta> \<A> \<and> q1' \<in> C) \<and>
       (\<exists> q2'. (q2, a, q2') \<in> \<Delta> \<A> \<and> q2' \<notin> C)) \<and>
-    (B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P"
+    ((B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P \<or> (B, B'', B') \<in> Hopcroft_splitted \<A> C a {} P)"
 
 lemma (in DFA) split_block_in_partition_prop1:
   assumes "P' = Hopcroft_split \<A> C a {} P" "is_partition (\<Q> \<A>) P"
-  shows "(B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P \<Longrightarrow> B' \<in> P' \<and> B'' \<in> P' \<and> B \<notin> P'"
+  shows "(B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P \<or> (B, B'', B') \<in> Hopcroft_splitted \<A> C a {} P \<Longrightarrow> B' \<in> P' \<and> B'' \<in> P' \<and> B \<notin> P'"
   apply (simp add: assms(1))
   unfolding Hopcroft_splitted_def Hopcroft_split_def split_language_equiv_partition_set_def
   apply (simp, intro conjI)
@@ -134,8 +134,8 @@ lemma (in DFA) split_block_in_partition_prop2:
   shows "B' \<in> P' \<and> B'' \<in> P' \<and> B \<notin> P'"
   apply (rule split_block_in_partition_prop1[of P' C a P B B' B''])
     apply (simp add: P'_def)
-    apply (simp add: case_prodD[OF assms(2)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]])
-    apply (simp add: assms(1)[simplified split_pred_def])
+   apply (simp add: case_prodD[OF assms(2)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]])
+  apply (simp add: assms(1)[simplified split_pred_def])
   done
 
 lemma (in DFA) split_block_not_in_workset:
@@ -196,12 +196,25 @@ next
     qed
   next
     show "(a, B') \<in> L' \<and> (a, B'') \<in> L'"
+      using assms(3)[simplified split_pred_def]
+      apply (cases "(B, B', B'') \<in> Hopcroft_splitted \<A> C b {} P")
+      subgoal
       apply (rule Hopcroft_update_splitters_pred___in_splitted_in_L[of \<A> C b P L L' a B])
          apply (simp add: assms(7))
         apply (simp add: assms(5))
-       apply (simp add: assms(3)[simplified split_pred_def])
-      using assms(2) assms(4)
-      apply blast
+        apply (simp add: assms(3)[simplified split_pred_def])
+        using assms(2) assms(4)
+        apply blast
+        done
+      subgoal
+        apply (rule conj_commute1)
+        apply (rule Hopcroft_update_splitters_pred___in_splitted_in_L[of \<A> C b P L L' a B])
+           apply (simp add: assms(7))
+          apply (simp add: assms(5))
+         apply (simp add: assms(3)[simplified split_pred_def])
+        using assms(2) assms(4)
+        apply blast
+        done
       done
   qed
 qed
@@ -211,9 +224,16 @@ definition aq_splitter where
                            let (a, B) = THE (a, B). (a, B) \<in> L \<and> q \<in> B in Some (a, B)
                           else None)"
 
+lemma aq_splitter_unique:
+  assumes "is_partition (\<Q> \<A>) P" "q \<in> \<Q> \<A>" "a \<in> \<Sigma> \<A>"
+  shows "\<exists>! B. (a, B) \<in> (\<Sigma> \<A> \<times> P) \<and> q \<in> B"
+  using is_partition_find[OF assms(1,2)]
+    by (simp add: assms(3))
+
 lemma aq_splitter_atmost1:
-  assumes "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)""q \<in> \<Q> \<A>" "a \<in> \<Sigma> \<A>"
+  assumes "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)" "q \<in> \<Q> \<A>" "a \<in> \<Sigma> \<A>"
   shows "(\<forall> B. (a, B) \<in> L \<longrightarrow> q \<notin> B) \<or> (\<exists>! B. (a, B) \<in> L \<and> q \<in> B)"
+\<comment>\<open>Given a and q, there is at most one splitter containing q.\<close>
 proof (rule SMT.verit_and_neg(3))
   assume "\<not> (\<forall>B. (a, B) \<in> L \<longrightarrow> q \<notin> B)"
   then obtain B where B_def:"(a, B) \<in> L \<and> q \<in> B" by blast
@@ -233,6 +253,9 @@ proof (rule SMT.verit_and_neg(3))
   qed
 qed
 
+definition unique_pred where
+  "unique_pred x P \<equiv> P x \<and> (\<forall>y. P y \<longrightarrow> y = x)"
+
 lemma estimate1_decrease:
   fixes \<A> :: "('q,'a, 'DFA_more) NFA_rec_scheme"
     and P :: "'q set set"
@@ -240,22 +263,95 @@ lemma estimate1_decrease:
     and a :: 'a
     and C :: "'q set"
   defines "P' \<equiv> Hopcroft_split \<A> C a {} P"
-  assumes "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" 
+  assumes "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" 
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
-  "Hopcroft_update_splitters_pred \<A> C a P L L'"
+  "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
+  "a \<in> \<Sigma> \<A>"
   shows "estimate1 \<A> (P', L') \<le> estimate1 \<A> (P,L)"
 proof-
-  \<comment>\<open>Sets of non-splitters\<close>
   let ?Lc = "\<Sigma> \<A> \<times> P - L"
-  let ?Lc'= "\<Sigma> \<A> \<times> P'- L'"
+  let ?Lc' = "\<Sigma> \<A> \<times> P' - L'"
 
-  \<comment>\<open>Set of splitters created\<close>
-  let ?fresh = "L' \<inter> ?Lc"
+  have part:"is_partition (\<Q> \<A>) P'"
+        proof-
+          have "is_weak_language_equiv_partition \<A> ({} \<union> P)" "is_weak_language_equiv_set \<A> C" "a \<in> \<Sigma> \<A>" "{} \<inter> P = {}"
+            using assms(5) unfolding Hopcroft_abstract_invar_def
+               apply simp
+            using assms(5) assms(8)
+            unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
+              apply (metis (mono_tags, lifting) case_prodD snd_eqD)
+             apply (simp add: assms(9))
+            by simp
+          note hyps=this
 
-  \<comment>\<open>Set of splitters removed\<close>
-  let ?removed = "?Lc' \<inter> L"
+          from HOL.conjunct1[OF DFA.Hopcroft_split_correct(1)[OF assms(2) hyps, simplified P'_def[symmetric] is_weak_language_equiv_partition_def]]
+          show ?thesis .
+        qed
 
-(* We cannot really use all of those because the partition changes. We may have to reason in terms of a-q-splitters *)
+  {
+    fix \<sigma>::'a and q::'q and B::"'q set" and B'::"'q set"
+    assume "\<sigma> \<in> \<Sigma> \<A>" "q \<in> \<Q> \<A>"
+    define aq where "aq = aq_splitter \<sigma> q L"
+    define aq' where "aq' = aq_splitter \<sigma> q L'"
+    assume asm:"aq = None" "aq' = None" "q\<in>B \<and> B \<in> P" "q\<in>B'\<and>B'\<in>P'"
+    then have uniqueBB':"\<exists>! B. q \<in> B \<and> (\<sigma>, B) \<in> ?Lc" "\<exists>! B'. q \<in> B' \<and> (\<sigma>, B') \<in> ?Lc'"
+    proof-
+      have "(a, B) \<in> L \<Longrightarrow> q \<notin> B" for a B
+      proof (rule ccontr)
+        assume "(a, B)\<in>L" "\<not> q \<notin> B" hence asm:"\<exists>(a, B)\<in>L. q\<in>B" by blast
+        then obtain s where "aq = Some s"
+          by (simp add: aq_def aq_splitter_def)
+        then show False
+          by (simp add: \<open>aq = None\<close>)
+      qed
+      moreover from assms(5) \<open>q \<in> \<Q> \<A>\<close>
+      have "\<exists>! B \<in> P. q \<in> B"
+        unfolding Hopcroft_abstract_invar_def
+          is_weak_language_equiv_partition_def
+          is_partition_def
+        by auto
+      moreover have "B\<in>P \<Longrightarrow> (\<sigma>, B) \<in> L \<or> (\<sigma>, B) \<in> ?Lc" for B
+        by (simp add: \<open>\<sigma> \<in> \<Sigma> \<A>\<close>)
+      ultimately show "\<exists>! B. q \<in> B \<and> (\<sigma>, B) \<in> ?Lc"
+        by blast
+    next
+      have nonsplitter:"(a, B') \<in> L' \<Longrightarrow> q \<notin> B'" for a B'
+      proof (rule ccontr)
+        assume "(a, B')\<in>L'" "\<not> q \<notin> B'" hence asm:"\<exists>(a, B')\<in>L'. q\<in>B'" by blast
+        then obtain s where "aq' = Some s"
+          by (simp add: aq'_def aq_splitter_def)
+        then show False
+          by (simp add: \<open>aq' = None\<close>)
+      qed
+
+      moreover have part_disj_workset:"B'\<in>P' \<Longrightarrow> (\<sigma>, B') \<in> L' \<or> (\<sigma>, B') \<in> ?Lc'" for B'
+        by (simp add: \<open>\<sigma> \<in> \<Sigma> \<A>\<close>)
+
+      show "\<exists>! B'. q \<in> B' \<and> (\<sigma>, B') \<in> ?Lc'"
+      proof-
+        from part asm(4) \<open>q \<in> \<Q> \<A>\<close> have "\<exists>! B'. q\<in>B' \<and> B'\<in>P'"
+          unfolding is_partition_def by blast
+        then show ?thesis
+          using nonsplitter part_disj_workset
+          by auto
+      qed
+    qed
+    
+    from uniqueBB' have
+      "unique_pred B (\<lambda>p. q \<in> p \<and> (\<sigma>, p) \<in> ?Lc)" (* B = THE B. (\<sigma>, B) \<in> ?Lc \<and> q \<in> B *)
+      "unique_pred B' (\<lambda>p. q \<in> p \<and> (\<sigma>, p) \<in> ?Lc')"
+      unfolding unique_pred_def
+      using asm(3,4) aq_splitter_unique[OF _ \<open>q \<in> \<Q> \<A>\<close> \<open>\<sigma> \<in> \<Sigma> \<A>\<close>] assms(5)
+      unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
+       apply auto[1]
+      using aq_splitter_unique[OF part \<open>q \<in> \<Q> \<A>\<close> \<open>\<sigma> \<in> \<Sigma> \<A>\<close>] asm(4) uniqueBB'(2) by blast
+
+    have "B = B' \<or> (\<exists> B'' aa CC. B = B' \<union> B'' \<and> B' \<inter> B'' = {} \<and> card B'' \<le> card B' \<and> (\<sigma>, B'') \<in> L \<and> (\<sigma>, B') \<in> ?Lc' \<and> (B, B', B'') \<in> Hopcroft_splitted \<A> CC aa {} P)"
+    proof (cases "")
+      (* The proof should examine wether B is split or not *)
+      show ?thesis sorry
+    qed
+  }
 
   show ?thesis sorry
 qed
