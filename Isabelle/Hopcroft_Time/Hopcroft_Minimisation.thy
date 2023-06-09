@@ -5,7 +5,7 @@
 
 section\<open>Hopcroft's Minimisation Algorithm\<close>
 
-theory Hopcroft_Mini misation
+theory Hopcroft_Minimisation
   imports DFA
         "../Collections/ICF/CollectionsV1"
         "../Nested_Multisets_Ordinals/Multiset_More"
@@ -966,7 +966,7 @@ definition Hopcroft_naive where
             equivalence property.\<close>
 
             (\<lambda>P. \<exists>p1 a p2. (p1 \<in> P \<and> a \<in> \<Sigma> \<A> \<and> p2 \<in> P \<and> split_language_equiv_partition_pred \<A> p1 a p2))
-            \<comment>\<open>loop condition: there exists a splitter (p1, a, p2) splitting P in \<A>.\<close>
+            \<comment>\<open>loop condition: there exists a splitter (a, p2) splitting p1 in P.\<close>
             (\<lambda>P. do { 
                (p1, a, p2) \<leftarrow> SPEC (\<lambda>(p1,a,p2). p1 \<in> P \<and> a \<in> \<Sigma> \<A> \<and> p2 \<in> P \<and> 
                    split_language_equiv_partition_pred \<A> p1 a p2); 
