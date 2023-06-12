@@ -206,9 +206,9 @@ The algorithm is given below in Algorithm~\ref{alg:modern}.
         $\mathcal{P} := \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F} \}$ \;
         $\mathcal{W} := \{ (a, \min \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F}\}), a \in \Sigma \}$ \;
         \While{$\mathcal{W} \neq \varnothing$}{
-            Pick $(a, B')$ from $\mathcal{W}$ and remove it\;
+            Pick $(a, C)$ from $\mathcal{W}$ and remove it\;
             \ForAll{$B \in \mathcal{P}$}{
-                Split $B$ with $(a, B')$ into $B_0$ and $B_1$ \;
+                Split $B$ with $(a, C)$ into $B_0$ and $B_1$ \;
                 $\mathcal{P} := (\mathcal{P} \setminus \{B\}) \cup \{B_0, B_1\}$ \;
                 \ForAll{$b \in \Sigma$}{
                     \eIf{$(b, B) \in \mathcal{W}$}{
