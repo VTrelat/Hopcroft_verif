@@ -19,6 +19,10 @@
 ## 05.06.2023 - 18.06.2023
 
 -   #### Notes
+    -   Work on the estimate for the time spent in the loop
+        -   Work on paper and in Isabelle: I tried to define some predicates from which I could be able to derive the time spent in the loop
+        -   Struggling to formalize my ideas from the paper proof to Isabelle
+    -   Added some details in `proof.tex`
 
 ## 22.05.2023 - 04.06.2023
 
