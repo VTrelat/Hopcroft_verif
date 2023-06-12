@@ -1,17 +1,6 @@
 theory Hopcroft_Thms
-imports Main DFA Partition
+imports Main DFA Partition 
 begin
-
-
-text \<open> In this theory, Hopcroft's minimisation algorithm [see
-Hopcroft, J.E.: An $n$ log $n$ algorithm for minimizing the states in a finite
-  automaton. In Kohavi, Z. (ed.) The Theory of Machines and Computations.
-Academic Press  189--196 (1971)] is verified. \<close>
-
-subsection \<open> Main idea \<close>
-
-text \<open> A determinisitic automaton with no unreachable states 
-        can be minimised by merging equivalent states. \<close>
 
 lemma merge_is_minimal :
 assumes wf_A: "DFA \<A>"
@@ -68,9 +57,6 @@ proof -
   done
 qed
 
-text \<open> This allows to define a high level, non-executable version of a minimisation
-        algorithm. These definitions and lemmata are later used as an abstract interface to
-        an executable implementation. \<close>
 definition Hopcroft_minimise :: "('q, 'a, 'x) NFA_rec_scheme \<Rightarrow> ('q, 'a) NFA_rec" where
  "Hopcroft_minimise \<A> \<equiv> NFA_rename_states \<A> (SOME f. 
   NFA_is_strong_equivalence_rename_fun \<A> f \<and> (\<forall>q \<in> \<Q> \<A>. f q \<in> \<Q> \<A>))"
@@ -149,21 +135,6 @@ proof -
     by auto
 qed
 
-
-text \<open> Now, we can consider the essence of Hopcroft's algorithm: 
-finding a suitable renaming function.  Hopcroft's algorithm computes the Myhill-Nerode equivalence 
-relation in form of a partition. From this partition, a renaming function can be easily derived. \<close>
-
-subsection \<open> Basic notions \<close>
-
-subsubsection \<open> Weak Equivalence Partitions \<close> 
-
-text \<open> For Hopcroft's algorithm, we consider special partitions. They have to satisfy two 
-properties: First, if two states are equivalent, they have to be in the same set of the partition.
-This property will later allow an induction argument when splitting partitions. However,
-for the base case, we need a stronger property. All sets of the considered partitions either contain
-only accepting states or only non-accepting states. \<close>
-
 definition is_weak_language_equiv_set where
   "is_weak_language_equiv_set \<A> p \<equiv>
    (p \<subseteq> \<Q> \<A>) \<and>                                  \<comment>\<open>p is a subset of the set of states of \<A>\<close>
@@ -228,11 +199,6 @@ lemma is_weak_language_equiv_partitionD3 :
    is_partition (\<Q> \<A>) P"
   unfolding is_weak_language_equiv_partition_def 
   by simp
-
-text \<open> An alternative definition of
-@{term is_weak_language_equiv_partition} 
-(that is often used in literature about Hopcroft's algorithm)
-can be given using the connection between partitions and equivalence relations. \<close>
 
 definition Hopcroft_accepting_relation where
   "Hopcroft_accepting_relation \<A> \<equiv> {(q1, q2) . q1 \<in> \<Q> \<A> \<and> q2 \<in> \<Q> \<A> \<and> (q1 \<in> \<F> \<A> \<longleftrightarrow> q2 \<in> \<F> \<A>)}"
@@ -312,14 +278,6 @@ next
   done
 qed
 
-
-text \<open> Hopcroft's algorithm is interested in finding a partition such that
-two states are in the same set of the partition, if and only if they are equivalent.
-The concept of weak language equivalence partitions above guarantees that
-two states that are equivalent are in the same partition. 
-
-In the following, the missing property that all the states in one partition are equivalent is
-formalised. \<close>
 
 definition is_weak2_language_equiv_set where
   "is_weak2_language_equiv_set \<A> p \<equiv>
@@ -476,14 +434,6 @@ next
   qed
 qed
 
-
-subsubsection \<open> Initial partition \<close>
-
-text \<open> By now, the essential concepts of different partitions have been introduced.
-Hopcroft's algorithm operates by splitting weak language partitions. If no further split is 
-possible, the searched partition has been found. For this algorithm a suitable initial
-partition is needed: \<close>
-
 lemma (in NFA) is_weak_language_equiv_partition_init :
   "is_weak_language_equiv_partition \<A> 
    (Hopcroft_accepting_partition \<A>)"
@@ -505,10 +455,6 @@ next
     by (simp add: quotient_inverse equiv_Myhill_Nerode_relation equiv_Hopcroft_accepting_relation)
 qed
 
-subsubsection \<open> Splitting Partitions \<close>
-
-text \<open> Next, we need to define how partitions are splitted. \<close>
-
 definition split_set where
   "split_set P S = ({s \<in> S. P s}, {s \<in> S. \<not>P s})"
 
@@ -526,16 +472,11 @@ lemma split_set_union_distinct:
   "split_set P S = (S1, S2) \<Longrightarrow>
    (S = S1 \<union> S2) \<and> (S1 \<inter> S2 = {})"
 unfolding split_set_def by auto
-      
-text \<open> Given two sets of states @{text p1}, @{text p2} of an automaton
-        @{text \<A>} and a label @{text a}. The set @{text p1} is split according to whether
-        a state in @{text p2} is reachable by @{text a}.\<close>
+
 definition split_language_equiv_partition where
   "split_language_equiv_partition \<A> p1 a p2 = \<comment>\<open>split p1 with (a, p2).\<close>
    split_set (\<lambda>q. \<exists>q' \<in> p2. (q, a, q') \<in> \<Delta> \<A>) p1"
 
-text \<open> Hopcroft's algorithm operates on deterministic automata. Exploiting the property, that
- the automaton is deterministic, the definition of splitting a partition becomes much simpler. \<close>
 lemma (in DFA) split_language_equiv_partition_alt_def :
 assumes p1_subset: "p1 \<subseteq> \<Q> \<A>"
     and a_in: "a \<in> \<Sigma> \<A>"
@@ -565,16 +506,12 @@ shows "p1a \<subseteq> p1 \<and> p1b \<subseteq> p1"
 using split_language_equiv_partition_union[OF assms]
 by simp
 
-text \<open> Splitting only makes sense if one of the resulting sets is non-empty. 
- This property is very important. Therefore, a special predicate is introduced. \<close>
 definition split_language_equiv_partition_pred ::
   "('q, 'a, 'x) NFA_rec_scheme \<Rightarrow> 'q set \<Rightarrow> 'a \<Rightarrow> 'q set \<Rightarrow> bool" where
   "split_language_equiv_partition_pred \<A> p1 a p2 \<equiv> \<comment>\<open>(a, p2) is a splitter of p1.\<close>
     (fst (split_language_equiv_partition \<A> p1 a p2) \<noteq> {}) \<and> 
     (snd (split_language_equiv_partition \<A> p1 a p2) \<noteq> {})"
 
-text \<open> Splitting according to this definition preserves the property 
-        that the partition is a weak language equivalence partition. \<close>
 lemma (in DFA) split_language_equiv_partition___weak_language_equiv_set :
 assumes split: "split_language_equiv_partition \<A> p1 a p2 = (p1a, p1b)"
     and a_in: "a \<in> \<Sigma> \<A>"
@@ -707,9 +644,9 @@ proof
   }
 qed
 
-text\<open> If no more splitting is possible, the desired strong language equivalence partition has been found. \<close>
+
 lemma (in DFA) split_language_equiv_partition_final___weak2 :
-assumes is_part: "is_partition (\<Q> \<A>) P"
+  assumes is_part: "is_partition (\<Q> \<A>) P"
    and accept_P: "\<And>p. p \<in> P \<Longrightarrow> (p \<subseteq> \<F> \<A>) \<or> (p \<inter> \<F> \<A> = {})"
    and no_split: "\<And>p1 a p2. \<lbrakk>p1 \<in> P; a \<in> \<Sigma> \<A>; p2 \<in> P\<rbrakk> \<Longrightarrow> 
        \<not>(split_language_equiv_partition_pred \<A> p1 a p2)"
@@ -947,20 +884,6 @@ proof (rule ccontr)
 qed
 
 
-
-subsection \<open> Abstract implementation \<close>
-
-text \<open> The naive implementation captures the main ideas. However, one would like to optimise 
-  for sets @{text p1}, @{text p2} and a label @{text a}. In the following, an explicit 
-  set of possible choices for @{text p2} and @{text a} is maintained. An element from this
-  set is chosen, all elements of the current partition processed and the set of possible choices
-  (the splitter set) updated.
-
-  For efficiency reasons, the splitter set should be as small as possible. The following lemma
-  guarantees that a possible choice that has been split can be replaced by both split
-  subsets.
-\<close>
-
 lemma split_language_equiv_partition_pred_split :
 assumes p2ab_union: "p2a \<union> p2b = p2"
     and part_pred_p2: "split_language_equiv_partition_pred \<A> p1 a p2"
@@ -1012,11 +935,6 @@ proof -
   qed
 qed
 
-text \<open>
-  More interestingly, if one already knows that there is no split according to a set @{text p2}
-  (as it is for example not in the set of splitters), then it is sufficient to consider only one
-  of its split components. 
-\<close>
 lemma (in DFA) split_language_equiv_partition_pred_split_neg :
 assumes p2ab_union: "p2a \<union> p2b = p2"
     and p2ab_dist: "p2a \<inter> p2b = {}"
@@ -1067,7 +985,6 @@ proof -
     by simp blast
 qed
 
-text \<open> If a set @text{p1} can be split, then each superset can be split as well. \<close> 
 lemma split_language_equiv_partition_pred___superset_p1:
 assumes split_pred: "split_language_equiv_partition_pred \<A> p1 a p2"
     and p1_sub: "p1 \<subseteq> p1'"
@@ -1090,9 +1007,6 @@ proof -
               p1ab_eq p1ab_eq'
     by auto
 qed
-
-
-subsubsection \<open> Splitting whole Partitions \<close>
 
 definition split_language_equiv_partition_set where
   "split_language_equiv_partition_set \<A> a p p' =
@@ -1475,8 +1389,6 @@ proof (rule ccontr)
 qed
 
 
-subsubsection \<open> Updating the set of Splitters \<close>
-
 definition Hopcroft_update_splitters_pred_aux_upper :: 
 "'a set \<Rightarrow> ('q set \<times> 'q set \<times> 'q set) set \<Rightarrow> ('q set) set \<Rightarrow>
     ('a \<times> 'q set) set \<Rightarrow> ('a \<times> 'q set) set \<Rightarrow> bool"
@@ -1750,8 +1662,6 @@ next
 qed
 
 
-subsubsection \<open> The abstract Algorithm \<close>
-
 definition Hopcroft_abstract_invar where
   "Hopcroft_abstract_invar \<A> = (\<lambda>(P, L). 
    is_weak_language_equiv_partition \<A> P \<and>
@@ -1856,12 +1766,6 @@ qed
 definition Hopcroft_abstract_variant where
   "Hopcroft_abstract_variant \<A> = (measure (\<lambda>P. card (\<Q> \<A>) - card P)) <*lex*> (measure card)"
 
-   
-
-subsection \<open> Implementing step \<close>
-
-text\<open> Above the next state of the loop was acquired using a specification. Now, let's refine this
-specification with an inner loop. \<close>
 
 definition Hopcroft_set_step_invar where
 "Hopcroft_set_step_invar \<A> p a P L P' \<sigma> = 
@@ -2199,5 +2103,33 @@ lemma Hopcroft_splitted_aux:"(B, B', B'') \<in> Hopcroft_splitted \<A> C b {} P 
 lemma conj_commute1:
   "(P \<and> Q) \<Longrightarrow> (Q \<and> P)"
   by simp
+
+lemma (in DFA) split_is_partition:
+  assumes "Hopcroft_abstract_invar \<A> (P, L)" "a \<in> \<Sigma> \<A>" "(a, C) \<in> L"
+  shows "is_partition (\<Q> \<A>) (Hopcroft_split \<A> C a {} P)"
+proof-
+  have "is_weak_language_equiv_partition \<A> ({} \<union> P)" "is_weak_language_equiv_set \<A> C" "a \<in> \<Sigma> \<A>" "{} \<inter> P = {}"
+    using assms(2) unfolding Hopcroft_abstract_invar_def
+       apply simp
+    using assms
+    unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
+       apply simp
+    using assms
+    unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
+      apply (metis (mono_tags, lifting) case_prodD snd_conv)
+    apply (simp add: assms)+
+    done
+  note hyps=this
+  from DFA.Hopcroft_split_correct(1)[OF DFA_axioms hyps]
+  show ?thesis
+    unfolding is_weak_language_equiv_partition_def
+    by simp
+qed
+
+definition unique_pred where
+  "unique_pred x P \<equiv> P x \<and> (\<forall>y. P y \<longrightarrow> y = x)"
+
+lemma unique_pred_correct:"(unique_pred x P) \<longleftrightarrow> (\<exists>! y. P y \<and> x = (THE y. P y))"
+  by (standard; metis the_equality unique_pred_def)+
 
 end
