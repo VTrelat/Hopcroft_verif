@@ -118,6 +118,13 @@ definition split_pred where
       (\<exists> q2'. (q2, a, q2') \<in> \<Delta> \<A> \<and> q2' \<notin> C)) \<and>
     ((B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P \<or> (B, B'', B') \<in> Hopcroft_splitted \<A> C a {} P)"
 
+lemma split_disj_union:
+  assumes "P' = Hopcroft_split \<A> C a {} P" "is_partition (\<Q> \<A>) P" "split_pred \<A> P B a C B' B''"
+  shows "B = B' \<union> B''" "B' \<inter> B'' = {}"
+  using assms Hopcroft_splitted_aux[of B _ _ \<A> C a P]
+  unfolding split_pred_def Hopcroft_splitted_def
+  by blast+
+
 lemma (in DFA) split_block_in_partition_prop1:
   assumes "P' = Hopcroft_split \<A> C a {} P" "is_partition (\<Q> \<A>) P"
   shows "(B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P \<or> (B, B'', B') \<in> Hopcroft_splitted \<A> C a {} P \<Longrightarrow> B' \<in> P' \<and> B'' \<in> P' \<and> B \<notin> P'"
@@ -253,9 +260,6 @@ proof (rule SMT.verit_and_neg(3))
   qed
 qed
 
-definition unique_pred where
-  "unique_pred x P \<equiv> P x \<and> (\<forall>y. P y \<longrightarrow> y = x)"
-
 lemma estimate1_decrease:
   fixes \<A> :: "('q,'a, 'DFA_more) NFA_rec_scheme"
     and P :: "'q set set"
@@ -271,22 +275,6 @@ lemma estimate1_decrease:
 proof-
   let ?Lc = "\<Sigma> \<A> \<times> P - L"
   let ?Lc' = "\<Sigma> \<A> \<times> P' - L'"
-
-  have part:"is_partition (\<Q> \<A>) P'"
-        proof-
-          have "is_weak_language_equiv_partition \<A> ({} \<union> P)" "is_weak_language_equiv_set \<A> C" "a \<in> \<Sigma> \<A>" "{} \<inter> P = {}"
-            using assms(5) unfolding Hopcroft_abstract_invar_def
-               apply simp
-            using assms(5) assms(8)
-            unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
-              apply (metis (mono_tags, lifting) case_prodD snd_eqD)
-             apply (simp add: assms(9))
-            by simp
-          note hyps=this
-
-          from HOL.conjunct1[OF DFA.Hopcroft_split_correct(1)[OF assms(2) hyps, simplified P'_def[symmetric] is_weak_language_equiv_partition_def]]
-          show ?thesis .
-        qed
 
   {
     fix \<sigma>::'a and q::'q and B::"'q set" and B'::"'q set"
@@ -329,27 +317,49 @@ proof-
 
       show "\<exists>! B'. q \<in> B' \<and> (\<sigma>, B') \<in> ?Lc'"
       proof-
-        from part asm(4) \<open>q \<in> \<Q> \<A>\<close> have "\<exists>! B'. q\<in>B' \<and> B'\<in>P'"
-          unfolding is_partition_def by blast
+        from DFA.split_is_partition[OF assms(2) assms(5) assms(9) assms(8)] asm(4) \<open>q \<in> \<Q> \<A>\<close> have "\<exists>! B'. q\<in>B' \<and> B'\<in>P'"
+          unfolding is_partition_def P'_def
+          by blast
         then show ?thesis
           using nonsplitter part_disj_workset
           by auto
       qed
     qed
     
-    from uniqueBB' have
+    from uniqueBB' have uniqueBB'_aux:
       "unique_pred B (\<lambda>p. q \<in> p \<and> (\<sigma>, p) \<in> ?Lc)" (* B = THE B. (\<sigma>, B) \<in> ?Lc \<and> q \<in> B *)
       "unique_pred B' (\<lambda>p. q \<in> p \<and> (\<sigma>, p) \<in> ?Lc')"
       unfolding unique_pred_def
       using asm(3,4) aq_splitter_unique[OF _ \<open>q \<in> \<Q> \<A>\<close> \<open>\<sigma> \<in> \<Sigma> \<A>\<close>] assms(5)
       unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
        apply auto[1]
-      using aq_splitter_unique[OF part \<open>q \<in> \<Q> \<A>\<close> \<open>\<sigma> \<in> \<Sigma> \<A>\<close>] asm(4) uniqueBB'(2) by blast
+      using aq_splitter_unique[OF DFA.split_is_partition[OF assms(2) assms(5) assms(9) assms(8)] \<open>q \<in> \<Q> \<A>\<close> \<open>\<sigma> \<in> \<Sigma> \<A>\<close>] asm(4) uniqueBB'(2)
+      unfolding P'_def by blast
 
-    have "B = B' \<or> (\<exists> B'' aa CC. B = B' \<union> B'' \<and> B' \<inter> B'' = {} \<and> card B'' \<le> card B' \<and> (\<sigma>, B'') \<in> L \<and> (\<sigma>, B') \<in> ?Lc' \<and> (B, B', B'') \<in> Hopcroft_splitted \<A> CC aa {} P)"
-    proof (cases "")
-      (* The proof should examine wether B is split or not *)
-      show ?thesis sorry
+    have "B = B' \<or> (\<exists> B'' aa CC. B = B' \<union> B'' \<and> B' \<inter> B'' = {} \<and> card B'' \<le> card B' \<and> (\<sigma>, B'') \<in> L' \<and> (\<sigma>, B') \<in> ?Lc' \<and> split_pred \<A> P B aa CC B' B'')"
+    proof (cases "\<exists> B'' aa CC. split_pred \<A> P B aa CC B' B''") \<comment>\<open>The proof should examine wether B is split or not\<close>
+      case True
+      then obtain B'' aa CC where pred:"split_pred \<A> P B aa CC B' B''"
+        by blast
+      then have "B \<noteq> B''"
+        using DFA.split_block_in_partition_prop2[OF assms(2) pred assms(5)]
+        by blast
+      then show ?thesis
+      proof-
+        have "B = B' \<union> B''" "B' \<inter> B'' = {}"
+          using case_prodD[OF assms(5)[simplified Hopcroft_abstract_invar_def]]
+          unfolding is_weak_language_equiv_partition_def
+          using pred split_disj_union
+          by meson+
+        from uniqueBB'_aux(2) have "(\<sigma>, B') \<in> ?Lc'"
+          unfolding unique_pred_def
+          by blast
+        show ?thesis
+          sorry
+      qed
+    next
+      case False
+      then show ?thesis sorry
     qed
   }
 
