@@ -9,7 +9,6 @@ theory Hopcroft_Time
   imports
     "Isabelle_LLVM_Time.NREST_Main"
     Hopcroft_Thms
-    "HOL-Library.Discrete"
 begin
 
 
@@ -258,6 +257,71 @@ proof (rule SMT.verit_and_neg(3))
         by fastforce
     qed
   qed
+qed
+
+lemma (in DFA) preds_disj_eq:
+  assumes "split_pred \<A> P B a C B' B''" "is_partition (\<Q> \<A>) P" "a \<in> \<Sigma> \<A>"
+  shows
+    "preds \<A> a B = preds \<A> a B' \<union> preds \<A> a B''"
+    "preds \<A> a B' \<inter> preds \<A> a B'' = {}"
+proof-
+  have B_eq:"B = B' \<union> B''" "B' \<inter> B'' = {}"
+    using assms split_disj_union by meson+
+
+  have union:"preds \<A> a B' \<union> preds \<A> a B'' = {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> (q' \<in> B' \<or> q' \<in> B'')}"
+    unfolding preds_def
+    by blast
+
+  have inter:"preds \<A> a B' \<inter> preds \<A> a B'' = {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> (q' \<in> B' \<inter>B'')}"
+  proof-
+    have "preds \<A> a B' \<inter> preds \<A> a B'' = {q. \<exists>q' q''. (q, a, q') \<in> \<Delta> \<A> \<and> (q, a, q'') \<in> \<Delta> \<A> \<and> (q' \<in> B' \<and> q'' \<in> B'')}"
+      unfolding preds_def by blast
+    moreover have "\<dots> = {q. \<exists>q' q''. (q, a, q') \<in> \<Delta> \<A> \<and> (q, a, q'') \<in> \<Delta> \<A> \<and> q' = q'' \<and>(q' \<in> B' \<and> q'' \<in> B'')}"
+      using deterministic_LTS
+      unfolding LTS_is_deterministic_def
+      by blast
+    ultimately show ?thesis
+      by blast
+  qed
+
+  from B_eq(1) union show "preds \<A> a B = preds \<A> a B' \<union> preds \<A> a B''"
+    unfolding preds_def
+    by blast
+
+  from B_eq(2) inter show "preds \<A> a B' \<inter> preds \<A> a B'' = {}"
+    unfolding preds_def
+    by blast
+qed
+
+lemma (in DFA) log_ineq:
+  assumes "split_pred \<A> P B a C B' B''" "is_partition (\<Q> \<A>) P" "a \<in> \<Sigma> \<A>"
+  shows "card (preds \<A> a B) * Discrete.log (card B) \<ge> card (preds \<A> a B') * Discrete.log (card B') + card (preds \<A> a B'') * Discrete.log (card B'')"
+proof (intro discrete_log_ineqI)
+  have fin:"finite (preds \<A> a B')" "finite (preds \<A> a B'')"
+  proof-
+    have "preds \<A> a E \<subseteq> \<Q> \<A>" for E
+      unfolding preds_def
+      using \<Delta>_consistent by blast
+    from rev_finite_subset[OF finite_\<Q> this, of B'] rev_finite_subset[OF finite_\<Q> this, of B'']
+    show "finite (preds \<A> a B')" "finite (preds \<A> a B'')" .
+  qed
+
+  from card_Un_Int[OF fin, simplified preds_disj_eq(1)[symmetric, OF assms] preds_disj_eq(2)[OF assms] Finite_Set.card.empty nat_arith.rule0[symmetric]]
+  show "card (preds \<A> a B') + card (preds \<A> a B'') = card (preds \<A> a B)" .
+
+  note incl =
+    Un_upper1[of B' B'', simplified card_Un_Int split_disj_union(1)[OF _ assms(2,1), simplified, symmetric]]
+    Un_upper2[of B'' B', simplified card_Un_Int split_disj_union(1)[OF _ assms(2,1), simplified, symmetric]]
+  note fin =
+    finite_subset[OF incl(1) is_partition_memb_finite[OF finite_\<Q> assms(2) conjunct1[OF assms(1)[simplified split_pred_def]]]]
+    finite_subset[OF incl(2) is_partition_memb_finite[OF finite_\<Q> assms(2) conjunct1[OF assms(1)[simplified split_pred_def]]]]
+  from
+    card_Un_Int[OF fin,
+      simplified split_disj_union(1)[OF _ assms(2,1), simplified, symmetric]
+                 split_disj_union(2)[OF _ assms(2,1), simplified]
+                 Finite_Set.card.empty
+                 nat_arith.rule0[symmetric]]
+  show "card B' + card B'' = card B" .
 qed
 
 lemma estimate1_decrease:
