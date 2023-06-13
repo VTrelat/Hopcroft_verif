@@ -1,5 +1,5 @@
 theory Hopcroft_Thms
-imports Main DFA Partition 
+imports Main DFA Partition "HOL-Library.Discrete"
 begin
 
 lemma merge_is_minimal :
@@ -2131,5 +2131,19 @@ definition unique_pred where
 
 lemma unique_pred_correct:"(unique_pred x P) \<longleftrightarrow> (\<exists>! y. P y \<and> x = (THE y. P y))"
   by (standard; metis the_equality unique_pred_def)+
+
+lemma discrete_log_ineq:"(a+b) * Discrete.log (x+y) \<ge> a * Discrete.log x + b * Discrete.log y"
+proof-
+  have "?thesis \<longleftrightarrow> a * Discrete.log(x+y) + b * Discrete.log(x+y) \<ge> a * Discrete.log x + b * Discrete.log y"
+    by (simp add: algebra_simps)
+  moreover have "Discrete.log(x+y) \<ge> Discrete.log x" "Discrete.log(x+y) \<ge> Discrete.log y"
+    by (simp add: Discrete.log_le_iff)+
+  ultimately show ?thesis
+    by (simp add: add_mono)
+qed
+
+lemma discrete_log_ineqI:
+  "\<lbrakk>A+B=AB; C+D=CD\<rbrakk> \<Longrightarrow> AB * Discrete.log CD \<ge> A * Discrete.log C + B * Discrete.log D"
+  using discrete_log_ineq[of A C B D] by simp
 
 end
