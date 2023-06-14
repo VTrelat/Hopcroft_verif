@@ -2146,4 +2146,22 @@ lemma discrete_log_ineqI:
   "\<lbrakk>A+B=AB; C+D=CD\<rbrakk> \<Longrightarrow> AB * Discrete.log CD \<ge> A * Discrete.log C + B * Discrete.log D"
   using discrete_log_ineq[of A C B D] by simp
 
+lemma sum_list_conc_distr:"xs = ys @ zs \<Longrightarrow> (\<Sum>x\<leftarrow>xs. f x) = (\<Sum>x\<leftarrow>ys. f x) + (\<Sum>x\<leftarrow>zs. f x)"
+  by (induction xs) simp+
+
+lemma "\<exists> ys zs. set xs = (set ys) \<union> (set zs) \<and> (\<forall> e \<in> (set ys). P e) \<and> (\<forall> e \<in> (set zs). \<not> (P e))"
+  apply (induction xs)
+  apply simp
+  subgoal for a xs
+    apply (cases "P a")
+      apply (metis Un_insert_left list.set(2) set_ConsD)
+       apply (metis Un_insert_right insert_iff list.set(2))
+    done
+  done
+
+lemma permutation_split_prop:
+  assumes "finite A"
+  shows "\<exists> f xs ys zs. bij f \<and> sorted_key_list_of_set f A = xs \<and> xs = ys @ zs \<and> (\<forall> e \<in> (set ys). P e) \<and> (\<forall> e \<in> (set zs). \<not> (P e))"
+  sorry
+
 end
