@@ -324,6 +324,86 @@ proof (intro discrete_log_ineqI)
   show "card B' + card B'' = card B" .
 qed
 
+(* definition "estimate2 \<A> \<equiv> \<lambda>(P,L).
+  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Discrete.log (card (snd s))) | s. fst s \<in> \<Sigma> \<A> \<and> snd s \<in> P}" *)
+definition "estimate2 \<A> f \<equiv> \<lambda>(P,L).
+  let xs = sorted_key_list_of_set f (\<Sigma> \<A> \<times> P)
+  in \<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"
+
+lemma (in DFA) estimate2_decrease:
+  assumes "P' = Hopcroft_split \<A> C a {} P" "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}"
+  "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
+  "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
+  "a \<in> \<Sigma> \<A>" "bij f"\<comment>\<open>f is a bijection that allows us to collect splitters in a list. It can be obtained from theorem ex_bij_betw_finite_nat\<close>
+  shows "estimate2 \<A> f (P', L') \<le> estimate2 \<A> f (P,L)"
+proof-
+  let ?S = "P \<inter> P'"\<comment>\<open>Set of blocks remained unchanged\<close>
+  let ?P1 = "P - ?S"\<comment>\<open>Set of blocks that will be split\<close>
+  let ?P1'= "P' - ?S"\<comment>\<open>Set of split blocks (unordered)\<close>
+  note is_partition_P = conjunct1[OF conjunct1[OF case_prodD[OF assms(5)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]]]]
+  note block_cases = DFA.Hopcroft_split_in2[OF assms(2) conjunct1[OF conjunct1[OF case_prodD[OF assms(5)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]]]] assms(9), of _ C, simplified assms(1)[symmetric]]
+
+  have "B \<in> ?P1 \<Longrightarrow> (\<exists> B' B''. B' \<in> ?P1' \<and> B'' \<in> ?P1' \<and> (B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P)" for B
+    \<comment>\<open>A block in the set of blocks that are going to be split is actually
+       split in two blocks that are in the set of split blocks\<close>
+  proof-
+    assume "B \<in> ?P1"
+    then have "B \<notin> P'" by blast
+
+    have conj:"(B \<notin> P \<or> (\<exists>pa pb. (B, pa, pb) \<in> Hopcroft_splitted \<A> C a {} P)) \<and> ((\<forall>p1 p1a p1b. (p1, p1a, p1b) \<notin> Hopcroft_splitted \<A> C a {} P \<or> (B \<noteq> p1a \<and> B \<noteq> p1b)))"
+    proof-
+      from block_cases[of B] have "B \<notin> P' \<longleftrightarrow> ((B \<notin> P \<or> (\<exists>pa pb. (B, pa, pb) \<in> Hopcroft_splitted \<A> C a {} P)) \<and> ((\<forall>p1 p1a p1b. (p1, p1a, p1b) \<notin> Hopcroft_splitted \<A> C a {} P \<or> (B \<noteq> p1a \<and> B \<noteq> p1b))))"
+        by presburger
+      with \<open>B \<notin> P'\<close> show ?thesis
+        by fast
+    qed
+
+    from conjunct1[OF conj] \<open>B \<in> ?P1\<close> obtain B' B'' where split:"(B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P"
+      by blast
+
+    with conjunct2[OF conj] have "B \<noteq> B' \<and> B \<noteq> B''"
+      by blast
+
+    have "B' \<in> P'" "B'' \<in> P'"
+      using DFA.split_block_in_partition_prop1[OF assms(2) assms(1) is_partition_P disjI1[OF split]]
+      by blast+
+
+    moreover have "B' \<in> ?P1'"
+    proof (rule ccontr)
+      assume "B' \<notin> ?P1'"
+      with \<open>B' \<in> P'\<close> have "B' \<in> P" by blast
+      moreover have "B \<inter> B' \<noteq> {}"
+        using Hopcroft_splitted_aux[OF split]
+        by simp
+      ultimately show False using is_partition_P unfolding is_partition_def
+        using \<open>B \<in> ?P1\<close> \<open>B \<noteq> B' \<and> B \<noteq> B''\<close> by blast 
+    qed
+
+    moreover have "B'' \<in> ?P1'"
+    proof (rule ccontr)
+      assume "B'' \<notin> ?P1'"
+      with \<open>B'' \<in> P'\<close> have "B'' \<in> P" by blast
+      moreover have "B \<inter> B'' \<noteq> {}"
+        using Hopcroft_splitted_aux[OF split]
+        by simp
+      ultimately show False using is_partition_P unfolding is_partition_def
+        using \<open>B \<in> ?P1\<close> \<open>B \<noteq> B' \<and> B \<noteq> B''\<close> by blast 
+    qed
+
+    ultimately show "\<exists>B' B''. B' \<in> ?P1' \<and> B'' \<in> ?P1' \<and> (B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P"
+      using split by blast
+  qed
+
+  let ?xs = "sorted_key_list_of_set f (\<Sigma> \<A> \<times> P)"
+  let ?xs1 = "sorted_key_list_of_set f (\<Sigma> \<A> \<times> ?P1)"
+  let ?xs2 = "sorted_key_list_of_set f (\<Sigma> \<A> \<times> ?S)"
+  
+  have "estimate2 \<A> f (P, L) =
+    (\<Sum>s\<leftarrow>?xs1. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))+
+    (\<Sum>s\<leftarrow>?xs2. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    unfolding estimate2_def
+    
+
 lemma estimate1_decrease:
   fixes \<A> :: "('q,'a, 'DFA_more) NFA_rec_scheme"
     and P :: "'q set set"
