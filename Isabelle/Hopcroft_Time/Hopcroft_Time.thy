@@ -326,7 +326,7 @@ qed
 
 (* definition "estimate2 \<A> \<equiv> \<lambda>(P,L).
   \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Discrete.log (card (snd s))) | s. fst s \<in> \<Sigma> \<A> \<and> snd s \<in> P}" *)
-definition "estimate2 \<A> f \<equiv> \<lambda>(P,L).
+definition "estimate2 \<A> \<equiv> \<lambda>(P,L) f.
   let xs = sorted_key_list_of_set f (\<Sigma> \<A> \<times> P)
   in \<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"
 
@@ -334,13 +334,15 @@ lemma (in DFA) estimate2_decrease:
   assumes "P' = Hopcroft_split \<A> C a {} P" "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}"
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
   "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
-  "a \<in> \<Sigma> \<A>" "bij f"\<comment>\<open>f is a bijection that allows us to collect splitters in a list. It can be obtained from theorem ex_bij_betw_finite_nat\<close>
-  shows "estimate2 \<A> f (P', L') \<le> estimate2 \<A> f (P,L)"
+  "a \<in> \<Sigma> \<A>"
+  shows "\<exists> f f'. estimate2 \<A> (P', L') f \<le> estimate2 \<A> (P,L) f' \<and> bij f \<and> bij f'"
+\<comment>\<open>f is a bijection (maybe use permutations?) that allows us to collect splitters in a list. It can be obtained from theorem ex_bij_betw_finite_nat\<close>
 proof-
   let ?S = "P \<inter> P'"\<comment>\<open>Set of blocks remained unchanged\<close>
   let ?P1 = "P - ?S"\<comment>\<open>Set of blocks that will be split\<close>
   let ?P1'= "P' - ?S"\<comment>\<open>Set of split blocks (unordered)\<close>
   note is_partition_P = conjunct1[OF conjunct1[OF case_prodD[OF assms(5)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]]]]
+  note is_partition_P'= split_is_partition[OF assms(5, 9, 8), simplified assms(1)[symmetric]]
   note block_cases = DFA.Hopcroft_split_in2[OF assms(2) conjunct1[OF conjunct1[OF case_prodD[OF assms(5)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]]]] assms(9), of _ C, simplified assms(1)[symmetric]]
 
   have "B \<in> ?P1 \<Longrightarrow> (\<exists> B' B''. B' \<in> ?P1' \<and> B'' \<in> ?P1' \<and> (B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P)" for B
@@ -394,15 +396,34 @@ proof-
       using split by blast
   qed
 
-  let ?xs = "sorted_key_list_of_set f (\<Sigma> \<A> \<times> P)"
-  let ?xs1 = "sorted_key_list_of_set f (\<Sigma> \<A> \<times> ?P1)"
-  let ?xs2 = "sorted_key_list_of_set f (\<Sigma> \<A> \<times> ?S)"
-  
-  have "estimate2 \<A> f (P, L) =
-    (\<Sum>s\<leftarrow>?xs1. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))+
-    (\<Sum>s\<leftarrow>?xs2. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+  from permutation_split_prop[OF finite_cartesian_product[OF finite_\<Sigma> is_partition_finite[OF finite_\<Q> is_partition_P]], of "\<lambda>x. snd x \<in> ?S"]
+  obtain f xs ys zs where const_def:"bij (f::'a \<times> 'q set \<Rightarrow> nat) \<and> sorted_key_list_of_set f (\<Sigma> \<A> \<times> P) = xs \<and> xs = ys @ zs \<and> (\<forall>e\<in>set ys. snd e \<in> P \<inter> P') \<and> (\<forall>e\<in>set zs. snd e \<notin> P \<inter> P')"
+    by blast
+
+  from permutation_split_prop[OF finite_cartesian_product[OF finite_\<Sigma> is_partition_finite[OF finite_\<Q> is_partition_P']], of "\<lambda>x. snd x \<in> ?S"]
+  obtain f' xs' ys' zs' where const'_def:"bij (f'::'a \<times> 'q set \<Rightarrow> nat) \<and> sorted_key_list_of_set f' (\<Sigma> \<A> \<times> P') = xs' \<and> xs' = ys' @ zs' \<and> (\<forall>e\<in>set ys'. snd e \<in> P \<inter> P') \<and> (\<forall>e\<in>set zs'. snd e \<notin> P \<inter> P')"
+    by blast
+
+  have "estimate2 \<A> (P, L) f =
+    (\<Sum>s\<leftarrow>ys. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))+
+    (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
     unfolding estimate2_def
-    
+    by (simp add: const_def)
+
+  have "estimate2 \<A> (P', L') f' =
+    (\<Sum>s\<leftarrow>ys'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))+
+    (\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    unfolding estimate2_def
+    by (simp add: const'_def)
+
+  have
+    "set ys = \<Sigma> \<A> \<times> ?S" "set zs = \<Sigma> \<A> \<times> ?P1"
+    "set ys' = \<Sigma> \<A> \<times> ?S" "set zs' = \<Sigma> \<A> \<times> ?P1'"
+    sorry
+
+  then have "ys = ys'"
+    sorry
+qed
 
 lemma estimate1_decrease:
   fixes \<A> :: "('q,'a, 'DFA_more) NFA_rec_scheme"
