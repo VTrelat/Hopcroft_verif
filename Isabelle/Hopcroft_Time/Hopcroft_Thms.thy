@@ -1,5 +1,5 @@
 theory Hopcroft_Thms
-imports Main DFA Partition "HOL-Library.Discrete"
+imports Main DFA Partition "HOL-Library.Discrete" "HOL-Combinatorics.List_Permutation"
 begin
 
 lemma merge_is_minimal :
@@ -2149,19 +2149,68 @@ lemma discrete_log_ineqI:
 lemma sum_list_conc_distr:"xs = ys @ zs \<Longrightarrow> (\<Sum>x\<leftarrow>xs. f x) = (\<Sum>x\<leftarrow>ys. f x) + (\<Sum>x\<leftarrow>zs. f x)"
   by (induction xs) simp+
 
-lemma "\<exists> ys zs. set xs = (set ys) \<union> (set zs) \<and> (\<forall> e \<in> (set ys). P e) \<and> (\<forall> e \<in> (set zs). \<not> (P e))"
-  apply (induction xs)
-  apply simp
-  subgoal for a xs
-    apply (cases "P a")
-      apply (metis Un_insert_left list.set(2) set_ConsD)
-       apply (metis Un_insert_right insert_iff list.set(2))
+abbreviation (input) ls_perm :: \<open>'a list \<Rightarrow> 'a set \<Rightarrow> bool\<close>  (infixr \<open><~~~>\<close> 50)
+  where \<open>xs <~~~> E \<equiv> (mset xs = mset_set E)\<close>
+
+lemma ls_perm_nempty_perm_finite:"\<exists> xs. (xs <~~~> E) \<and> xs \<noteq> [] \<Longrightarrow> finite E"
+proof-
+  assume "\<exists> xs. (xs <~~~> E) \<and> xs \<noteq> []"
+  then obtain xs where xs_def:"xs <~~~> E" "xs \<noteq> []"
+    by blast
+
+  then have "finite (set xs)"
+    by blast
+
+  {
+    assume "\<not> finite E"
+    then have "mset_set E = {#}" by simp
+
+    with \<open>finite (set xs)\<close> xs_def obtain x where "x \<in># mset_set E" "\<not> (x \<in># mset xs)"
+      by simp
+    with xs_def(1) have False
+      by presburger
+  }
+  then show ?thesis by blast
+qed
+
+lemma ls_perm_split_prop: "finite E \<Longrightarrow> \<exists> xs ys zs. xs <~~~> E \<and> xs = ys @ zs \<and> (\<forall>e \<in> set ys. P e) \<and> (\<forall>e \<in> set zs. \<not> P e)"
+proof-
+  assume finE:"finite E"
+  obtain ys zs where yszs_def:"ys <~~~> {x \<in> E. P x}" "zs <~~~> {x \<in> E. \<not> P x}"
+    using ex_mset by blast
+  define xs where "xs \<equiv> ys @ zs"
+
+  have "xs <~~~> E"
+  proof-
+    have "E = {x \<in> E. P x} \<union> {x \<in> E. \<not> P x}" "{x \<in> E. P x} \<inter> {x \<in> E. \<not> P x} = {}"
+      by blast+
+
+    with mset_set_Union[of "{x \<in> E. P x}" "{x \<in> E. \<not> P x}" ] finE finite_Un[of "{x \<in> E. P x}" "{x \<in> E. \<not> P x}", simplified this(1)[symmetric]]
+    have "mset_set E = mset_set {x \<in> E. P x} + mset_set {x \<in> E. \<not> P x}"
+      by fastforce
+
+    moreover
+    from xs_def have "mset xs = mset ys + mset zs" by simp
+
+    moreover have "\<dots> = mset_set {x \<in> E. P x} + mset_set {x \<in> E. \<not> P x}"
+      using yszs_def by argo
+
+    ultimately show ?thesis
+      by argo
+  qed
+
+  moreover from yszs_def have "e\<in>set ys \<Longrightarrow> P e" "e\<in>set zs \<Longrightarrow> \<not> P e" for e
+     (* @TODO: find a better proof, this is easy *)
+     apply (metis (no_types, lifting) count_mset_0_iff count_mset_set(3) mem_Collect_eq)+
     done
+  
+  ultimately show ?thesis
+    using yszs_def xs_def by blast
+qed
+
+lemma ls_perm_set_eq:"finite E \<Longrightarrow> xs <~~~> E \<Longrightarrow> set xs = E"
+  (* @TODO: find a better proof, this is easy *)
+  apply standard
+  apply (metis order_eq_iff finite_set_mset_mset_set set_mset_mset)+
   done
-
-lemma permutation_split_prop:
-  assumes "finite A"
-  shows "\<exists> f xs ys zs. bij f \<and> sorted_key_list_of_set f A = xs \<and> xs = ys @ zs \<and> (\<forall> e \<in> (set ys). P e) \<and> (\<forall> e \<in> (set zs). \<not> (P e))"
-  sorry
-
 end
