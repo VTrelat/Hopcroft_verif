@@ -9,6 +9,7 @@ theory Hopcroft_Time
   imports
     "Isabelle_LLVM_Time.NREST_Main"
     Hopcroft_Thms
+    "HOL-Combinatorics.Permutations"
 begin
 
 
@@ -326,16 +327,17 @@ qed
 
 (* definition "estimate2 \<A> \<equiv> \<lambda>(P,L).
   \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Discrete.log (card (snd s))) | s. fst s \<in> \<Sigma> \<A> \<and> snd s \<in> P}" *)
-definition "estimate2 \<A> \<equiv> \<lambda>(P,L) f.
-  let xs = sorted_key_list_of_set f (\<Sigma> \<A> \<times> P)
-  in \<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"
+definition "estimate2 \<A> \<equiv> \<lambda>(P,L) xs.
+  if (xs <~~~> (\<Sigma> \<A> \<times> P)) then 
+    \<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))
+  else undefined"
 
 lemma (in DFA) estimate2_decrease:
   assumes "P' = Hopcroft_split \<A> C a {} P" "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}"
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
   "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
   "a \<in> \<Sigma> \<A>"
-  shows "\<exists> f f'. estimate2 \<A> (P', L') f \<le> estimate2 \<A> (P,L) f' \<and> bij f \<and> bij f'"
+  shows "estimate2 \<A> (P', L') \<le> estimate2 \<A> (P,L)"
 \<comment>\<open>f is a bijection (maybe use permutations?) that allows us to collect splitters in a list. It can be obtained from theorem ex_bij_betw_finite_nat\<close>
 proof-
   let ?S = "P \<inter> P'"\<comment>\<open>Set of blocks remained unchanged\<close>
@@ -396,30 +398,52 @@ proof-
       using split by blast
   qed
 
-  from permutation_split_prop[OF finite_cartesian_product[OF finite_\<Sigma> is_partition_finite[OF finite_\<Q> is_partition_P]], of "\<lambda>x. snd x \<in> ?S"]
-  obtain f xs ys zs where const_def:"bij (f::'a \<times> 'q set \<Rightarrow> nat) \<and> sorted_key_list_of_set f (\<Sigma> \<A> \<times> P) = xs \<and> xs = ys @ zs \<and> (\<forall>e\<in>set ys. snd e \<in> P \<inter> P') \<and> (\<forall>e\<in>set zs. snd e \<notin> P \<inter> P')"
-    by blast
+  note fin\<Sigma>P = finite_cartesian_product[OF finite_\<Sigma> is_partition_finite[OF finite_\<Q> is_partition_P]]
+  note fin\<Sigma>P'= finite_cartesian_product[OF finite_\<Sigma> is_partition_finite[OF finite_\<Q> is_partition_P']]
 
-  from permutation_split_prop[OF finite_cartesian_product[OF finite_\<Sigma> is_partition_finite[OF finite_\<Q> is_partition_P']], of "\<lambda>x. snd x \<in> ?S"]
-  obtain f' xs' ys' zs' where const'_def:"bij (f'::'a \<times> 'q set \<Rightarrow> nat) \<and> sorted_key_list_of_set f' (\<Sigma> \<A> \<times> P') = xs' \<and> xs' = ys' @ zs' \<and> (\<forall>e\<in>set ys'. snd e \<in> P \<inter> P') \<and> (\<forall>e\<in>set zs'. snd e \<notin> P \<inter> P')"
-    by blast
+  obtain xs ys zs where split_xs:
+    "xs = ys @ zs"
+    "\<forall> e \<in> set ys. snd e \<in> ?S" "\<forall> e \<in> set zs. snd e \<notin> ?S"
+    "xs <~~~> \<Sigma> \<A> \<times> P"
+    "estimate2 \<A> (P, L) xs = (\<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    unfolding estimate2_def
+    using ls_perm_split_prop[OF fin\<Sigma>P, of "\<lambda>s. snd s \<in> ?S"]
+    by clarsimp
 
-  have "estimate2 \<A> (P, L) f =
+  obtain xs' ys' zs' where split_xs':
+    "xs' = ys' @ zs'"
+    "\<forall> e \<in> set ys'. snd e \<in> ?S" "\<forall> e \<in> set zs'. snd e \<notin> ?S"
+    "xs' <~~~> \<Sigma> \<A> \<times> P'"
+    "estimate2 \<A> (P', L') xs' = (\<Sum>s\<leftarrow>xs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    unfolding estimate2_def
+    using ls_perm_split_prop[OF fin\<Sigma>P', of "\<lambda>s. snd s \<in> ?S"]
+    by clarsimp
+
+  have "estimate2 \<A> (P, L) xs =
     (\<Sum>s\<leftarrow>ys. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))+
     (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
     unfolding estimate2_def
-    by (simp add: const_def)
+    using split_xs(4) sum_list_conc_distr[OF split_xs(1), of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
+    by simp
 
-  have "estimate2 \<A> (P', L') f' =
+  have "estimate2 \<A> (P', L') xs' =
     (\<Sum>s\<leftarrow>ys'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))+
     (\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
     unfolding estimate2_def
-    by (simp add: const'_def)
+    using split_xs'(4) sum_list_conc_distr[OF split_xs'(1), of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
+    by simp
+
+  have fst_ys:"e \<in> set ys \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
+    using set_append[of ys zs, simplified split_xs(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)]]
+    by (metis SigmaD1 UnI1 prod.exhaust_sel)
+
+  have fst_ys':"e \<in> set ys' \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
+    using set_append[of ys' zs', simplified split_xs'(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)]]
+    by (metis SigmaD1 UnI1 prod.exhaust_sel)
 
   have
     "set ys = \<Sigma> \<A> \<times> ?S" "set zs = \<Sigma> \<A> \<times> ?P1"
     "set ys' = \<Sigma> \<A> \<times> ?S" "set zs' = \<Sigma> \<A> \<times> ?P1'"
-    sorry
 
   then have "ys = ys'"
     sorry
@@ -437,6 +461,7 @@ lemma estimate1_decrease:
   "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
   "a \<in> \<Sigma> \<A>"
   shows "estimate1 \<A> (P', L') \<le> estimate1 \<A> (P,L)"
+\<comment>\<open>WARNING: incorrect definition of estimate1 (via sets, should be done with lists and permutations) plus too hard to prove\<close>
 proof-
   let ?Lc = "\<Sigma> \<A> \<times> P - L"
   let ?Lc' = "\<Sigma> \<A> \<times> P' - L'"
