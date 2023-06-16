@@ -2149,6 +2149,9 @@ lemma discrete_log_ineqI:
 lemma sum_list_conc_distr:"xs = ys @ zs \<Longrightarrow> (\<Sum>x\<leftarrow>xs. f x) = (\<Sum>x\<leftarrow>ys. f x) + (\<Sum>x\<leftarrow>zs. f x)"
   by (induction xs) simp+
 
+lemma mset_eq_sum_list_eq: "mset xs = mset ys \<Longrightarrow> (\<Sum>x\<leftarrow>xs. (f::'a \<Rightarrow> 'b::comm_monoid_add) x) = (\<Sum>x\<leftarrow>ys. f x)"
+  using mset_map[where f=f] sum_mset_sum_list by metis
+
 abbreviation (input) ls_perm :: \<open>'a list \<Rightarrow> 'a set \<Rightarrow> bool\<close>  (infixr \<open><~~~>\<close> 50)
   where \<open>xs <~~~> E \<equiv> (mset xs = mset_set E)\<close>
 
