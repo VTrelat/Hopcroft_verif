@@ -436,17 +436,135 @@ proof-
   have fst_ys:"e \<in> set ys \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
     using set_append[of ys zs, simplified split_xs(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)]]
     by (metis SigmaD1 UnI1 prod.exhaust_sel)
+  have fst_zs:"e \<in> set zs \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
+    using set_append[of ys zs, simplified split_xs(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)]]
+    by (metis SigmaD1 UnI2 prod.exhaust_sel)
 
   have fst_ys':"e \<in> set ys' \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
     using set_append[of ys' zs', simplified split_xs'(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)]]
     by (metis SigmaD1 UnI1 prod.exhaust_sel)
+  have fst_zs':"e \<in> set zs' \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
+    using set_append[of ys' zs', simplified split_xs'(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)]]
+    by (metis SigmaD1 UnI2 prod.exhaust_sel)
 
   have
     "set ys = \<Sigma> \<A> \<times> ?S" "set zs = \<Sigma> \<A> \<times> ?P1"
     "set ys' = \<Sigma> \<A> \<times> ?S" "set zs' = \<Sigma> \<A> \<times> ?P1'"
+  proof-
+    show "set ys = \<Sigma> \<A> \<times> ?S"
+    proof
+      show "\<Sigma> \<A> \<times> ?S \<subseteq> set ys"
+      proof
+        fix s
+        assume asm:"s \<in> \<Sigma> \<A> \<times> ?S" 
+        then obtain \<sigma> E where s_split:"s = (\<sigma>, E)" by blast
+        with asm have "\<sigma> \<in> \<Sigma> \<A>" "E \<in> ?S"
+          by blast+
+        from asm ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)] have "s \<in> set xs"
+          by blast
+        with split_xs show "s \<in> set ys"
+          using \<open>E \<in> ?S\<close> s_split by auto
+      qed
+    qed (insert fst_ys in_prod_fst_sndI split_xs(2), blast)
 
-  then have "ys = ys'"
-    sorry
+    show "set zs = \<Sigma> \<A> \<times> ?P1"
+    proof
+      show "set zs \<subseteq> \<Sigma> \<A> \<times> ?P1"
+      proof
+        fix s
+        assume asm:"s \<in> set zs"
+        with fst_zs split_xs obtain \<sigma> E where zs_split:"s = (\<sigma>, E)" "\<sigma> \<in> \<Sigma> \<A>" "E \<notin> ?S"
+          using prod.exhaust_sel by blast
+        have "E \<in> P"
+        proof-
+          from split_xs(1) asm have "s \<in> set xs" by simp
+          with ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)] zs_split
+          show ?thesis by blast
+        qed
+        with zs_split show "s \<in> \<Sigma> \<A> \<times> ?P1"
+          by blast
+      qed
+
+      show "\<Sigma> \<A> \<times> ?P1 \<subseteq> set zs"
+      proof
+        fix s
+        assume asm:"s \<in> \<Sigma> \<A> \<times> ?P1"
+        then obtain \<sigma> E where "s = (\<sigma>, E)" by blast
+        then show "s \<in> set zs"
+          using \<open>set ys = \<Sigma> \<A> \<times> ?S\<close> asm ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)] set_append[of ys zs] split_xs(1)
+          by blast
+      qed
+    qed
+
+    show "set ys' = \<Sigma> \<A> \<times> ?S"
+    proof
+      show "\<Sigma> \<A> \<times> ?S \<subseteq> set ys'"
+      proof
+        fix s
+        assume asm:"s \<in> \<Sigma> \<A> \<times> ?S" 
+        then obtain \<sigma> E where s_split:"s = (\<sigma>, E)" by blast
+        with asm have "\<sigma> \<in> \<Sigma> \<A>" "E \<in> ?S"
+          by blast+
+        from asm ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] have "s \<in> set xs'"
+          by blast
+        with split_xs' show "s \<in> set ys'"
+          using \<open>E \<in> ?S\<close> s_split by auto
+      qed
+    qed (insert fst_ys' in_prod_fst_sndI split_xs'(2), blast)
+
+    show "set zs' = \<Sigma> \<A> \<times> ?P1'"
+    proof
+      show "set zs' \<subseteq> \<Sigma> \<A> \<times> ?P1'"
+      proof
+        fix s
+        assume asm:"s \<in> set zs'"
+        with fst_zs' split_xs' obtain \<sigma> E where zs'_split:"s = (\<sigma>, E)" "\<sigma> \<in> \<Sigma> \<A>" "E \<notin> ?S"
+          using prod.exhaust_sel by blast
+        have "E \<in> P'"
+        proof-
+          from split_xs'(1) asm have "s \<in> set xs'" by simp
+          with ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] zs'_split
+          show ?thesis by blast
+        qed
+        with zs'_split show "s \<in> \<Sigma> \<A> \<times> ?P1'"
+          by blast
+      qed
+
+      show "\<Sigma> \<A> \<times> ?P1' \<subseteq> set zs'"
+      proof
+        fix s
+        assume asm:"s \<in> \<Sigma> \<A> \<times> ?P1'"
+        then obtain \<sigma> E where "s = (\<sigma>, E)" by blast
+        then show "s \<in> set zs'"
+          using \<open>set ys' = \<Sigma> \<A> \<times> ?S\<close> asm ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] set_append[of ys' zs'] split_xs'(1)
+          by blast
+      qed
+    qed
+  qed
+  note ys_ys'_set_eq = this(1)[simplified this(3)[symmetric]]
+
+  have distinct:
+    "distinct xs" "distinct ys" "distinct zs"
+    "distinct xs'" "distinct ys'" "distinct zs'"
+    using distinct_append[of ys zs] finite_distinct_list[OF fin\<Sigma>P] mset_set_set perm_distinct_iff split_xs(1) split_xs(4)
+    using distinct_append[of ys' zs'] finite_distinct_list[OF fin\<Sigma>P'] split_xs'(1) split_xs'(4)
+    by metis+
+
+  have ys_ys'_mset_eq: "mset ys = mset ys'"
+    using mset_set_set[OF distinct(2)] mset_set_set[OF distinct(5)] ys_ys'_set_eq
+    by argo
+
+  have "estimate2 \<A> (P, L) xs \<le> estimate2 \<A> (P', L') xs'"
+  proof-
+    have sum_ys_ys'_eq:"(\<Sum>s\<leftarrow>ys. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) = (\<Sum>s\<leftarrow>ys'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+      using mset_eq_sum_list_eq[OF ys_ys'_mset_eq, of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"] .
+
+    show ?thesis
+      unfolding estimate2_def
+      apply (simp add: split_xs(4) split_xs'(4))
+      apply (simp add: sum_list_conc_distr[OF split_xs(1)] sum_list_conc_distr[OF split_xs'(1)])
+      apply (simp add: sum_ys_ys'_eq)
+  qed
 qed
 
 lemma estimate1_decrease:
