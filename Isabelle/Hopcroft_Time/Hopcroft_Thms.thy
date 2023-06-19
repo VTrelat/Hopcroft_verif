@@ -2087,10 +2087,10 @@ proof -
 qed
 
 lemma Hopcroft_set_step_correct_aux4 :
-assumes invar: "Hopcroft_set_step_invar \<A> p a P L {} (P'', L'')"
+assumes invar: "Hopcroft_set_step_invar \<A> p a P L {} (P', L')"
 shows "Hopcroft_update_splitters_pred_aux (\<Sigma> \<A>) (Hopcroft_splitted \<A> p a {} P) P
-        (L - {(a, p)}) L'' \<and>
-       P'' = Hopcroft_split \<A> p a {} P"
+        (L - {(a, p)}) L' \<and>
+       P' = Hopcroft_split \<A> p a {} P"
 using invar
 unfolding Hopcroft_set_step_invar_def
   by simp
@@ -2131,6 +2131,9 @@ definition unique_pred where
 
 lemma unique_pred_correct:"(unique_pred x P) \<longleftrightarrow> (\<exists>! y. P y \<and> x = (THE y. P y))"
   by (standard; metis the_equality unique_pred_def)+
+
+lemma ex1_ex1I:"\<lbrakk>P x y; \<And>x' y'. P x' y' \<Longrightarrow> x = x' \<and> y = y'\<rbrakk> \<Longrightarrow> \<exists>! x. \<exists>! y. P x y"
+  by (intro ex1I, blast+)
 
 lemma discrete_log_ineq:"(a+b) * Discrete.log (x+y) \<ge> a * Discrete.log x + b * Discrete.log y"
 proof-
