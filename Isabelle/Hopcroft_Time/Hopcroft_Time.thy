@@ -118,6 +118,49 @@ definition split_pred where
       (\<exists> q2'. (q2, a, q2') \<in> \<Delta> \<A> \<and> q2' \<notin> C)) \<and>
     ((B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P \<or> (B, B'', B') \<in> Hopcroft_splitted \<A> C a {} P)"
 
+lemma split_pred_sym:"split_pred \<A> P B a C B' B'' = split_pred \<A> P B a C B'' B'"
+  unfolding split_pred_def by blast
+
+lemma (in DFA) Hopcroft_splitted_split_pred:
+  assumes "is_partition (\<Q> \<A>) P" "(B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P"
+  shows "split_pred \<A> P B a C B' B''"
+proof-
+  have props:
+    "B' = {s \<in> B. \<exists>q'\<in>C. (s, a, q') \<in> \<Delta> \<A>}"
+    "B'' = {s \<in> B. \<forall>q'\<in>C. (s, a, q') \<notin> \<Delta> \<A>}"
+    "B \<in> P"
+    "(\<exists>x. x \<in> B \<and> (\<exists>q'\<in>C. (x, a, q') \<in> \<Delta> \<A>))"
+    "(\<exists>x. x \<in> B \<and> (\<forall>q'\<in>C. (x, a, q') \<notin> \<Delta> \<A>))"
+    using assms
+    unfolding Hopcroft_splitted_def split_language_equiv_partition_def split_set_def split_pred_def
+    by blast+
+
+  show ?thesis unfolding split_pred_def
+  proof (intro conjI)
+    show "\<exists>q1 q2. q1 \<in> B \<and> q2 \<in> B \<and> (\<exists>q1'. (q1, a, q1') \<in> \<Delta> \<A> \<and> q1' \<in> C) \<and> (\<exists>q2'. (q2, a, q2') \<in> \<Delta> \<A> \<and> q2' \<notin> C)"
+    proof-
+      from props obtain q1 q2 where q1q2_def:"q1 \<in> B'" "q2 \<in> B''"
+        by blast
+      from q1q2_def have "q1 \<in> B" "q2 \<in> B"
+        using props(1,2) by blast+
+
+      from \<open>q2\<in>B\<close> \<open>B\<in>P\<close> \<open>is_partition (\<Q> \<A>) P\<close> have "q2 \<in> \<Q> \<A>"
+        using is_partition_in_subset by blast
+
+      from props(1) q1q2_def obtain q1' where "q1' \<in> C" "(q1, a, q1') \<in> \<Delta> \<A>"
+        by blast
+      from props(2) q1q2_def obtain q2' where "(q2, a, q2') \<in> \<Delta> \<A>"
+        using complete_LTS
+        unfolding LTS_is_complete_def
+        using \<Delta>_consistent \<open>(q1, a, q1') \<in> \<Delta> \<A>\<close> \<open>q2 \<in> \<Q> \<A>\<close> by blast
+      then have "q2' \<notin> C"
+        using props(2) q1q2_def(2) by blast
+      show ?thesis
+        using \<open>(q2, a, q2') \<in> \<Delta> \<A>\<close> \<open>q2 \<in> B\<close> \<open>q2' \<notin> C\<close> props(4) by blast
+    qed
+  qed (simp add: \<open>B \<in> P\<close>, insert assms, blast)
+qed
+
 lemma split_disj_union:
   assumes "P' = Hopcroft_split \<A> C a {} P" "is_partition (\<Q> \<A>) P" "split_pred \<A> P B a C B' B''"
   shows "B = B' \<union> B''" "B' \<inter> B'' = {}"
@@ -447,7 +490,7 @@ proof-
     using set_append[of ys' zs', simplified split_xs'(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)]]
     by (metis SigmaD1 UnI2 prod.exhaust_sel)
 
-  have
+  have list_set_eq:
     "set ys = \<Sigma> \<A> \<times> ?S" "set zs = \<Sigma> \<A> \<times> ?P1"
     "set ys' = \<Sigma> \<A> \<times> ?S" "set zs' = \<Sigma> \<A> \<times> ?P1'"
   proof-
@@ -554,17 +597,113 @@ proof-
     using mset_set_set[OF distinct(2)] mset_set_set[OF distinct(5)] ys_ys'_set_eq
     by argo
 
+  {
+    fix B
+    assume "B \<in> set zs"
+    with list_set_eq(2) have "snd B \<in> ?P1" using mem_Times_iff[of B "\<Sigma> \<A>" ?P1] by presburger
+    with block_cases[of "snd B"] obtain B' B'' where
+      split: "fst B \<in> \<Sigma> \<A>" "fst B = fst B'" "fst B = fst B''"
+        "(snd (B::'a \<times> 'q set), snd (B'::'a \<times> 'q set), snd (B''::'a \<times> 'q set)) \<in> Hopcroft_splitted \<A> C a {} P"
+      using fst_zs[OF \<open>B \<in> set zs\<close>] by fastforce
+    
+    have "snd B' \<in> P'" "snd B'' \<in> P'"
+      using split split_block_in_partition_prop1[OF assms(1) is_partition_P]
+      by blast+
+    
+    then have "B' \<in> set zs'" "B'' \<in> set zs'"
+    proof-
+      show "B' \<in> set zs'"
+      proof-
+        have "B' \<in> set xs'"
+          using \<open>snd B' \<in> P'\<close> split ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] in_prod_fst_sndI
+          by metis
+        have "B' \<notin> set ys'"
+        proof (rule ccontr)
+          assume "\<not> B' \<notin> set ys'" hence "B' \<in> set ys'" by blast
+          with list_set_eq(3) have "snd B' \<in> ?S"
+            by fastforce
+          with \<open>snd B \<in> ?P1\<close> have "snd B \<in> P" "snd B' \<in> P"
+            by blast+
+
+          then show False
+            using Hopcroft_splitted_aux[OF split(4)] is_partition_P
+            unfolding is_partition_def
+            using Int_commute Un_Int_eq(3) Un_Int_eq(4)
+            by blast
+        qed
+        then show ?thesis
+          using \<open>B' \<in> set xs'\<close> split_xs'(1) by simp
+      qed
+
+      show "B'' \<in> set zs'"
+      proof-
+        have "B'' \<in> set xs'"
+          using \<open>snd B'' \<in> P'\<close> split ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] in_prod_fst_sndI
+          by metis
+        have "B'' \<notin> set ys'"
+        proof (rule ccontr)
+          assume "\<not> B'' \<notin> set ys'" hence "B'' \<in> set ys'" by blast
+          with list_set_eq(3) have "snd B'' \<in> ?S"
+            by fastforce
+          with \<open>snd B \<in> ?P1\<close> have "snd B \<in> P" "snd B'' \<in> P"
+            by blast+
+
+          then show False
+            using Hopcroft_splitted_aux[OF split(4)] is_partition_P
+            unfolding is_partition_def
+            using Int_commute Un_Int_eq(3) Un_Int_eq(4)
+            by blast
+        qed
+        then show ?thesis
+          using \<open>B'' \<in> set xs'\<close> split_xs'(1) by simp
+      qed
+    qed
+
+    have "B \<notin> set zs'"
+      using split_block_in_partition_prop1[OF assms(1) is_partition_P, of "snd B" "snd B'" "snd B''"] split list_set_eq(4)
+      by fastforce
+
+    have "\<exists>! B'. \<exists>! B''. B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"
+    proof (intro ex1_ex1I)
+      show "B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"
+      proof (intro conjI)
+        show "(snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P" using split(4) .
+        show "B' \<in> set zs'" using \<open>B' \<in> set zs'\<close> .
+        show "B'' \<in> set zs'" using \<open>B'' \<in> set zs'\<close> .
+        show "fst B = fst B'" using split(2) .
+        show "fst B = fst B''" using split(3) .
+      qed
+      show "\<And>x y. x \<in> set zs' \<and> y \<in> set zs' \<and> (snd B, snd x, snd y) \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst x \<and> fst B = fst y \<Longrightarrow> B' = x \<and> B'' = y"
+      proof-
+        show "x \<in> set zs' \<and> y \<in> set zs' \<and> (snd B, snd x, snd y) \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst x \<and> fst B = fst y \<Longrightarrow> B' = x \<and> B'' = y" for x y
+        proof-
+          assume asm:"x \<in> set zs' \<and> y \<in> set zs' \<and> (snd B, snd x, snd y) \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst x \<and> fst B = fst y"
+          with split(4) have "snd x = snd B'" "snd y = snd B''"
+            unfolding Hopcroft_splitted_def
+            by (simp, metis fst_conv snd_conv)+
+          moreover have "fst x = fst B'" "fst y = fst B''"
+            using asm split(2,3) by argo+
+          ultimately show "B' = x \<and> B'' = y"
+            using prod.expand by blast
+        qed
+      qed
+    qed
+  } note unique_split=this
+
+
   have "estimate2 \<A> (P, L) xs \<le> estimate2 \<A> (P', L') xs'"
   proof-
     have sum_ys_ys'_eq:"(\<Sum>s\<leftarrow>ys. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) = (\<Sum>s\<leftarrow>ys'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
       using mset_eq_sum_list_eq[OF ys_ys'_mset_eq, of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"] .
-
     show ?thesis
       unfolding estimate2_def
       apply (simp add: split_xs(4) split_xs'(4))
       apply (simp add: sum_list_conc_distr[OF split_xs(1)] sum_list_conc_distr[OF split_xs'(1)])
       apply (simp add: sum_ys_ys'_eq)
+      using unique_split (* maybe show the result by induction after showing that unique_split exactly describes zs'. *)
+      sorry
   qed
+  show ?thesis sorry
 qed
 
 lemma estimate1_decrease:
