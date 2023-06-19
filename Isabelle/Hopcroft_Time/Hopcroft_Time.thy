@@ -368,12 +368,11 @@ proof (intro discrete_log_ineqI)
   show "card B' + card B'' = card B" .
 qed
 
-(* definition "estimate2 \<A> \<equiv> \<lambda>(P,L).
-  \<Sum>{(card (preds \<A> (fst s) (snd s))) * (Discrete.log (card (snd s))) | s. fst s \<in> \<Sigma> \<A> \<and> snd s \<in> P}" *)
 definition "estimate2 \<A> \<equiv> \<lambda>(P,L) xs.
   if (xs <~~~> (\<Sigma> \<A> \<times> P)) then 
     \<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))
   else undefined"
+(* xs should be defined as SOME xs. xs <~~~> \<Sigma> \<A> \<times> P *)
 
 lemma (in DFA) estimate2_decrease:
   assumes "P' = Hopcroft_split \<A> C a {} P" "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}"
@@ -381,7 +380,6 @@ lemma (in DFA) estimate2_decrease:
   "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
   "a \<in> \<Sigma> \<A>"
   shows "estimate2 \<A> (P', L') \<le> estimate2 \<A> (P,L)"
-\<comment>\<open>f is a bijection (maybe use permutations?) that allows us to collect splitters in a list. It can be obtained from theorem ex_bij_betw_finite_nat\<close>
 proof-
   let ?S = "P \<inter> P'"\<comment>\<open>Set of blocks remained unchanged\<close>
   let ?P1 = "P - ?S"\<comment>\<open>Set of blocks that will be split\<close>
@@ -703,7 +701,9 @@ proof-
       using unique_split (* maybe show the result by induction after showing that unique_split exactly describes zs'. *)
       sorry
   qed
-  show ?thesis sorry
+
+  show ?thesis
+    sorry (* we need to define estimate2 differently so that xs is not a parameter but inherent to the definition *)
 qed
 
 lemma estimate1_decrease:
