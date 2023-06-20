@@ -368,11 +368,64 @@ proof (intro discrete_log_ineqI)
   show "card B' + card B'' = card B" .
 qed
 
-definition "estimate2 \<A> \<equiv> \<lambda>(P,L) xs.
-  if (xs <~~~> (\<Sigma> \<A> \<times> P)) then 
-    \<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))
-  else undefined"
-(* xs should be defined as SOME xs. xs <~~~> \<Sigma> \<A> \<times> P *)
+definition "estimate2 \<A> \<equiv> \<lambda>(P,L).
+  let xs = (SOME xs. xs <~~~> \<Sigma> \<A> \<times> P) in 
+    \<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"
+
+lemma (in DFA) to_be_named:
+    "Hopcroft_abstract_invar \<A> (P, L) \<and>
+    P' = Hopcroft_split \<A> C a {} P \<and>
+    is_partition (\<Q> \<A>) P \<and>
+    xs = ys @ zs \<and>
+    (\<forall> e \<in> set ys. snd e \<in> P \<inter> P') \<and> (\<forall> e \<in> set zs. snd e \<notin> P \<inter> P') \<and>
+    xs <~~~> \<Sigma> \<A> \<times> P \<and>
+    set zs = \<Sigma> \<A> \<times> (P - P \<inter> P') \<and>
+    
+    xs' = ys' @ zs' \<and>
+    (\<forall> e \<in> set ys'. snd e \<in> P \<inter> P') \<and> (\<forall> e \<in> set zs'. snd e \<notin> P \<inter> P') \<and>
+    xs' <~~~> \<Sigma> \<A> \<times> P' \<and>
+    set zs' = \<Sigma> \<A> \<times> (P' - P \<inter> P') \<and>
+    (\<forall>B \<in> set zs. \<exists>! (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B'') \<and>
+    (\<forall>B'\<in> set zs'. \<exists> B B''. B \<in> set xs \<and> B'' \<in> set zs' \<and> split_pred \<A> P (snd B) a C (snd B') (snd B''))
+ \<Longrightarrow> (\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+proof (induction zs arbitrary: xs ys xs' ys' zs')
+  case Nil
+  have "zs' = []"
+  proof (rule ccontr)
+    assume "zs' \<noteq> []"
+    then obtain B' where "B' \<in> set zs'"
+      by blast
+    with Nil obtain B B'' where "B \<in> set xs" "B'' \<in> set zs'" "split_pred \<A> P (snd B) a C (snd B') (snd B'')"
+      by meson
+    from split_block_in_partition_prop2[OF \<open>split_pred \<A> P (snd B) a C (snd B') (snd B'')\<close> conjunct1[OF Nil], simplified conjunct1[OF conjunct2[OF Nil], symmetric]]
+    have "snd B \<notin> P'" by simp
+    then show False
+      using \<open>B \<in> set xs\<close> Nil by auto
+  qed
+  then show ?case by blast
+next
+  case (Cons S zs)
+  have "(\<Sum>s\<leftarrow>S # zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) =
+    (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) +
+    (card (preds \<A> (fst S) (snd S)) * Discrete.log (card (snd S)))"
+    by simp
+
+  obtain S' S'' where splitS:"(S', S'') = (THE (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd S, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst S = fst B' \<and> fst S = fst B'')"
+    using Cons prod.collapse
+    by meson
+
+(*
+Next steps of the proof:
+- find the two unique S' S'' resulting from the split of S
+- define zss' the list obtained from removing S' and S'' from zs' (obtained via a permutation s.t. the invariant can be satisfied)
+- show that the sum over zs' is equal to the sum over zss' plus the two terms for S' and S''
+- show the invariant for zss'
+- then by IH, the sum over zss' is less than or equal to the sum over zs [1]
+- with lemma DFA.log_ineq the sum of the two terms for S' and S'' is less than or equal to the term for S [2]
+- show thesis by [1] and [2]
+*)
+  show ?case sorry
+qed
 
 lemma (in DFA) estimate2_decrease:
   assumes "P' = Hopcroft_split \<A> C a {} P" "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}"
@@ -442,50 +495,70 @@ proof-
   note fin\<Sigma>P = finite_cartesian_product[OF finite_\<Sigma> is_partition_finite[OF finite_\<Q> is_partition_P]]
   note fin\<Sigma>P'= finite_cartesian_product[OF finite_\<Sigma> is_partition_finite[OF finite_\<Q> is_partition_P']]
 
+  obtain xs1 where xs1_def:"xs1 = (SOME xs. xs <~~~> \<Sigma> \<A> \<times> P)"
+    using ex_mset by blast
+  then have xs1_ok:"estimate2 \<A> (P, L) = (\<Sum>s\<leftarrow>xs1. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    unfolding estimate2_def by simp
+  have xs1_perm:"xs1 <~~~> \<Sigma> \<A> \<times> P"
+    using someI_ex[OF ex_mset, of "mset_set (\<Sigma> \<A> \<times> P)", simplified xs1_def[symmetric]] .
+
   obtain xs ys zs where split_xs:
     "xs = ys @ zs"
     "\<forall> e \<in> set ys. snd e \<in> ?S" "\<forall> e \<in> set zs. snd e \<notin> ?S"
-    "xs <~~~> \<Sigma> \<A> \<times> P"
-    "estimate2 \<A> (P, L) xs = (\<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    "xs <~~> xs1"
+    "estimate2 \<A> (P, L)= (\<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    using ls_perm_split_prop[OF fin\<Sigma>P, of "\<lambda>s. snd s \<in> ?S"] xs1_ok xs1_perm
+      mset_eq_sum_list_eq[of xs1 _ "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
     unfolding estimate2_def
-    using ls_perm_split_prop[OF fin\<Sigma>P, of "\<lambda>s. snd s \<in> ?S"]
-    by clarsimp
+    by (metis (no_types, lifting))
+  note xs_perm=xs1_perm[simplified split_xs(4)[symmetric]]
+
+  obtain xs1' where xs1'_def:"xs1' = (SOME xs. xs <~~~> \<Sigma> \<A> \<times> P')"
+    using ex_mset by blast
+  then have xs1'_ok:"estimate2 \<A> (P', L') = (\<Sum>s\<leftarrow>xs1'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    unfolding estimate2_def by simp
+  have xs1'_perm:"xs1' <~~~> \<Sigma> \<A> \<times> P'"
+    using someI_ex[OF ex_mset, of "mset_set (\<Sigma> \<A> \<times> P')", simplified xs1'_def[symmetric]] .
 
   obtain xs' ys' zs' where split_xs':
     "xs' = ys' @ zs'"
     "\<forall> e \<in> set ys'. snd e \<in> ?S" "\<forall> e \<in> set zs'. snd e \<notin> ?S"
-    "xs' <~~~> \<Sigma> \<A> \<times> P'"
-    "estimate2 \<A> (P', L') xs' = (\<Sum>s\<leftarrow>xs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    "xs' <~~> xs1'"
+    "estimate2 \<A> (P', L') = (\<Sum>s\<leftarrow>xs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    using ls_perm_split_prop[OF fin\<Sigma>P', of "\<lambda>s. snd s \<in> ?S"] xs1'_ok xs1'_perm
+      mset_eq_sum_list_eq[of xs1' _ "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
     unfolding estimate2_def
-    using ls_perm_split_prop[OF fin\<Sigma>P', of "\<lambda>s. snd s \<in> ?S"]
-    by clarsimp
+    by (metis (no_types, lifting))
+  note xs'_perm=xs1'_perm[simplified split_xs'(4)[symmetric]]
 
-  have "estimate2 \<A> (P, L) xs =
+  have "estimate2 \<A> (P, L) =
     (\<Sum>s\<leftarrow>ys. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))+
     (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
     unfolding estimate2_def
-    using split_xs(4) sum_list_conc_distr[OF split_xs(1), of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
-    by simp
+    using xs_perm
+      sum_list_conc_distr[OF split_xs(1), of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
+      split_xs(5) xs1_def xs1_ok by auto
 
-  have "estimate2 \<A> (P', L') xs' =
+  have "estimate2 \<A> (P', L') =
     (\<Sum>s\<leftarrow>ys'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))+
     (\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
     unfolding estimate2_def
-    using split_xs'(4) sum_list_conc_distr[OF split_xs'(1), of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
-    by simp
+    using xs'_perm
+      sum_list_conc_distr[OF split_xs'(1), of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
+      split_xs'(5) xs1'_def xs1'_ok by auto
 
   have fst_ys:"e \<in> set ys \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
-    using set_append[of ys zs, simplified split_xs(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)]]
+    using set_append[of ys zs, simplified split_xs(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P xs_perm]]
     by (metis SigmaD1 UnI1 prod.exhaust_sel)
   have fst_zs:"e \<in> set zs \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
-    using set_append[of ys zs, simplified split_xs(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)]]
+    using set_append[of ys zs, simplified split_xs(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P xs_perm]]
     by (metis SigmaD1 UnI2 prod.exhaust_sel)
 
   have fst_ys':"e \<in> set ys' \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
-    using set_append[of ys' zs', simplified split_xs'(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)]]
+    using set_append[of ys' zs', simplified split_xs'(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P' xs'_perm]]
     by (metis SigmaD1 UnI1 prod.exhaust_sel)
   have fst_zs':"e \<in> set zs' \<Longrightarrow> fst e \<in> \<Sigma> \<A>" for e
-    using set_append[of ys' zs', simplified split_xs'(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)]]
+    using set_append[of ys' zs', simplified split_xs'(1)[symmetric] ls_perm_set_eq[OF fin\<Sigma>P' xs'_perm]]
     by (metis SigmaD1 UnI2 prod.exhaust_sel)
 
   have list_set_eq:
@@ -501,7 +574,7 @@ proof-
         then obtain \<sigma> E where s_split:"s = (\<sigma>, E)" by blast
         with asm have "\<sigma> \<in> \<Sigma> \<A>" "E \<in> ?S"
           by blast+
-        from asm ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)] have "s \<in> set xs"
+        from asm ls_perm_set_eq[OF fin\<Sigma>P xs_perm] have "s \<in> set xs"
           by blast
         with split_xs show "s \<in> set ys"
           using \<open>E \<in> ?S\<close> s_split by auto
@@ -519,7 +592,7 @@ proof-
         have "E \<in> P"
         proof-
           from split_xs(1) asm have "s \<in> set xs" by simp
-          with ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)] zs_split
+          with ls_perm_set_eq[OF fin\<Sigma>P xs_perm] zs_split
           show ?thesis by blast
         qed
         with zs_split show "s \<in> \<Sigma> \<A> \<times> ?P1"
@@ -532,7 +605,7 @@ proof-
         assume asm:"s \<in> \<Sigma> \<A> \<times> ?P1"
         then obtain \<sigma> E where "s = (\<sigma>, E)" by blast
         then show "s \<in> set zs"
-          using \<open>set ys = \<Sigma> \<A> \<times> ?S\<close> asm ls_perm_set_eq[OF fin\<Sigma>P split_xs(4)] set_append[of ys zs] split_xs(1)
+          using \<open>set ys = \<Sigma> \<A> \<times> ?S\<close> asm ls_perm_set_eq[OF fin\<Sigma>P xs_perm] set_append[of ys zs] split_xs(1)
           by blast
       qed
     qed
@@ -546,7 +619,7 @@ proof-
         then obtain \<sigma> E where s_split:"s = (\<sigma>, E)" by blast
         with asm have "\<sigma> \<in> \<Sigma> \<A>" "E \<in> ?S"
           by blast+
-        from asm ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] have "s \<in> set xs'"
+        from asm ls_perm_set_eq[OF fin\<Sigma>P' xs'_perm] have "s \<in> set xs'"
           by blast
         with split_xs' show "s \<in> set ys'"
           using \<open>E \<in> ?S\<close> s_split by auto
@@ -564,7 +637,7 @@ proof-
         have "E \<in> P'"
         proof-
           from split_xs'(1) asm have "s \<in> set xs'" by simp
-          with ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] zs'_split
+          with ls_perm_set_eq[OF fin\<Sigma>P' xs'_perm] zs'_split
           show ?thesis by blast
         qed
         with zs'_split show "s \<in> \<Sigma> \<A> \<times> ?P1'"
@@ -577,7 +650,7 @@ proof-
         assume asm:"s \<in> \<Sigma> \<A> \<times> ?P1'"
         then obtain \<sigma> E where "s = (\<sigma>, E)" by blast
         then show "s \<in> set zs'"
-          using \<open>set ys' = \<Sigma> \<A> \<times> ?S\<close> asm ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] set_append[of ys' zs'] split_xs'(1)
+          using \<open>set ys' = \<Sigma> \<A> \<times> ?S\<close> asm ls_perm_set_eq[OF fin\<Sigma>P' xs'_perm] set_append[of ys' zs'] split_xs'(1)
           by blast
       qed
     qed
@@ -587,8 +660,8 @@ proof-
   have distinct:
     "distinct xs" "distinct ys" "distinct zs"
     "distinct xs'" "distinct ys'" "distinct zs'"
-    using distinct_append[of ys zs] finite_distinct_list[OF fin\<Sigma>P] mset_set_set perm_distinct_iff split_xs(1) split_xs(4)
-    using distinct_append[of ys' zs'] finite_distinct_list[OF fin\<Sigma>P'] split_xs'(1) split_xs'(4)
+    using distinct_append[of ys zs] finite_distinct_list[OF fin\<Sigma>P] mset_set_set perm_distinct_iff split_xs(1) xs_perm
+    using distinct_append[of ys' zs'] finite_distinct_list[OF fin\<Sigma>P'] split_xs'(1) xs'_perm
     by metis+
 
   have ys_ys'_mset_eq: "mset ys = mset ys'"
@@ -613,7 +686,7 @@ proof-
       show "B' \<in> set zs'"
       proof-
         have "B' \<in> set xs'"
-          using \<open>snd B' \<in> P'\<close> split ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] in_prod_fst_sndI
+          using \<open>snd B' \<in> P'\<close> split ls_perm_set_eq[OF fin\<Sigma>P' xs'_perm] in_prod_fst_sndI
           by metis
         have "B' \<notin> set ys'"
         proof (rule ccontr)
@@ -636,7 +709,7 @@ proof-
       show "B'' \<in> set zs'"
       proof-
         have "B'' \<in> set xs'"
-          using \<open>snd B'' \<in> P'\<close> split ls_perm_set_eq[OF fin\<Sigma>P' split_xs'(4)] in_prod_fst_sndI
+          using \<open>snd B'' \<in> P'\<close> split ls_perm_set_eq[OF fin\<Sigma>P' xs'_perm] in_prod_fst_sndI
           by metis
         have "B'' \<notin> set ys'"
         proof (rule ccontr)
@@ -661,49 +734,65 @@ proof-
       using split_block_in_partition_prop1[OF assms(1) is_partition_P, of "snd B" "snd B'" "snd B''"] split list_set_eq(4)
       by fastforce
 
-    have "\<exists>! B'. \<exists>! B''. B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"
-    proof (intro ex1_ex1I)
-      show "B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"
-      proof (intro conjI)
-        show "(snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P" using split(4) .
-        show "B' \<in> set zs'" using \<open>B' \<in> set zs'\<close> .
-        show "B'' \<in> set zs'" using \<open>B'' \<in> set zs'\<close> .
-        show "fst B = fst B'" using split(2) .
-        show "fst B = fst B''" using split(3) .
-      qed
-      show "\<And>x y. x \<in> set zs' \<and> y \<in> set zs' \<and> (snd B, snd x, snd y) \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst x \<and> fst B = fst y \<Longrightarrow> B' = x \<and> B'' = y"
-      proof-
-        show "x \<in> set zs' \<and> y \<in> set zs' \<and> (snd B, snd x, snd y) \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst x \<and> fst B = fst y \<Longrightarrow> B' = x \<and> B'' = y" for x y
+    have "\<exists>! (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"
+    proof (intro ex1I, simp add: case_prod_beta)
+      show "fst (B', B'') \<in> set zs' \<and> snd (B', B'') \<in> set zs' \<and> (snd B, snd (fst (B', B'')), snd (snd (B', B''))) \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst (fst (B', B'')) \<and> fst B = fst (snd (B', B''))"
+        apply (intro conjI)
+        subgoal using \<open>B' \<in> set zs'\<close> by simp
+        subgoal using \<open>B'' \<in> set zs'\<close> by simp
+        subgoal using split(4) by simp
+        subgoal using split(2) by simp
+        subgoal using split(3) by simp
+        done
+
+      show "\<And>x. (case x of (B', B'') \<Rightarrow> B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B'') \<Longrightarrow> x = (B', B'')"
+      proof (simp add: case_prod_beta)
+        show "fst X \<in> set zs' \<and> snd X \<in> set zs' \<and> (snd B, snd (fst X), snd (snd X)) \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst (fst X) \<and> fst B = fst (snd X) \<Longrightarrow> X = (B', B'')" for X
         proof-
+          define x y where "x = fst X" "y = snd X"
           assume asm:"x \<in> set zs' \<and> y \<in> set zs' \<and> (snd B, snd x, snd y) \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst x \<and> fst B = fst y"
           with split(4) have "snd x = snd B'" "snd y = snd B''"
             unfolding Hopcroft_splitted_def
             by (simp, metis fst_conv snd_conv)+
           moreover have "fst x = fst B'" "fst y = fst B''"
             using asm split(2,3) by argo+
-          ultimately show "B' = x \<and> B'' = y"
-            using prod.expand by blast
+          ultimately show ?thesis
+            by (simp add: prod.expand surjective_pairing[of X, simplified x_y_def[symmetric]])
         qed
       qed
     qed
   } note unique_split=this
 
+  define f where "f = (\<lambda>B. (THE (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''))"
 
-  have "estimate2 \<A> (P, L) xs \<le> estimate2 \<A> (P', L') xs'"
+  define I where "I = \<Union>{{fst (f B), snd (f B)} | B. B \<in> set zs}"
+
+  have I_zs'_eq:"I = set zs'"
+  proof
+    show "I \<subseteq> set zs'"
+      sorry
+
+    show "I \<supseteq> set zs'"
+      sorry
+  qed
+
+  have zszs'_le:"(\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    sorry
+
+
+  have "estimate2 \<A> (P', L') \<le> estimate2 \<A> (P, L)"
   proof-
     have sum_ys_ys'_eq:"(\<Sum>s\<leftarrow>ys. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) = (\<Sum>s\<leftarrow>ys'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
       using mset_eq_sum_list_eq[OF ys_ys'_mset_eq, of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"] .
     show ?thesis
-      unfolding estimate2_def
-      apply (simp add: split_xs(4) split_xs'(4))
+      apply (simp add: split_xs(5) split_xs'(5))
       apply (simp add: sum_list_conc_distr[OF split_xs(1)] sum_list_conc_distr[OF split_xs'(1)])
       apply (simp add: sum_ys_ys'_eq)
-      using unique_split (* maybe show the result by induction after showing that unique_split exactly describes zs'. *)
-      sorry
+      apply (simp add: zszs'_le)
+      done
   qed
 
-  show ?thesis
-    sorry (* we need to define estimate2 differently so that xs is not a parameter but inherent to the definition *)
+  then show ?thesis .
 qed
 
 lemma estimate1_decrease:
