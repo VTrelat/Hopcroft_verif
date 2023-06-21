@@ -372,23 +372,23 @@ definition "estimate2 \<A> \<equiv> \<lambda>(P,L).
   let xs = (SOME xs. xs <~~~> \<Sigma> \<A> \<times> P) in 
     \<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"
 
-lemma (in DFA) to_be_named:
-    "Hopcroft_abstract_invar \<A> (P, L) \<and>
-    P' = Hopcroft_split \<A> C a {} P \<and>
-    is_partition (\<Q> \<A>) P \<and>
-    xs = ys @ zs \<and>
-    (\<forall> e \<in> set ys. snd e \<in> P \<inter> P') \<and> (\<forall> e \<in> set zs. snd e \<notin> P \<inter> P') \<and>
-    xs <~~~> \<Sigma> \<A> \<times> P \<and>
-    set zs = \<Sigma> \<A> \<times> (P - P \<inter> P') \<and>
-    
-    xs' = ys' @ zs' \<and>
-    (\<forall> e \<in> set ys'. snd e \<in> P \<inter> P') \<and> (\<forall> e \<in> set zs'. snd e \<notin> P \<inter> P') \<and>
-    xs' <~~~> \<Sigma> \<A> \<times> P' \<and>
-    set zs' = \<Sigma> \<A> \<times> (P' - P \<inter> P') \<and>
-    (\<forall>B \<in> set zs. \<exists>! (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B'') \<and>
-    (\<forall>B'\<in> set zs'. \<exists> B B''. B \<in> set xs \<and> B'' \<in> set zs' \<and> split_pred \<A> P (snd B) a C (snd B') (snd B''))
- \<Longrightarrow> (\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
-proof (induction zs arbitrary: xs ys xs' ys' zs')
+lemma (in DFA) estimate2_induct:
+  assumes "Hopcroft_abstract_invar \<A> (P, L)"
+    "P' = Hopcroft_split \<A> C a {} P"
+    "is_partition (\<Q> \<A>) P"
+    "xs = ys @ zs"
+    "(\<forall> e \<in> set ys. snd e \<in> P \<inter> P') \<and> (\<forall> e \<in> set zs. snd e \<notin> P \<inter> P')"
+    "xs <~~~> \<Sigma> \<A> \<times> P"
+    "set zs = \<Sigma> \<A> \<times> (P - P \<inter> P')"
+
+    "xs' = ys' @ zs'"
+    "(\<forall> e \<in> set ys'. snd e \<in> P \<inter> P') \<and> (\<forall> e \<in> set zs'. snd e \<notin> P \<inter> P')"
+    "xs' <~~~> \<Sigma> \<A> \<times> P'"
+    "set zs' = \<Sigma> \<A> \<times> (P' - P \<inter> P')"
+    "(\<forall>B \<in> set zs. \<exists>! (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B'')"
+    "(\<forall>B'\<in> set zs'. \<exists> B B''. B \<in> set xs \<and> B'' \<in> set zs' \<and> split_pred \<A> P (snd B) a C (snd B') (snd B''))"
+ shows "(\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+using assms proof (induction zs arbitrary: xs ys xs' ys' zs')
   case Nil
   have "zs' = []"
   proof (rule ccontr)
@@ -397,10 +397,11 @@ proof (induction zs arbitrary: xs ys xs' ys' zs')
       by blast
     with Nil obtain B B'' where "B \<in> set xs" "B'' \<in> set zs'" "split_pred \<A> P (snd B) a C (snd B') (snd B'')"
       by meson
-    from split_block_in_partition_prop2[OF \<open>split_pred \<A> P (snd B) a C (snd B') (snd B'')\<close> conjunct1[OF Nil], simplified conjunct1[OF conjunct2[OF Nil], symmetric]]
+    from split_block_in_partition_prop2[OF \<open>split_pred \<A> P (snd B) a C (snd B') (snd B'')\<close> assms(1), simplified assms(2)[symmetric]]
     have "snd B \<notin> P'" by simp
     then show False
-      using \<open>B \<in> set xs\<close> Nil by auto
+      using \<open>B \<in> set xs\<close> Nil
+      by (metis IntD2 append_Nil2)
   qed
   then show ?case by blast
 next
@@ -763,7 +764,30 @@ proof-
     qed
   } note unique_split=this
 
-  define f where "f = (\<lambda>B. (THE (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''))"
+  define f :: "('a \<times> 'q set) \<Rightarrow> ('a \<times> 'q set) \<times> ('a \<times> 'q set)" where
+    "f = (\<lambda>B. (THE (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''))"
+  have dom_f:"f ` (set zs) = (set zs') \<times> (set zs')"
+  proof
+    show "f ` set zs \<subseteq> set zs' \<times> set zs'"
+    proof
+      fix y assume "y \<in> f ` set zs"
+      then obtain x where x_def:"x \<in> set zs" "f x = y" by blast
+      show "y \<in> set zs' \<times> set zs'"
+        apply (simp add: x_def(2)[symmetric] f_def)
+        using theI'[OF unique_split[OF x_def(1)]]
+        by auto
+    qed
+    show "set zs' \<times> set zs' \<subseteq> f ` set zs"
+    proof (standard, insert mem_Times_iff, clarsimp simp add: image_iff)
+      fix a B' b C'
+      assume "(a, B') \<in> set zs'" "(b, C') \<in> set zs'"
+            
+
+
+      show "((a, B'), (b, C')) = f B"
+        sorry
+    qed
+  qed
 
   define I where "I = \<Union>{{fst (f B), snd (f B)} | B. B \<in> set zs}"
 
@@ -777,7 +801,7 @@ proof-
   qed
 
   have zszs'_le:"(\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
-    sorry
+    using estimate2_induct assms
 
 
   have "estimate2 \<A> (P', L') \<le> estimate2 \<A> (P, L)"
