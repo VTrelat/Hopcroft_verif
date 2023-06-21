@@ -25,26 +25,26 @@
 
     -   Work on the estimate for the time spent in the loop, see lemma `estimate2_decrease`
 
-        -   Now working on a simplified estimate `estimate2` which is easier to prove but still captures the essential idea:
+        -   Now working on a simplified estimate `estimate2` which is easier to work with but still captures the essential idea (being the linearithmic time):
 
             > Instead of proving that the following quantity decreases:
             > $$\sum_{(a, C)\in L} |\overset{\hookleftarrow{a}}{C}| \log|C| + \sum_{(a, C)\in ((\Sigma \times P)\setminus L)} |\overset{\hookleftarrow{a}}{C}| \log\frac{|C|}{2}$$
             > We remove the halving factor in the second sum, which allows us to gather the two sums into one over $\Sigma \times P$:
             > $$\sum_{(a, C)\in \Sigma \times P} |\overset{\hookleftarrow{a}}{C}| \log|C|$$
 
-            The reason of this change is that with the halving factor, we would have to show that for a state transition $(P, L) \rightarrow (P', L')$, we would have to examine all cases for all blocks whether they are splitters (or not) or whether they are split by some other splitter (or not). This would be very tedious to formalize. Here are some things I tried:
+            The reason of this change is that with the halving factor, we would have to show that for a state transition $(P, L) \rightarrow (P', L')$, we would have to examine all cases for all blocks whether they are splitters (or not) or whether they are split by some other splitter (or not) or whether there are new splitters created from this splitter (or not). This would be very tedious to formalize. Here are some things I tried:
 
             -   Splitters of the workset can be uniquely characterized thanks to '$a$-$q$-splitters'. It is defined as follows. For any $a \in \Sigma$ and any $q \in \mathcal{Q}$, there is a unique block $B$ of the partition containing $q$. Now, either $(a, B)$ is a splitter i.e. is in the workset and is the $a$-$q$-splitter or not. I used the option type in Isabelle. This is a good characterization of the splitters but it is not easy to work with it. For example, if we want to show that the number of splitters decreases, we would have to show that the number of $a$-$q$-splitters decreases for any $a \in \Sigma$ and any $q \in \mathcal{Q}$. This is not easy to formalize.
 
         -   The estimate `estimate1` was defined in Isabelle as the sum of a (finite) set as `∑{?f s | s. s ∈ L}` (skipping over the details). This is incorrect because the aforementioned function `?f` is probably not injective! Thus, this sum was less than or equal to the actual sum that we want to prove to decrease. Here are the fixes that I tried:
             -   The only way that I found to 'fix the injectivity issue' is to sum over multisets instead. The problem was that in the proof, I still need to distinguish between blocks that are split or not. What is convenient with blocks is that they are split iff they do not appear in the next partition. In other words, given the state transition $(P, L) \rightarrow (P', L')$, none of the blocks in $P \cap P'$ are split and all of the blocks in $P \setminus (P \cap P')$ are.
             -   Given this observation, I thought it would be convenient to have a structure that allows for induction (just in case at first) so I modified the sum again to lists. In order to keep the properties of multisets, those are not just any lists but permutations of those multisets. Thus, we can work on lists and write inductive properties on the sums while keeping the flexibility of multisets. Yet, this adds some overhead because of the permutations, but it allows for the following:
-                > For all $(a, C) \in \Sigma \times P$, we are interested in whether $C$ is split or not, i.e. whether $C \in P \cap P'$ or not. We can easily prove that there exists a permutation `xs` of $\Sigma \times P$ such that `xs` can be written as `xs1 @ xs2` where all elements in `xs1` are not split and all elements in `xs2` are split.
+                > For all $(a, C) \in \Sigma \times P$, we are interested in whether $C$ is split or not, i.e. whether $C \in P \cap P'$ or not. We can easily prove that there exists a permutation `xs` of $\Sigma \times P$ such that `xs` can be written as `xs1 @ xs2` where all elements in `xs1` are split and all elements in `xs2` are not split.
                 > Likewise, we can obtain `xs'`, `xs1'` and `xs2'` for the next state $(P', L')$.
                 >
                 > Then, it is easy to see that `xs2` and `xs2'` are permutations of each other, so summing over them is the same. This reduces the proof to showing that the sum over `xs1'` is less than or equal to the sum over `xs1`.
                 >
-                > To show this, we show that every element in `xs1` is split into two elements in `xs1'` and we show that we can construct a bijection between both sets (of lists). With algebraic properties of the logarithm, we can show that for each term, the inequality holds and this concludes the proof. Since we are working with lists, the proof can be carried out through an induction.
+                > To show this, we show that every element in `xs1` is split into two elements in `xs1'` and we show that we can construct a bijection between both sets (of lists). With algebraic properties of the logarithm, we can show that for each term, the inequality holds and this concludes the proof. Since we are working with lists, the proof can be carried out with an induction.
 
 </div>
 
