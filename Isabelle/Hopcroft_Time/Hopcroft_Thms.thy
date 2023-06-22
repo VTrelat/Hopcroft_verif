@@ -2219,4 +2219,7 @@ lemma ls_perm_set_eq:"finite E \<Longrightarrow> xs <~~~> E \<Longrightarrow> se
   apply standard
   apply (metis order_eq_iff finite_set_mset_mset_set set_mset_mset)+
   done
+
+lemma perm_consI:"x \<in> set xs \<Longrightarrow> (\<exists> ys. (x#ys) <~~> xs)"
+  using perm_remove[of x xs] by metis
 end
