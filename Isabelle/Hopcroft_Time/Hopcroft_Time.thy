@@ -411,10 +411,84 @@ next
     (card (preds \<A> (fst S) (snd S)) * Discrete.log (card (snd S)))"
     by simp
 
-  obtain S' S'' where splitS:"(S', S'') = (THE (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd S, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst S = fst B' \<and> fst S = fst B'')"
+  obtain S' S'' where splitS:"(S', S'') = (THE x. fst x \<in> set zs' \<and> snd x \<in> set zs' \<and> (snd S, snd (fst x), snd (snd x)) \<in> Hopcroft_splitted \<A> C a {} P \<and> fst S = fst (fst x) \<and> fst S = fst (snd x))"
     using Cons prod.collapse
     by meson
+  from theI'[OF bspec[OF Cons(13) list.set_intros(1)[of S zs]], simplified case_prod_beta splitS[symmetric]]
+  have S'_S''_zs'_mem:"S' \<in> set zs'" "S'' \<in> set zs'"
+    by simp+
 
+  from Hopcroft_splitted_aux[OF conjunct1[OF conjunct2[OF conjunct2[OF theI'[OF bspec[OF Cons(13) list.set_intros(1)[of S zs]], simplified case_prod_beta splitS[symmetric]]]]]]
+  have S'_S''_neq:"S' \<noteq> S''"
+    by auto
+
+  obtain zss'::"('a \<times> 'q set) list"  where "(S' # S'' # zss') <~~> zs'"
+  proof-
+(*     from S'_S''_zs'_mem obtain i j where "zs'!i = S'" "zs'!j = S''"
+      using in_set_conv_nth[of _ zs'] by blast
+
+    define l1 where "l1 = (hd ^^ i) zs'" *)
+
+    from S'_S''_zs'_mem(1) have nemp:"zs' \<noteq> []"
+      by fastforce
+
+    define l1 l1' where "l1 = takeWhile (\<lambda>s. s\<noteq>S' \<and> s\<noteq>S'') zs'" "l1' = dropWhile (\<lambda>s. s\<noteq>S' \<and> s\<noteq>S'') zs'"
+    define SS l1'' where "SS = hd l1'" "l1'' = tl l1'"
+
+    have "l1' \<noteq> []"
+      using S'_S''_zs'_mem(1) l1_l1'_def(2) by auto
+    have 1:"zs' = l1 @ [SS] @ l1''"
+      using SS_l1''_def \<open>l1' \<noteq> []\<close> l1_l1'_def by simp
+    have "SS = S' \<or> SS = S''"
+      using S'_S''_zs'_mem SS_l1''_def(1) l1_l1'_def(2) hd_dropWhile[OF \<open>l1'\<noteq>[]\<close>[simplified l1_l1'_def(2)]]
+      by blast
+      
+
+    define l2 l2' where "l2 = takeWhile (\<lambda>s. (s\<noteq>S' \<and> s\<noteq>S'') \<or> s=SS) l1''" "l2' = dropWhile (\<lambda>s. (s\<noteq>S' \<and> s\<noteq>S'') \<or> s=SS) l1''"
+    define SS' l2'' where "SS' = hd l2'" "l2'' = tl l2'"
+
+    have "l2' \<noteq> []"
+    proof (cases "SS = S'")
+      case True
+      then have "S'' \<notin> set l1"
+        using l1_l1'_def(1) set_takeWhileD by fastforce
+      then have "S'' \<in> set l1''"
+        using S'_S''_neq \<open>zs' = l1 @ [SS] @ l1''\<close> True S'_S''_zs'_mem
+        by simp
+      then show ?thesis
+        using S'_S''_neq True l2_l2'_def(2) by fastforce
+    next
+      case False
+      then have false:"SS = S''"
+        using SS_l1''_def(1) \<open>l1' \<noteq> []\<close> hd_dropWhile l1_l1'_def(2) by blast
+      then have "S' \<notin> set l1"
+        using l1_l1'_def(1) set_takeWhileD by fastforce
+      then have "S' \<in> set l1''"
+        using S'_S''_neq \<open>zs' = l1 @ [SS] @ l1''\<close> false S'_S''_zs'_mem
+        by simp
+      then show ?thesis
+        using S'_S''_neq false l2_l2'_def(2) by fastforce
+    qed
+
+    have "SS' = S' \<or> SS' = S''" "SS \<noteq> SS'"
+      using S'_S''_zs'_mem SS'_l2''_def(1) l2_l2'_def(2) hd_dropWhile[OF \<open>l2'\<noteq>[]\<close>[simplified l2_l2'_def(2)]] SS'_l2''_def(1)
+      by (blast, argo)
+
+    have 2:"l1'' = l2 @ [SS'] @ l2''"
+      using SS'_l2''_def \<open>l2' \<noteq> []\<close> l2_l2'_def by simp
+
+    note zs'_split = 1[simplified 2]
+    define zss' where "zss' = l1 @ l2 @ l2''"
+
+    from zs'_split zss'_def have "SS # SS' # zss' <~~> zs'"
+      by simp
+
+    then have "\<exists> zss'. (S' # S'' # zss') <~~> zs'"
+      using \<open>SS = S' \<or> SS = S''\<close> \<open>SS' = S' \<or> SS' = S''\<close> \<open>SS \<noteq> SS'\<close>
+      by (metis append_Cons empty_append_eq_id perm_append_Cons)
+    then show "(\<And>zss'. mset (S' # S'' # zss') = mset zs' \<Longrightarrow> thesis) \<Longrightarrow> thesis"
+      by blast
+  qed
 (*
 Next steps of the proof:
 - find the two unique S' S'' resulting from the split of S
