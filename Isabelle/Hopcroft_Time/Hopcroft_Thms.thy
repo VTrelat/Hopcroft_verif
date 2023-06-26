@@ -2155,6 +2155,31 @@ lemma sum_list_conc_distr:"xs = ys @ zs \<Longrightarrow> (\<Sum>x\<leftarrow>xs
 lemma mset_eq_sum_list_eq: "mset xs = mset ys \<Longrightarrow> (\<Sum>x\<leftarrow>xs. (f::'a \<Rightarrow> 'b::comm_monoid_add) x) = (\<Sum>x\<leftarrow>ys. f x)"
   using mset_map[where f=f] sum_mset_sum_list by metis
 
+lemma sum_fold_prod_aux:
+  "(fold ((@) \<circ> (\<lambda>x. [fst (F x), snd (F x)])) xs []) <~~> ys \<Longrightarrow>
+  (\<Sum>y\<leftarrow>ys. (f::'a \<Rightarrow> 'b::comm_monoid_add) y) = (\<Sum>x\<leftarrow>xs. f (fst (F x)) + f (snd (F x)))"
+proof (induction xs arbitrary: ys)
+  case (Cons x xs)
+  from Cons.prems obtain ys' where ys'_def:"ys <~~> (fst (F x)) # (snd (F x)) # ys'"
+  proof-
+    have "(fold ((@) \<circ> (\<lambda>x. [fst (F x), snd (F x)])) (x # xs) []) = (fold ((@) \<circ> (\<lambda>x. [fst (F x), snd (F x)])) xs [fst (F x), snd (F x)])"
+      by simp
+    with Cons.prems have "\<exists> ys'. ys <~~> (fst (F x)) # (snd (F x)) # ys'"
+      by (metis (no_types, lifting) append_Cons fold_append_concat_rev fold_map perm_append_swap)
+    thus "(\<And>ys'. mset ys = mset (fst (F x) # snd (F x) # ys') \<Longrightarrow> thesis) \<Longrightarrow> thesis"
+      by blast
+  qed
+  with mset_eq_sum_list_eq[OF this, of f]
+  have "(\<Sum>y\<leftarrow>ys. f y) =  f (fst (F x)) + f (snd (F x)) + (\<Sum>y\<leftarrow>ys'. f y)"
+    by (simp add: add.assoc)
+
+  moreover from Cons.prems Cons.IH[of ys'] have "(\<Sum>y\<leftarrow>ys'. f y) = (\<Sum>x\<leftarrow>xs. f (fst (F x)) + f (snd (F x)))"
+    by (smt (z3) Cons_eq_appendI ys'_def append_Nil append_assoc comp_apply fold_append_concat_rev fold_map fold_simps(2) perm_append1_eq perm_append_single perm_append_swap)
+
+  ultimately show "(\<Sum>y\<leftarrow>ys. f y) = (\<Sum>x\<leftarrow>x#xs. f (fst (F x)) + f (snd (F x)))"
+    by simp
+qed simp
+
 abbreviation (input) ls_perm :: \<open>'a list \<Rightarrow> 'a set \<Rightarrow> bool\<close>  (infixr \<open><~~~>\<close> 50)
   where \<open>xs <~~~> E \<equiv> (mset xs = mset_set E)\<close>
 
@@ -2222,4 +2247,8 @@ lemma ls_perm_set_eq:"finite E \<Longrightarrow> xs <~~~> E \<Longrightarrow> se
 
 lemma perm_consI:"x \<in> set xs \<Longrightarrow> (\<exists> ys. (x#ys) <~~> xs)"
   using perm_remove[of x xs] by metis
+
+lemma theI'':"\<exists>!(x, y). P x y \<Longrightarrow> P (fst (THE (x, y). P x y)) (snd (THE (x, y). P x y))"
+  by (metis case_prod_beta' theI')
+
 end
