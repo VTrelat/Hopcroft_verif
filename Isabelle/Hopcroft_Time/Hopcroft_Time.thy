@@ -950,58 +950,110 @@ proof-
       obtain b where b_def:"b = fst B'"
         by simp
 
-(*
-Next steps:
-- show that letter b is ok, i.e. (b, B'') \<in> set zs', (b, B) \<in> set xs
-- show that b is unique (easy by definition)
-*)
+      with \<open>B' \<in> set zs'\<close>[simplified list_set_eq(4)] fst_zs'[OF \<open>B' \<in> set zs'\<close>]
+      have "(b, B'') \<in> set zs'" "(b, B) \<in> set xs"
+        using BB''_def theI'[OF uniqueBB'', simplified case_prod_beta]
+          the_equality[of "\<lambda>(B, B''). B \<in> P \<and> B'' \<in> P' - P \<and> split_pred \<A> P B a C (snd B') B''" "(B, B'')", simplified]
+          \<open>split_pred \<A> P B a C (snd B') B''\<close> split_pred_split_aux2[OF is_partition_P] list_set_eq(4)
+          ls_perm_set_eq[OF fin\<Sigma>P xs_perm]
+        by blast+
 
+      then have ex:"(b, B) \<in> set xs \<and> (b, B'') \<in> set zs' \<and> split_pred \<A> P B a C (snd B') B'' \<and> b = fst B'"
+        using \<open>split_pred \<A> P B a C (snd B') B''\<close> b_def by blast
+
+      show ?thesis
+        apply (rule ex1I)
+        using ex apply fastforce
+        subgoal
+        proof (simp add: case_prod_beta)
+          fix x
+          assume asm:"fst x \<in> set xs \<and> snd x \<in> set zs' \<and> split_pred \<A> P (snd (fst x)) a C (snd B') (snd (snd x)) \<and> fst (fst x) = fst B' \<and> fst (fst x) = fst (snd x)"
+          then obtain \<sigma> D D'' where x_split:"x = ((\<sigma>, D),(\<sigma>, D''))"
+            by (metis prod.exhaust_sel)
+
+          with asm xs_perm split_xs'(3) assms(1) assms(5)
+            split_pred_split_aux2[OF is_partition_P, where a=a and C=C and B'="snd B'"]
+            split_block_in_partition_prop2[OF _ assms(5)] \<open>B \<in> ?P1\<close>
+          have "D \<in> P \<and> D'' \<in> P'-P \<and> split_pred \<A> P D a C (snd B') D''"
+            by (metis Diff_iff Int_iff fst_conv snd_conv split_pred_def)
+
+          with uniqueBB'' BB''_def have "D = B" "D'' = B''"
+            using split_pred_split_aux2[OF is_partition_P \<open>split_pred \<A> P B a C (snd B') B''\<close>]
+            by blast+
+
+          with conjunct1[OF conjunct2[OF conjunct2[OF conjunct2[OF asm]], simplified x_split fst_conv]]
+          show "x = ((fst B', B), fst B', B'')"
+            using x_split by blast
+        qed
+        done
     qed
   } note unique_split_conv=this
+
+  thm unique_split unique_split_conv
+  \<comment>\<open>We do not directly have an equivalence, however this is sufficient for the following.
+  The important is to have unicity.\<close>
 
   define f :: "('a \<times> 'q set) \<Rightarrow> ('a \<times> 'q set) \<times> ('a \<times> 'q set)" where
     "f = (\<lambda>B. (THE (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''))"
 
-  have "bij_betw f (set zs)  (set zs' \<times> set zs')"
-    sorry
-
-  have dom_f:"f ` (set zs) = (set zs') \<times> (set zs')"
-  proof
-    show "f ` set zs \<subseteq> set zs' \<times> set zs'"
-    proof
-      fix y assume "y \<in> f ` set zs"
-      then obtain x where x_def:"x \<in> set zs" "f x = y" by blast
-      show "y \<in> set zs' \<times> set zs'"
-        apply (simp add: x_def(2)[symmetric] f_def)
-        using theI'[OF unique_split[OF x_def(1)]]
-        by auto
-    qed
-    show "set zs' \<times> set zs' \<subseteq> f ` set zs"
-    proof (standard, insert mem_Times_iff, clarsimp simp add: image_iff)
-      fix a B' b C'
-      assume "(a, B') \<in> set zs'" "(b, C') \<in> set zs'"
-            
-
-
-      show "((a, B'), (b, C')) = f B"
-        sorry
-    qed
-  qed
+  have "inj_on f (set zs)"
+    apply (standard, simp add: f_def)
+    by (smt (verit, ccfv_threshold) Hopcroft_splitted_aux[of _ _ _ \<A> C a P] fst_conv snd_conv split_beta surj_pair the_equality unique_split)
 
   define I where "I = \<Union>{{fst (f B), snd (f B)} | B. B \<in> set zs}"
 
   have I_zs'_eq:"I = set zs'"
   proof
     show "I \<subseteq> set zs'"
-      sorry
+    proof
+      fix x assume "x \<in> I"
+      from \<open>x \<in> I\<close>[simplified I_def] obtain B where B_def:
+        "B \<in> set zs" "x = fst (f B) \<or> x = snd (f B)"
+        by blast
+
+      from unique_split[OF B_def(1)] B_def(2)[simplified f_def]
+        theI'[of "\<lambda>(B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"]
+      show "x \<in> set zs'"
+        by fastforce
+    qed
 
     show "I \<supseteq> set zs'"
-      sorry
+    proof
+      fix x assume "x \<in> set zs'"
+      from theI'[OF unique_split_conv[OF this]] obtain B B'' where BB''_def:
+        "(B, B'') = (THE (B, B''). B \<in> set xs \<and> B'' \<in> set zs' \<and> split_pred \<A> P (snd B) a C (snd x) (snd B'') \<and> fst B = fst x \<and> fst B = fst B'')"
+        by fastforce
+      hence "B \<in> set zs"
+        using theI'[OF unique_split_conv[OF \<open>x \<in> set zs'\<close>]]  assms(1) split_block_in_partition_prop2[OF _ assms(5)] split_xs(1,2) by fastforce
+
+      from f_def have "f B = (THE (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B'')"
+        by blast
+
+      thm theI''[OF unique_split_conv[OF \<open>x \<in> set zs'\<close>], simplified BB''_def[symmetric] fst_conv snd_conv]
+
+      with theI''[OF unique_split_conv[OF \<open>x \<in> set zs'\<close>], simplified BB''_def[symmetric] fst_conv snd_conv] assms(1) BB''_def \<open>x \<in> set zs'\<close> unique_split[OF \<open>B \<in> set zs\<close>]
+      have fcase:"f B = (x, B'') \<or> f B = (B'', x)"
+        using DFA.Hopcroft_splitted_unique[OF \<open>DFA \<A>\<close>, of "snd B" _ _ C a P] the_equality[of "\<lambda>(B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"]
+        unfolding split_pred_def
+        by (smt (verit, best) case_prodI)
+        (* @TODO: Find a cleaner proof *)
+        
+      with I_def \<open>B \<in> set zs\<close> show "x \<in> I"
+        by (smt (verit, ccfv_threshold) Union_iff fst_conv insertI1 insert_commute mem_Collect_eq snd_conv)
+    qed
   qed
 
-  have zszs'_le:"(\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
-    using estimate2_induct assms
+  have fold_eq:"mset (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) zs []) = mset zs'"
+    sorry
 
+  from sum_fold_prod_aux[OF fold_eq, of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
+  have "(\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) = (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst (fst (f s))) (snd (fst (f s)))) * Discrete.log (card (snd (fst (f s)))) + card (preds \<A> (fst (snd (f s))) (snd (snd (f s)))) * Discrete.log (card (snd (snd (f s)))))"
+    .
+  also have "\<dots> \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    sorry
+
+  ultimately have zszs'_le:"(\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+    by argo
 
   have "estimate2 \<A> (P', L') \<le> estimate2 \<A> (P, L)"
   proof-
