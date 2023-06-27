@@ -1000,6 +1000,11 @@ proof-
     apply (standard, simp add: f_def)
     by (smt (verit, ccfv_threshold) Hopcroft_splitted_aux[of _ _ _ \<A> C a P] fst_conv snd_conv split_beta surj_pair the_equality unique_split)
 
+  have f_fst_snd_neq:"x \<in> set zs \<Longrightarrow> fst (f x) \<noteq> snd (f x)" for x
+    unfolding f_def
+    using Hopcroft_splitted_aux[of _ _ _ \<A> C a P] unique_split[of x] theI''
+    by (smt (verit, best) inf.idem)
+
   define I where "I = \<Union>{{fst (f B), snd (f B)} | B. B \<in> set zs}"
 
   have I_zs'_eq:"I = set zs'"
@@ -1033,7 +1038,8 @@ proof-
 
       with theI''[OF unique_split_conv[OF \<open>x \<in> set zs'\<close>], simplified BB''_def[symmetric] fst_conv snd_conv] assms(1) BB''_def \<open>x \<in> set zs'\<close> unique_split[OF \<open>B \<in> set zs\<close>]
       have fcase:"f B = (x, B'') \<or> f B = (B'', x)"
-        using DFA.Hopcroft_splitted_unique[OF \<open>DFA \<A>\<close>, of "snd B" _ _ C a P] the_equality[of "\<lambda>(B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"]
+        using DFA.Hopcroft_splitted_unique[OF \<open>DFA \<A>\<close>, of "snd B" _ _ C a P]
+          the_equality[of "\<lambda>(B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"]
         unfolding split_pred_def
         by (smt (verit, best) case_prodI)
         (* @TODO: Find a cleaner proof *)
@@ -1043,12 +1049,50 @@ proof-
     qed
   qed
 
-  have fold_eq:"mset (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) zs []) = mset zs'"
-    sorry
+  have fold_eq:"(fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) zs []) <~~> zs'"
+  proof-
+    have foldI_eq:"set (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) zs res) = I \<union> set res" for res
+      unfolding I_def
+    proof (induction zs arbitrary: res)
+      case (Cons z zs)
+      have "fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) (z # zs) res = fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) zs ([fst (f z), snd (f z)] @ res)"
+        by simp
+      then have "set (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) (z # zs) res) =  \<Union> {{fst (f B), snd (f B)} |B. B \<in> set zs} \<union> set ([fst (f z), snd (f z)] @ res)"
+        using Cons.IH[of "([fst (f z), snd (f z)] @ res)"] by argo
+      also have "\<dots> = \<Union> {{fst (f B), snd (f B)} |B. B \<in> set zs} \<union> {fst (f z), snd (f z)} \<union> set res"
+        by simp
+      moreover have "\<Union> {{fst (f B), snd (f B)} |B. B \<in> set (z#zs)} \<union> set res = \<Union> {{fst (f B), snd (f B)} |B. B \<in> (set zs) \<union> {z}} \<union> set res"
+        by simp
+      moreover have "\<Union> {{fst (f B), snd (f B)} |B. B \<in> set (z#zs)} \<union> set res = \<Union> {{fst (f B), snd (f B)} |B. B \<in> set zs} \<union> {fst (f z), snd (f z)} \<union> set res"
+        by (auto, (metis insertCI prod.collapse)+)
+      ultimately show ?case by argo
+    qed simp
 
-  from sum_fold_prod_aux[OF fold_eq, of "\<lambda>s. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"]
-  have "(\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) = (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst (fst (f s))) (snd (fst (f s)))) * Discrete.log (card (snd (fst (f s)))) + card (preds \<A> (fst (snd (f s))) (snd (snd (f s)))) * Discrete.log (card (snd (snd (f s)))))"
-    .
+    have fold_mem_zs:"y \<in> set (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) zs []) = (\<exists>x\<in>set zs. y = fst (f x) \<or> y = snd (f x))" for y
+      by (simp add: foldI_eq, unfold I_def, blast)
+
+    have "distinct (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) zs [])" (is "distinct ?fold")
+      apply (rule fold_map_distinct[OF distinct(3), of f])
+      subgoal for x
+        apply (intro conjI)
+        subgoal using f_def f_fst_snd_neq by blast
+        subgoal unfolding f_def using theI''[OF unique_split, of x] by argo
+        subgoal
+          using theI''[OF unique_split, of x]
+          unfolding f_def Hopcroft_splitted_def is_partition_P split_language_equiv_partition_def split_set_def
+          by blast
+        done
+      done
+
+    from set_eq_iff_mset_eq_distinct[OF this distinct(6), simplified foldI_eq I_zs'_eq simp_thms(6,11) Un_empty_right[simplified empty_set]]
+    show ?thesis.
+  qed
+
+  from sum_fold_prod_aux[OF fold_eq, of "\<lambda>s. card(preds \<A> (fst s) (snd s))*Discrete.log(card(snd s))"]
+  have "(\<Sum>s\<leftarrow>zs'. card(preds \<A> (fst s) (snd s))*Discrete.log(card(snd s))) =
+    (\<Sum>s\<leftarrow>zs. card(preds \<A> (fst(fst(f s))) (snd(fst (f s))))*Discrete.log(card(snd(fst (f s)))) +
+              card(preds \<A> (fst(snd(f s))) (snd(snd (f s))))*Discrete.log(card(snd(snd (f s)))))".
+
   also have "\<dots> \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
     sorry
 
