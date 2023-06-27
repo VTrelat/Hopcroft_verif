@@ -2251,4 +2251,23 @@ lemma perm_consI:"x \<in> set xs \<Longrightarrow> (\<exists> ys. (x#ys) <~~> xs
 lemma theI'':"\<exists>!(x, y). P x y \<Longrightarrow> P (fst (THE (x, y). P x y)) (snd (THE (x, y). P x y))"
   by (metis case_prod_beta' theI')
 
+lemma fold_map_Un_eq:"set (fold ((@) \<circ> (\<lambda>x. (f::'a \<Rightarrow> 'b list) x)) xs res) = (set res) \<union> (\<Union> {set (f x) | x. x \<in> set xs})"
+proof (induction xs arbitrary: res)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons x xs)
+  then have "fold ((@) \<circ> f) (x # xs) res = fold ((@) \<circ> f) xs [] @ (f x @ res)"
+    by (metis (no_types, lifting) append.right_neutral comp_apply fold_append_concat_rev fold_map fold_simps(2))
+  with Cons have "set (fold ((@) \<circ> f) (x # xs) res) = set res \<union> \<Union> {set (f x) |x. x \<in> set xs} \<union> set (f x)"
+    by fastforce
+  moreover have "\<Union> {set (f y) |y. y \<in> set (x#xs)} = \<Union> {set (f x) |x. x \<in> set xs} \<union> set (f x)"
+    by auto
+  ultimately show ?case
+    using Un_assoc[of "set res" "\<Union> {set (f x) |x. x \<in> set xs}" "set (f x)"]
+    by argo
+qed
+
+lemma fold_map_distinct:"\<lbrakk>distinct xs; \<And>x. x \<in> set xs \<Longrightarrow> fst (f x) \<noteq> snd (f x) \<and> fst (fst (f x)) = fst (snd (f x)) \<and> is_partition (snd x) {snd (fst (f x)), snd (snd (f x))}\<rbrakk> \<Longrightarrow> distinct (fold ((@) \<circ> (\<lambda>x. [fst(f x), snd(f x)])) xs [])"
+  sorry
 end
