@@ -39,12 +39,31 @@
         -   The estimate `estimate1` was defined in Isabelle as the sum of a (finite) set as `∑{?f s | s. s ∈ L}` (skipping over the details). This is incorrect because the aforementioned function `?f` is probably not injective! Thus, this sum was less than or equal to the actual sum that we want to prove to decrease. Here are the fixes that I tried:
             -   The only way that I found to 'fix the injectivity issue' is to sum over multisets instead. The problem was that in the proof, I still need to distinguish between blocks that are split or not. What is convenient with blocks is that they are split iff they do not appear in the next partition. In other words, given the state transition $(P, L) \rightarrow (P', L')$, none of the blocks in $P \cap P'$ are split and all of the blocks in $P \setminus (P \cap P')$ are.
             -   Given this observation, I thought it would be convenient to have a structure that allows for induction (just in case at first) so I modified the sum again to lists. In order to keep the properties of multisets, those are not just any lists but permutations of those multisets. Thus, we can work on lists and write inductive properties on the sums while keeping the flexibility of multisets. Yet, this adds some overhead because of the permutations, but it allows for the following:
-                > For all $(a, C) \in \Sigma \times P$, we are interested in whether $C$ is split or not, i.e. whether $C \in P \cap P'$ or not. We can easily prove that there exists a permutation `xs` of $\Sigma \times P$ such that `xs` can be written as `xs1 @ xs2` where all elements in `xs1` are split and all elements in `xs2` are not split.
+                > For all $(a, C) \in \Sigma \times P$, we are interested in whether $C$ is split or not, i.e. whether $C \in P \cap P'$ or not. We can easily prove that there exists a (list) permutation `xs` of $\Sigma \times P$ such that `xs` can be written as `xs1 @ xs2` where all elements in `xs1` are split and all elements in `xs2` are not split.
                 > Likewise, we can obtain `xs'`, `xs1'` and `xs2'` for the next state $(P', L')$.
                 >
-                > Then, it is easy to see that `xs2` and `xs2'` are permutations of each other, so summing over them is the same. This reduces the proof to showing that the sum over `xs1'` is less than or equal to the sum over `xs1`.
+                > Then, it is easy to see that `xs2` and `xs2'` are permutations of each other, so summing over them is the same, i.e.:
+                > $$\forall f \sum_{x\in xs2} f(x) = \sum_{x\in xs2'} f(x)$$
                 >
-                > To show this, we show that every element in `xs1` is split into two elements in `xs1'` and we show that we can construct a bijection between both sets (of lists). With algebraic properties of the logarithm, we can show that for each term, the inequality holds and this concludes the proof. Since we are working with lists, the proof can be carried out with an induction.
+                > Thus, the state of the proof can be reduced to showing that the sum over `xs1'` is less than or equal to the sum over `xs1`:
+                > $$\sum_{(a, C)\in xs1'} |\overset{\hookleftarrow{a}}{C}| \log|C| \leq \sum_{(a, C)\in xs1} |\overset{\hookleftarrow{a}}{C}| \log|C|$$
+                >
+                > To show this, we show that every element in `xs1` is split into two elements in `xs1'` and we show that we can construct a bijection between both sets (of lists) using the following property:
+                > For any splitter $(a,B)$ in `xs1`, we can find two unique blocks $B'$ and $B''$ in `xs1'` such that $(a, B')$ and $(a, B'')$ are in `xs1'` and $B'$ and $B''$ are the result of splitting $B$ in the new partition $P'$. We define a function $f$ using this property and show that the image of `xs1` by $f$ is (a permutation of) `xs1'` and that $f$ is injective on `set xs1`.
+                >
+                > If $f_1$ and $f_2$ are the two components of $f$, and if for any $(a, C)$, $(a, C)_{[1]} := a$ and $(a, C)_{[2]} := C$, then we can show that:
+                > $$\forall x \in \text{set }\texttt{xs1}, f_1(x)_{[1]} = f_2(x)_{[1]} = x_{[1]}$$
+                > This reduces the proof to showing the following:
+                > $$\sum_{x\in xs1}\left( |\overset{\hookleftarrow{x_{[1]}}}{f_1(x)_{[2]}}| \log|f_1(x)_{[2]}| + |\overset{\hookleftarrow{x_{[1]}}}{f_2(x)_{[2]}}| \log|f_2(x)_{[2]}| \right) \leq \sum_{x\in xs1} |\overset{\hookleftarrow{x_{[1]}}}{x_{[2]}}| \log|x_{[2]}|$$
+                >
+                > A way to show this is to show the following:
+                > $$\forall x \in \text{set }\texttt{xs1}, |\overset{\hookleftarrow{x_{[1]}}}{f_1(x)_{[2]}}| \log|f_1(x)_{[2]}| + |\overset{\hookleftarrow{x_{[1]}}}{f_2(x)_{[2]}}| \log|f_2(x)_{[2]}| \leq |\overset{\hookleftarrow{x_{[1]}}}{x_{[2]}}| \log|x_{[2]}| \qquad (1)$$
+                > This is easy because by definition of $f$:
+                > $$\forall x \in \text{set }\texttt{xs1}, f_1(x)_{[2]} \cup f_2(x)_{[2]} = x_{[2]} \land f_1(x)_{[2]} \cap f_2(x)_{[2]} = \varnothing \qquad (2)$$
+                >
+                > Using algebraic properties of the logarithm, we can show that
+                > $$a \log x + b \log y \le (a+b) \log (x+y) \qquad (3)$$
+                > Using properties of the cardinal for finite sets in $(2)$ together with $(3)$, we show $(1)$ and conclude the proof.
 
 </div>
 
