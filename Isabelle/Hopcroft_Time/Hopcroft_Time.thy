@@ -600,6 +600,42 @@ proof (cases "B' \<in> P")
   qed
 qed simp
 
+(*
+
+lemma estimate1_decrease:
+  fixes \<A> :: "('q,'a, 'DFA_more) NFA_rec_scheme"
+    and P :: "'q set set"
+    and L :: "('a \<times> 'q set) set"
+    and a :: 'a
+    and C :: "'q set"
+  defines "P' \<equiv> Hopcroft_split \<A> C a {} P"
+  assumes "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" 
+  "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
+  "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
+  "a \<in> \<Sigma> \<A>"
+  shows "estimate1 \<A> (P', L') \<le> estimate1 \<A> (P,L)"
+\<comment>\<open>WARNING: incorrect definition of estimate1 (via sets, should be done with lists and permutations) plus too hard to prove\<close>
+  sorry
+
+lemma estimate1_progress:
+  assumes (* "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" *) 
+  "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
+  "Hopcroft_update_splitters_pred \<A> p a P L L'"
+  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L')
+          + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate1 \<A> (P,L)" 
+  unfolding estimate1_def preds_def
+  apply simp
+proof -
+  show "\<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * Discrete.log (card b) |a b. (a, b) \<in> L'} +
+    \<Sum> {card {q. \<exists>q'. (q, aa, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * (Discrete.log (card b) - Suc 0) |aa b. aa \<in> \<Sigma> \<A> \<and> b \<in> Hopcroft_split \<A> p a {} P \<and> (aa, b) \<notin> L'} +
+    card (\<Sigma> \<A>) * card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> p}
+    < \<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * Discrete.log (card b) |a b. (a, b) \<in> L} +
+      \<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * (Discrete.log (card b) - Suc 0) |a b. a \<in> \<Sigma> \<A> \<and> b \<in> P \<and> (a, b) \<notin> L}"
+    sorry
+qed
+
+*)
+
 lemma (in DFA) estimate2_decrease:
   assumes "P' = Hopcroft_split \<A> C a {} P" "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}"
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
@@ -1162,138 +1198,28 @@ proof-
   then show ?thesis .
 qed
 
-lemma estimate1_decrease:
-  fixes \<A> :: "('q,'a, 'DFA_more) NFA_rec_scheme"
-    and P :: "'q set set"
-    and L :: "('a \<times> 'q set) set"
-    and a :: 'a
-    and C :: "'q set"
-  defines "P' \<equiv> Hopcroft_split \<A> C a {} P"
-  assumes "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" 
+lemma (in DFA) estimate2_progress:
+  assumes "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}"
+  "P' = Hopcroft_split \<A> p a {} P"
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
-  "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
-  "a \<in> \<Sigma> \<A>"
-  shows "estimate1 \<A> (P', L') \<le> estimate1 \<A> (P,L)"
-\<comment>\<open>WARNING: incorrect definition of estimate1 (via sets, should be done with lists and permutations) plus too hard to prove\<close>
-proof-
-  let ?Lc = "\<Sigma> \<A> \<times> P - L"
-  let ?Lc' = "\<Sigma> \<A> \<times> P' - L'"
-
-  {
-    fix \<sigma>::'a and q::'q and B::"'q set" and B'::"'q set"
-    assume "\<sigma> \<in> \<Sigma> \<A>" "q \<in> \<Q> \<A>"
-    define aq where "aq = aq_splitter \<sigma> q L"
-    define aq' where "aq' = aq_splitter \<sigma> q L'"
-    assume asm:"aq = None" "aq' = None" "q\<in>B \<and> B \<in> P" "q\<in>B'\<and>B'\<in>P'"
-    then have uniqueBB':"\<exists>! B. q \<in> B \<and> (\<sigma>, B) \<in> ?Lc" "\<exists>! B'. q \<in> B' \<and> (\<sigma>, B') \<in> ?Lc'"
-    proof-
-      have "(a, B) \<in> L \<Longrightarrow> q \<notin> B" for a B
-      proof (rule ccontr)
-        assume "(a, B)\<in>L" "\<not> q \<notin> B" hence asm:"\<exists>(a, B)\<in>L. q\<in>B" by blast
-        then obtain s where "aq = Some s"
-          by (simp add: aq_def aq_splitter_def)
-        then show False
-          by (simp add: \<open>aq = None\<close>)
-      qed
-      moreover from assms(5) \<open>q \<in> \<Q> \<A>\<close>
-      have "\<exists>! B \<in> P. q \<in> B"
-        unfolding Hopcroft_abstract_invar_def
-          is_weak_language_equiv_partition_def
-          is_partition_def
-        by auto
-      moreover have "B\<in>P \<Longrightarrow> (\<sigma>, B) \<in> L \<or> (\<sigma>, B) \<in> ?Lc" for B
-        by (simp add: \<open>\<sigma> \<in> \<Sigma> \<A>\<close>)
-      ultimately show "\<exists>! B. q \<in> B \<and> (\<sigma>, B) \<in> ?Lc"
-        by blast
-    next
-      have nonsplitter:"(a, B') \<in> L' \<Longrightarrow> q \<notin> B'" for a B'
-      proof (rule ccontr)
-        assume "(a, B')\<in>L'" "\<not> q \<notin> B'" hence asm:"\<exists>(a, B')\<in>L'. q\<in>B'" by blast
-        then obtain s where "aq' = Some s"
-          by (simp add: aq'_def aq_splitter_def)
-        then show False
-          by (simp add: \<open>aq' = None\<close>)
-      qed
-
-      moreover have part_disj_workset:"B'\<in>P' \<Longrightarrow> (\<sigma>, B') \<in> L' \<or> (\<sigma>, B') \<in> ?Lc'" for B'
-        by (simp add: \<open>\<sigma> \<in> \<Sigma> \<A>\<close>)
-
-      show "\<exists>! B'. q \<in> B' \<and> (\<sigma>, B') \<in> ?Lc'"
-      proof-
-        from DFA.split_is_partition[OF assms(2) assms(5) assms(9) assms(8)] asm(4) \<open>q \<in> \<Q> \<A>\<close> have "\<exists>! B'. q\<in>B' \<and> B'\<in>P'"
-          unfolding is_partition_def P'_def
-          by blast
-        then show ?thesis
-          using nonsplitter part_disj_workset
-          by auto
-      qed
-    qed
-    
-    from uniqueBB' have uniqueBB'_aux:
-      "unique_pred B (\<lambda>p. q \<in> p \<and> (\<sigma>, p) \<in> ?Lc)" (* B = THE B. (\<sigma>, B) \<in> ?Lc \<and> q \<in> B *)
-      "unique_pred B' (\<lambda>p. q \<in> p \<and> (\<sigma>, p) \<in> ?Lc')"
-      unfolding unique_pred_def
-      using asm(3,4) aq_splitter_unique[OF _ \<open>q \<in> \<Q> \<A>\<close> \<open>\<sigma> \<in> \<Sigma> \<A>\<close>] assms(5)
-      unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
-       apply auto[1]
-      using aq_splitter_unique[OF DFA.split_is_partition[OF assms(2) assms(5) assms(9) assms(8)] \<open>q \<in> \<Q> \<A>\<close> \<open>\<sigma> \<in> \<Sigma> \<A>\<close>] asm(4) uniqueBB'(2)
-      unfolding P'_def by blast
-
-    have "B = B' \<or> (\<exists> B'' aa CC. B = B' \<union> B'' \<and> B' \<inter> B'' = {} \<and> card B'' \<le> card B' \<and> (\<sigma>, B'') \<in> L' \<and> (\<sigma>, B') \<in> ?Lc' \<and> split_pred \<A> P B aa CC B' B'')"
-    proof (cases "\<exists> B'' aa CC. split_pred \<A> P B aa CC B' B''") \<comment>\<open>The proof should examine wether B is split or not\<close>
-      case True
-      then obtain B'' aa CC where pred:"split_pred \<A> P B aa CC B' B''"
-        by blast
-      then have "B \<noteq> B''"
-        using DFA.split_block_in_partition_prop2[OF assms(2) pred assms(5)]
-        by blast
-      then show ?thesis
-      proof-
-        have "B = B' \<union> B''" "B' \<inter> B'' = {}"
-          using case_prodD[OF assms(5)[simplified Hopcroft_abstract_invar_def]]
-          unfolding is_weak_language_equiv_partition_def
-          using pred split_disj_union
-          by meson+
-        from uniqueBB'_aux(2) have "(\<sigma>, B') \<in> ?Lc'"
-          unfolding unique_pred_def
-          by blast
-        show ?thesis
-          sorry
-      qed
-    next
-      case False
-      then show ?thesis sorry
-    qed
-  }
-
-  show ?thesis sorry
-qed
-
-lemma estimate1_progress:
-  assumes (* "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}" *) 
-  "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
-  "Hopcroft_update_splitters_pred \<A> p a P L L'"
-  shows "estimate1 \<A> (Hopcroft_split \<A> p a {} P, L')
-          + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate1 \<A> (P,L)" 
-  unfolding estimate1_def preds_def
+  "Hopcroft_update_splitters_pred \<A> p a P L L'" "(a, p) \<in> L" "a \<in> \<Sigma> \<A>"
+  shows "estimate2 \<A> (P', L')
+          + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate2 \<A> (P,L)" 
+  unfolding estimate2_def preds_def
   apply simp
-proof -
-  show "\<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * Discrete.log (card b) |a b. (a, b) \<in> L'} +
-    \<Sum> {card {q. \<exists>q'. (q, aa, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * (Discrete.log (card b) - Suc 0) |aa b. aa \<in> \<Sigma> \<A> \<and> b \<in> Hopcroft_split \<A> p a {} P \<and> (aa, b) \<notin> L'} +
-    card (\<Sigma> \<A>) * card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> p}
-    < \<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * Discrete.log (card b) |a b. (a, b) \<in> L} +
-      \<Sum> {card {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> q' \<in> b} * (Discrete.log (card b) - Suc 0) |a b. a \<in> \<Sigma> \<A> \<and> b \<in> P \<and> (a, b) \<notin> L}"
-    sorry
-qed
+  using estimate2_decrease[OF assms(3) DFA_axioms assms(1,2,4,5,6,7,8)]
+  sorry
+
   
-lemma estimate1_progress_decrease:
-  assumes "estimate1 \<A> (Hopcroft_split \<A> ba aa {} a, bb) + f aa ba < estimate1 \<A> (a, b)"
+lemma estimate2_progress_decrease:
+  assumes "estimate2 \<A> (Hopcroft_split \<A> ba aa {} a, bb) + f aa ba < estimate2 \<A> (a, b)"
   shows
     "lift_acost c1 + cost ''update_split'' (enat (f aa ba)) +
-      lift_acost (estimate1 \<A> (Hopcroft_split \<A> ba aa {} a, bb) *m (c1 + cost ''update_split'' 1)) 
-    \<le> lift_acost (estimate1 \<A> (a, b) *m (c1 + cost ''update_split'' 1))"
+      lift_acost (estimate2 \<A> (Hopcroft_split \<A> ba aa {} a, bb) *m (c1 + cost ''update_split'' 1)) 
+    \<le> lift_acost (estimate2 \<A> (a, b) *m (c1 + cost ''update_split'' 1))"
 proof -
   find_theorems lift_acost "(*m)"
+  thm costmult_right_mono_nat
   show ?thesis sorry
 qed
 
@@ -1412,7 +1338,6 @@ text
   Refinement of the specification for acquiring next state toward an inner loop.
     def: Hopcroft_set_f
 \<close>
-(* thm Hopcroft_set_f_def *)
 
 text
 \<open>
@@ -1420,7 +1345,6 @@ text
   Precomputation of the set of predecessors of the currently chosen set.
     def: Hopcroft_precompute_step
 \<close>
-(* thm Hopcroft_precompute_step_def *)
 
 text
 \<open>
@@ -1428,7 +1352,6 @@ text
   Refinement towards efficient data structures. Partition of \<Q> \<rightarrow> maps
     def: Hopcroft_map
 \<close>
-(* thm Hopcroft_map_def *)
 
 text
 \<open>
@@ -1436,15 +1359,12 @@ text
   Classes as sets \<rightarrow> maps (bijection with natural numbers).
     def: Hopcroft_map2
 \<close>
-(* thm Hopcroft_map2_def *)
 
 text
 \<open>
   Implementation
   Instantiation of the locales
 \<close>
-(* thm hopcroft_impl_def *)
-(* thm hop_impl.Hopcroft_code_def *)
 
 
 end

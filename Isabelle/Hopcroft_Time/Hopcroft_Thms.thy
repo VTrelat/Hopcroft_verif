@@ -2,6 +2,19 @@ theory Hopcroft_Thms
 imports Main DFA Partition "HOL-Library.Discrete" "HOL-Combinatorics.List_Permutation"
 begin
 
+section\<open>Auxiliary lemmas\<close>
+text
+\<open>
+A collection of useful lemmas for the proofs in Hopcroft\_Time.
+\<close>
+
+subsection \<open>Hopcroft's algorithm\<close>
+text
+\<open>
+A collection of lemmas for automata, mainly DFAs, languages properties and wellfoundedness
+of the functions defined on them, plus some definitions and lemmas for the abstract algorithm.
+\<close>
+
 lemma merge_is_minimal :
 assumes wf_A: "DFA \<A>"
     and connected: "SemiAutomaton_is_initially_connected \<A>"
@@ -2100,10 +2113,6 @@ lemma Hopcroft_splitted_aux:"(B, B', B'') \<in> Hopcroft_splitted \<A> C b {} P 
   unfolding Hopcroft_splitted_def split_language_equiv_partition_def split_set_def
   by blast
 
-lemma conj_commute1:
-  "(P \<and> Q) \<Longrightarrow> (Q \<and> P)"
-  by simp
-
 lemma (in DFA) split_is_partition:
   assumes "Hopcroft_abstract_invar \<A> (P, L)" "a \<in> \<Sigma> \<A>" "(a, C) \<in> L"
   shows "is_partition (\<Q> \<A>) (Hopcroft_split \<A> C a {} P)"
@@ -2126,28 +2135,7 @@ proof-
     by simp
 qed
 
-definition unique_pred where
-  "unique_pred x P \<equiv> P x \<and> (\<forall>y. P y \<longrightarrow> y = x)"
-
-lemma unique_pred_correct:"(unique_pred x P) \<longleftrightarrow> (\<exists>! y. P y \<and> x = (THE y. P y))"
-  by (standard; metis the_equality unique_pred_def)+
-
-lemma ex1_ex1I:"\<lbrakk>P x y; \<And>x' y'. P x' y' \<Longrightarrow> x = x' \<and> y = y'\<rbrakk> \<Longrightarrow> \<exists>! x. \<exists>! y. P x y"
-  by (intro ex1I, blast+)
-
-lemma discrete_log_ineq:"(a+b) * Discrete.log (x+y) \<ge> a * Discrete.log x + b * Discrete.log y"
-proof-
-  have "?thesis \<longleftrightarrow> a * Discrete.log(x+y) + b * Discrete.log(x+y) \<ge> a * Discrete.log x + b * Discrete.log y"
-    by (simp add: algebra_simps)
-  moreover have "Discrete.log(x+y) \<ge> Discrete.log x" "Discrete.log(x+y) \<ge> Discrete.log y"
-    by (simp add: Discrete.log_le_iff)+
-  ultimately show ?thesis
-    by (simp add: add_mono)
-qed
-
-lemma discrete_log_ineqI:
-  "\<lbrakk>A+B=AB; C+D=CD\<rbrakk> \<Longrightarrow> AB * Discrete.log CD \<ge> A * Discrete.log C + B * Discrete.log D"
-  using discrete_log_ineq[of A C B D] by simp
+subsection \<open>Permutations and sums\<close>
 
 lemma sum_list_conc_distr:"xs = ys @ zs \<Longrightarrow> (\<Sum>x\<leftarrow>xs. f x) = (\<Sum>x\<leftarrow>ys. f x) + (\<Sum>x\<leftarrow>zs. f x)"
   by (induction xs) simp+
@@ -2180,6 +2168,9 @@ proof (induction xs arbitrary: ys)
     by simp
 qed simp
 
+text\<open>
+We define permutations between lists and sets and prove some properties on them.
+\<close>
 abbreviation (input) ls_perm :: \<open>'a list \<Rightarrow> 'a set \<Rightarrow> bool\<close>  (infixr \<open><~~~>\<close> 50)
   where \<open>xs <~~~> E \<equiv> (mset xs = mset_set E)\<close>
 
@@ -2248,8 +2239,45 @@ lemma ls_perm_set_eq:"finite E \<Longrightarrow> xs <~~~> E \<Longrightarrow> se
 lemma perm_consI:"x \<in> set xs \<Longrightarrow> (\<exists> ys. (x#ys) <~~> xs)"
   using perm_remove[of x xs] by metis
 
+subsection \<open>Algebraic properties of @{term log}}\<close>
+
+lemma discrete_log_ineq:"(a+b) * Discrete.log (x+y) \<ge> a * Discrete.log x + b * Discrete.log y"
+proof-
+  have "?thesis \<longleftrightarrow> a * Discrete.log(x+y) + b * Discrete.log(x+y) \<ge> a * Discrete.log x + b * Discrete.log y"
+    by (simp add: algebra_simps)
+  moreover have "Discrete.log(x+y) \<ge> Discrete.log x" "Discrete.log(x+y) \<ge> Discrete.log y"
+    by (simp add: Discrete.log_le_iff)+
+  ultimately show ?thesis
+    by (simp add: add_mono)
+qed
+
+lemma discrete_log_ineqI:
+  "\<lbrakk>A+B=AB; C+D=CD\<rbrakk> \<Longrightarrow> AB * Discrete.log CD \<ge> A * Discrete.log C + B * Discrete.log D"
+  using discrete_log_ineq[of A C B D] by simp
+
+subsection \<open>Additional HOL rules\<close>
+
+lemma conj_commute1:
+  "(P \<and> Q) \<Longrightarrow> (Q \<and> P)"
+  by simp
+
+definition unique_pred where
+  "unique_pred x P \<equiv> P x \<and> (\<forall>y. P y \<longrightarrow> y = x)"
+
+lemma unique_pred_correct:"(unique_pred x P) \<longleftrightarrow> (\<exists>! y. P y \<and> x = (THE y. P y))"
+  by (standard; metis the_equality unique_pred_def)+
+
+lemma ex1_ex1I:"\<lbrakk>P x y; \<And>x' y'. P x' y' \<Longrightarrow> x = x' \<and> y = y'\<rbrakk> \<Longrightarrow> \<exists>! x. \<exists>! y. P x y"
+  by (intro ex1I, blast+)
+
 lemma theI'':"\<exists>!(x, y). P x y \<Longrightarrow> P (fst (THE (x, y). P x y)) (snd (THE (x, y). P x y))"
   by (metis case_prod_beta' theI')
+
+subsection \<open>Miscellaneous\<close>
+
+text\<open>
+Those lemmas do not fit any of the previous categories but are still useful.
+\<close>
 
 lemma fold_map_Un_eq:"set (fold ((@) \<circ> (\<lambda>x. (f::'a \<Rightarrow> 'b list) x)) xs res) = (set res) \<union> (\<Union> {set (f x) | x. x \<in> set xs})"
 proof (induction xs arbitrary: res)
@@ -2270,4 +2298,5 @@ qed
 
 lemma fold_map_distinct:"\<lbrakk>distinct xs; \<And>x. x \<in> set xs \<Longrightarrow> fst (f x) \<noteq> snd (f x) \<and> fst (fst (f x)) = fst (snd (f x)) \<and> is_partition (snd x) {snd (fst (f x)), snd (snd (f x))}\<rbrakk> \<Longrightarrow> distinct (fold ((@) \<circ> (\<lambda>x. [fst(f x), snd(f x)])) xs [])"
   sorry
+
 end
