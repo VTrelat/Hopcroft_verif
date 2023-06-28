@@ -303,24 +303,31 @@ proof (rule SMT.verit_and_neg(3))
   qed
 qed
 
+find_theorems name:"consistent"
+
+lemma (in DFA) fin_preds: "finite (preds \<A> a B)"
+  using \<Delta>_consistent[where \<sigma>=a] finite_subset[OF _ finite_\<Q>, of "preds \<A> a B"]
+  unfolding preds_def
+  by blast
+
 lemma (in DFA) preds_disj_eq:
-  assumes "split_pred \<A> P B a C B' B''" "is_partition (\<Q> \<A>) P" "a \<in> \<Sigma> \<A>"
+  assumes "split_pred \<A> P B a C B' B''" "is_partition (\<Q> \<A>) P" "\<sigma> \<in> \<Sigma> \<A>"
   shows
-    "preds \<A> a B = preds \<A> a B' \<union> preds \<A> a B''"
-    "preds \<A> a B' \<inter> preds \<A> a B'' = {}"
+    "preds \<A> \<sigma> B = preds \<A> \<sigma> B' \<union> preds \<A> \<sigma> B''"
+    "preds \<A> \<sigma> B' \<inter> preds \<A> \<sigma> B'' = {}"
 proof-
   have B_eq:"B = B' \<union> B''" "B' \<inter> B'' = {}"
     using assms split_disj_union by meson+
 
-  have union:"preds \<A> a B' \<union> preds \<A> a B'' = {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> (q' \<in> B' \<or> q' \<in> B'')}"
+  have union:"preds \<A> \<sigma> B' \<union> preds \<A> \<sigma> B'' = {q. \<exists>q'. (q, \<sigma>, q') \<in> \<Delta> \<A> \<and> (q' \<in> B' \<or> q' \<in> B'')}"
     unfolding preds_def
     by blast
 
-  have inter:"preds \<A> a B' \<inter> preds \<A> a B'' = {q. \<exists>q'. (q, a, q') \<in> \<Delta> \<A> \<and> (q' \<in> B' \<inter>B'')}"
+  have inter:"preds \<A> \<sigma> B' \<inter> preds \<A> \<sigma> B'' = {q. \<exists>q'. (q, \<sigma>, q') \<in> \<Delta> \<A> \<and> (q' \<in> B' \<inter> B'')}"
   proof-
-    have "preds \<A> a B' \<inter> preds \<A> a B'' = {q. \<exists>q' q''. (q, a, q') \<in> \<Delta> \<A> \<and> (q, a, q'') \<in> \<Delta> \<A> \<and> (q' \<in> B' \<and> q'' \<in> B'')}"
+    have "preds \<A> \<sigma> B' \<inter> preds \<A> \<sigma> B'' = {q. \<exists>q' q''. (q, \<sigma>, q') \<in> \<Delta> \<A> \<and> (q, \<sigma>, q'') \<in> \<Delta> \<A> \<and> (q' \<in> B' \<and> q'' \<in> B'')}"
       unfolding preds_def by blast
-    moreover have "\<dots> = {q. \<exists>q' q''. (q, a, q') \<in> \<Delta> \<A> \<and> (q, a, q'') \<in> \<Delta> \<A> \<and> q' = q'' \<and>(q' \<in> B' \<and> q'' \<in> B'')}"
+    moreover have "\<dots> = {q. \<exists>q' q''. (q, \<sigma>, q') \<in> \<Delta> \<A> \<and> (q, \<sigma>, q'') \<in> \<Delta> \<A> \<and> q' = q'' \<and>(q' \<in> B' \<and> q'' \<in> B'')}"
       using deterministic_LTS
       unfolding LTS_is_deterministic_def
       by blast
@@ -328,11 +335,11 @@ proof-
       by blast
   qed
 
-  from B_eq(1) union show "preds \<A> a B = preds \<A> a B' \<union> preds \<A> a B''"
+  from B_eq(1) union show "preds \<A> \<sigma> B = preds \<A> \<sigma> B' \<union> preds \<A> \<sigma> B''"
     unfolding preds_def
     by blast
 
-  from B_eq(2) inter show "preds \<A> a B' \<inter> preds \<A> a B'' = {}"
+  from B_eq(2) inter show "preds \<A> \<sigma> B' \<inter> preds \<A> \<sigma> B'' = {}"
     unfolding preds_def
     by blast
 qed
@@ -1094,7 +1101,48 @@ proof-
               card(preds \<A> (fst(snd(f s))) (snd(snd (f s))))*Discrete.log(card(snd(snd (f s)))))".
 
   also have "\<dots> \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
-    sorry
+  proof-
+    have "s \<in> set zs \<Longrightarrow> 
+      card (preds \<A> (fst (fst (f s))) (snd (fst (f s)))) * Discrete.log (card (snd (fst (f s)))) +
+      card (preds \<A> (fst (snd (f s))) (snd (snd (f s)))) * Discrete.log (card (snd (snd (f s)))) \<le>
+      card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"
+      for s
+    proof (rule discrete_log_ineqI)
+      assume "s \<in> set zs"
+      let ?a = "fst (fst (f s))" and ?a' = "fst (snd (f s))"
+      have same_letter:"?a' = fst s" "?a = fst s"
+        unfolding f_def
+        using theI''[OF unique_split[OF \<open>s \<in> set zs\<close>]]
+        by argo+
+
+      let ?B' = "snd (fst (f s))" and ?B'' = "snd (snd (f s))"
+      have f_ok:"(?a, ?B') \<in> set zs' \<and> (?a', ?B'') \<in> set zs' \<and> (snd s, ?B', ?B'') \<in> Hopcroft_splitted \<A> C a {} P"
+        unfolding f_def
+        using theI''[OF unique_split[OF \<open>s \<in> set zs\<close>]]
+        by (metis prod.exhaust_sel)
+
+      show "card (preds \<A> ?a ?B') + card (preds \<A> ?a' ?B'') = card (preds \<A> (fst s) (snd s))"
+        apply (simp add: same_letter)
+        using
+          card_Un_disjoint[
+            OF fin_preds fin_preds
+               preds_disj_eq(2)[
+                 OF
+                   DFA.Hopcroft_splitted_split_pred[OF \<open>DFA \<A>\<close> is_partition_P conjunct2[OF conjunct2[OF f_ok]]]
+                   is_partition_P fst_zs[OF \<open>s \<in> set zs\<close>]
+                 ],
+                 simplified
+                   preds_disj_eq(1)[OF DFA.Hopcroft_splitted_split_pred[OF \<open>DFA \<A>\<close> is_partition_P conjunct2[OF conjunct2[OF f_ok]]] is_partition_P fst_zs[OF \<open>s \<in> set zs\<close>],symmetric],
+                 symmetric].
+
+      show "card (snd (fst (f s))) + card (snd (snd (f s))) = card (snd s)"
+        apply (rule card_Un_disjoint[OF _ _ split_disj_union(2)[OF assms(1) is_partition_P DFA.Hopcroft_splitted_split_pred[OF \<open>DFA \<A>\<close> is_partition_P conjunct2[OF conjunct2[OF f_ok]]]], simplified split_disj_union(1)[OF assms(1) is_partition_P DFA.Hopcroft_splitted_split_pred[OF \<open>DFA \<A>\<close> is_partition_P conjunct2[OF conjunct2[OF f_ok]]], symmetric], symmetric])
+        using is_partition_memb_finite[OF finite_\<Q> is_partition_P conjunct1[OF Hopcroft_splitted_aux[OF conjunct2[OF conjunct2[OF f_ok]]]], simplified conjunct1[OF conjunct2[OF Hopcroft_splitted_aux[OF conjunct2[OF conjunct2[OF f_ok]]]]] finite_Un]
+        by blast+
+    qed
+    from sum_list_mono[OF this, of zs id, simplified]
+    show ?thesis.
+  qed
 
   ultimately have zszs'_le:"(\<Sum>s\<leftarrow>zs'. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))) \<le> (\<Sum>s\<leftarrow>zs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
     by argo
