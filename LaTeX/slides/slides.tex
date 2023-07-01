@@ -1,8 +1,9 @@
 \documentclass{beamer}
 \usepackage{tikz, hyperref}
 
-
 \usetheme{terminal}
+
+\newcommand{\prompt}[1]{vtrelat@home:\raisebox{0.5ex}{\texttildelow}\$ #1}
 
 
 % Title page information
@@ -14,17 +15,17 @@
 \begin{document}
 
 \begin{frame}
-  \frametitle{vtrelat@home:\raisebox{0.5ex}{\texttildelow}\$ cat info.txt}
+  \frametitle{\prompt{cat info.txt}}
   \begin{raggedright}
     \tt
     \color{terminalprompt}
     \texttt{\string{\\
     \begin{tabular}{p{0.2\textwidth} p{0.8\textwidth}}
-      {\small\color{terminalprompt}title:} & {\color{terminalstr}"\inserttitle"}, \\
-      {\small\color{terminalprompt}author:} & {\color{terminalstr}"\insertauthor"}, \\
-      {\small\color{terminalprompt}institute:} & {\color{terminalstr}"\insertinstitute"}, \\
-      {\small\color{terminalprompt}date:} & {\color{terminalstr}"\insertdate"}, \\
-      {\small\color{terminalprompt}link:} & {\color{terminalstr}"\href{https://github.com/VTrelat/Hopcroft_verif}{github.com/VTrelat/Hopcroft\_verif}"}
+      {\small title:} & "{\color{terminalstr}\inserttitle}", \\
+      {\small author:} & "{\color{terminalstr}\insertauthor}", \\
+      {\small institute:} & "{\color{terminalstr}\insertinstitute}", \\
+      {\small date:} & "{\color{terminalstr}\insertdate}", \\
+      {\small link:} & "{\color{terminalstr}\href{https://github.com/VTrelat/Hopcroft_verif}{github.com/VTrelat/Hopcroft\_verif}}"
     \end{tabular}\\
     \string}}
   \end{raggedright}
@@ -32,7 +33,7 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{vtrelat@home:\raisebox{0.5ex}{\texttildelow}\$ ls -R -al}
+  \frametitle{\prompt{ls -R -al}}
   \tt
   \tableofcontents
 \end{frame}
@@ -46,7 +47,7 @@
 \subsection{Subsection 2}
 
 \begin{frame}
-  \frametitle{vtrelat@home:\raisebox{0.5ex}{\texttildelow}\$ sudo rm -rf /*}
+  \frametitle{\prompt{sudo rm -rf /*}}
   This is the content of your frame.
   \begin{itemize}
     \item item 1
