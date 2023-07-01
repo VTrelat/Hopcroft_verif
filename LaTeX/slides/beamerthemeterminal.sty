@@ -1,0 +1,100 @@
+\ProvidesPackage{beamerthemeterminal}
+
+\setbeamersize{text margin left=20pt, text margin right=20pt}
+
+% Set the color scheme
+\definecolor{terminalbg}{RGB}{245,245,245} % Background color
+\definecolor{terminaltopbar}{RGB}{230,230,230} % Text color
+\definecolor{terminalfg}{RGB}{0,0,0} % Text color
+\definecolor{terminalprompt}{RGB}{100,100,100} % Prompt color
+\definecolor{terminalstr}{RGB}{35, 80, 153} % String color
+\definecolor{closebutton}{RGB}{255, 96, 92} % Button background color
+\definecolor{minimizebutton}{RGB}{255, 189, 68} % Button background color
+\definecolor{fullscreenbutton}{RGB}{0, 202, 78} % Button background color
+
+% Set the background and foreground colors
+\setbeamercolor{background canvas}{bg=terminalbg}
+\setbeamercolor{normal text}{fg=terminalfg}
+\usebackgroundtemplate%
+{% fill with solid color, rounded corners
+  \begin{tikzpicture}[remember picture,overlay, rounded corners=10pt]
+    \fill[terminalbg] (current page.north west) rectangle (current page.south east);
+  \end{tikzpicture}%
+  \begin{tikzpicture}[]
+    \fill[terminaltopbar, rounded corners=8pt] (0,5pt) rectangle (\paperwidth, 37pt);
+    \fill[terminalbg] (0,0) rectangle (\paperwidth, 19pt);
+  \end{tikzpicture}%
+}
+
+\newcommand{\windowbutton}[1]{%
+  \tikz[baseline={(0,0)}]{
+    \fill[#1] (0,0) circle (3pt);
+  }%
+}
+
+% Customize the headline
+\setbeamertemplate{headline}{%
+  \leavevmode%
+  \vskip3pt%
+  \hbox{%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=2.5ex,dp=1.125ex]{palette secondary}%
+      \hspace{6pt}\windowbutton{closebutton}\hspace{3pt}\windowbutton{minimizebutton}\hspace{3pt}\windowbutton{fullscreenbutton}
+    \end{beamercolorbox}%
+  }
+}
+
+% Set the font
+\setbeamerfont{normal text}{family=\ttfamily, size=\small}
+\setbeamerfont{frametitle}{size=\small, family=\ttfamily}
+
+% Adjust the layout
+% \setbeamertemplate{navigation symbols}{} % Remove the navigation symbols
+
+% Define the title page template
+% \defbeamertemplate*{title page}{terminal}[1][]{
+%   \begin{raggedright}
+%     \tt
+%     \color{terminalprompt}
+%     vtrelat@home:\raisebox{0.5ex}{\texttildelow}\$ cat info.txt\\
+%   \end{raggedright}
+%   \begin{raggedright}
+%     \tt\small
+%     \color{terminalprompt}
+%     \texttt{\string{\\
+%     \begin{tabular}{p{0.2\textwidth} p{0.8\textwidth}}
+%       {\color{terminalprompt}title:} & {\color{terminalstr}"\inserttitle"}, \\
+%       {\color{terminalprompt}author:} & {\color{terminalstr}"\insertauthor"}, \\
+%       {\color{terminalprompt}institute:} & {\color{terminalstr}"\insertinstitute"}, \\
+%       {\color{terminalprompt}date:} & {\color{terminalstr}"\insertdate"}
+%     \end{tabular}\\
+%     \string}}
+%   \end{raggedright}
+%   \vfill
+% }
+
+
+\setbeamertemplate{frametitle}{%
+  \vspace*{5pt}
+  \hspace*{5pt}%
+  \begin{beamercolorbox}[sep=0.3cm,wd=\paperwidth]{frametitle}
+    \usebeamerfont{normal}\color{terminalprompt}\insertframetitle
+  \end{beamercolorbox}
+}
+
+
+\setbeamertemplate{itemize item}{\texttt{\$}}
+
+\makeatletter
+\renewcommand{\@listI}{%
+  \leftmargin=1em%
+  \topsep    2pt plus 2pt minus 1pt%
+  \parsep     2pt plus 2pt%
+  \itemsep    2pt%
+}
+\makeatother
+
+% Set itemize bullet and color and font
+\setbeamercolor{itemize item}{fg=terminalprompt}
+% set font and color for itemize body
+\setbeamerfont{itemize/enumerate body}{family=\ttfamily}
+\setbeamercolor{itemize/enumerate body}{fg=terminalprompt}
