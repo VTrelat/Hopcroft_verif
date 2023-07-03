@@ -318,7 +318,7 @@ From Req.\ \ref{req:2} and Req.\ \ref{req:3}, we can show that for a state $q$ i
 \bigskip
 
 \begin{lemma}\label{lem:time_iteration}
-    An iteration of the while loop in both algorithms for a splitter $s = (a, C)$ takes a time proportional to the number of transitions terminating in $C$ and the number of symbols in the alphabet, i.e. $\Theta\left(\left| \Sigma \right| \cdot \left| \delta^{-1}(C, a) \right| \right)$ time.
+    An iteration of the \textit{while} loop in both algorithms for a splitter $s = (a, C)$ takes a time proportional to the number of transitions terminating in $C$ and the number of symbols in the alphabet, i.e. $\Theta\left(\left| \Sigma \right| \cdot \left| \delta^{-1}(C, a) \right| \right)$ time.
 \end{lemma}
 \begin{proof}
     We start by showing it for Algorithm \ref{alg:original}. We pick $a \in \Sigma$ such that $L_a \neq \varnothing$ and an $i \in L_a$. We need to examine all $j < k$ such that $\exists q \in P_j, \delta(q, a) \in s_{a,i}$ to construct the sets corresponding to splitting the block $P_j$ w.r.t.\ $a$ and $P_i$.
@@ -428,7 +428,7 @@ This gives a way to characterize splitters throughout the whole execution.
 
 \begin{lemma}\label{lem:bound}
     Let us consider some step in the algorithm such that $\mathcal{P}$ is the current partition. We give an estimation of the total time spent in the loop until termination as an upper bound:
-    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \preds{a}{B} | \log \frac{| B |}{2} \right)$$
+    $$ T := \theta \cdot \left(\sum_{(a, C) \in \mathcal{W}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \preds{a}{B} | \log \frac{| B |}{2} \right)$$
     where $\theta$ is the constant of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
 \end{lemma}
 \begin{proof}
@@ -514,8 +514,14 @@ The objective of the project is to obtain a formal proof for the time complexity
 We follow a top-down strategy, from the abstract level to the implementation.
 
 \subsubsection{Abstract level}
-The purpose of this section is to explain how the analysis at the abstract level is structured without adding too many details.
+
+The purpose of this section is to explain how the analysis at the abstract level is structured without adding too many details about Isabelle.
+
+\paragraph{Setting up the framework}
 First, we define the algorithm on the abstract level using the NREST framework as shown below:
+
+\noindent
+\begin{minipage}{\linewidth}
 \begin{lstlisting}[language=Isabelle]
 definition Hopcroft_abstractT where
 Hopcroft_abstractT $\color{isa_dark_blue}\mathcal{A}$ $\equiv$
@@ -524,20 +530,27 @@ Hopcroft_abstractT $\color{isa_dark_blue}\mathcal{A}$ $\equiv$
     do {
       PL $\leftarrow$ init_spec $\color{isa_dark_blue}\mathcal{A}$;
       (P, _) $\leftarrow$ monadic_WHILEIET (Hopcroft_abstract_invar $\color{isa_dark_blue}\mathcal{A}$) 
-          ($\lambda$ s. cost_iteration $\color{isa_dark_blue}\mathcal{A}$ s) check_b_spec (Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$) PL;
+          ($\lambda$ s. estimate_iteration $\color{isa_dark_blue}\mathcal{A}$ s) check_b_spec (Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$) PL;
       RETURNT P
     }
 \end{lstlisting}
+\end{minipage}
+
 It is parameterized by abstract costs for each operation, like checking emptiness, returning an empty partition or a singleton, initializing the state\footnote{States in this setting are tuples $(P, L)$ where $P$ is a partition of the set of states $\mathcal{Q}$ of $\mathcal{A}$ together with a workset $L$ of splitters.}, etc.
 For the sake of simplicity and since names are rather self-explanatory, we only give the definition of \texttt{check\_states\_empty\_spec} as an example and detail the \textit{while} loop. Checking emptiness for the set of states costs one coin of the currency \texttt{check\_states\_empty} and can be defined as follows:
+
 \begin{lstlisting}[language=Isabelle]
 definition check_states_empty_spec $\mathcal{A}$ $\equiv$
   consume (RETURNT ($\mathcal{Q}$ $\mathcal{A}$ = {})) (cost ''check_states_empty'' 1)
 \end{lstlisting}
+
 The purpose of using currencies is to be able to give an abstract description of the costs, and then to instantiate them with concrete values in the implementation which will be expressed in terms of concrete elementary costs like the number of comparisons or assignments. For example, if the set of states is represented as a tree \texttt{t}, there should be a method or an attribute \texttt{t.isempty} kept up to date during the execution of the algorithm, so that the cost of checking emptiness is equal to the cost of a function call plus the cost for reading memory at the location of the boolean \texttt{t.isempty}, that is constant time.
 
-The \textit{while} loop requires to be provided with an invariant, an estimation\edmargin{VT}{To be detailed} of the total amount of resource -- here time -- to be consumed, the loop condition, the function to be executed in the loop body and the initial state.
+The \textit{while} loop requires to be provided with an invariant, an estimation of the total amount of resource to be consumed -- here time, and this estimation has to decrease over an iteration, the loop condition, the function to be executed in the loop body and the initial state.
 The loop body defined in \texttt{Hopcroft\_abstract\_f} is given below:
+
+\noindent
+\begin{minipage}{\linewidth}
 \begin{lstlisting}[language=Isabelle]
 definition Hopcroft_abstract_f where
 Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$ = 
@@ -548,9 +561,12 @@ Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$ =
     RETURNT PL'
   }
 \end{lstlisting}
+\end{minipage}
+
 The main operation, i.e.\ splitting blocks of the partition and updating the workset accordingly is specified in \texttt{update\_split\_spec}.
 As written in the informal paper proof of lemma \ref{lem:time_iteration}, this operation is a bit tricky since both splitting and updating are performed on-the-fly at the same time, thus they are gathered together for the moment.
 The definition of \texttt{update\_split\_spec} is given below:
+
 \begin{lstlisting}[language=Isabelle]
 definition update_split_spec $\color{isa_dark_blue}\mathcal{A}$ $\equiv$ $\lambda$(P,L) a p.
   SPEC ($\lambda$(P', L').
@@ -558,6 +574,39 @@ definition update_split_spec $\color{isa_dark_blue}\mathcal{A}$ $\equiv$ $\lambd
   ) ($\lambda$_. cost ''update_split'' (enat ($|\Sigma$ $\color{isa_dark_blue}\mathcal{A}|$ * $|$ preds $\color{isa_dark_blue}\mathcal{A}$ a p $|$)))
 \end{lstlisting}
 where \texttt{preds $\mathcal{A}$ a p} represents the set of all predecessors $\bigcup_{q \in p} \delta^{-1}(q, a) = \preds{a}{p}$ of all states of $p$ labelled by $a$. The cost specified by this definition stems from the result of lemma \ref{lem:time_iteration}, namely that the cost for splitting and updating the partition and the workset is $\Theta(|\Sigma| \cdot |\preds{a}{p}|)$.
+
+\bigskip
+
+The most important part of this definition is the estimate of the cost for the loop, i.e.\ the amount of resource consumed by the loop. From lemma \ref{lem:bound}, we have the following estimate:
+\begin{equation*}
+    T = \theta \cdot \left(\sum_{(a, C) \in \mathcal{W}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \preds{a}{B} | \log \frac{| B |}{2} \right)
+\end{equation*}
+The constant $\theta$ comes from lemma \ref{lem:time_iteration} and represents constant costs inherent to the loop body, like the cost of checking emptiness, calling a function, etc. In Isabelle, this factor $\theta$ is defined following the definition of \texttt{Hopcroft\_abstract\_f} and \texttt{check\_b\_spec} as follows:
+
+\begin{lstlisting}[language=Isabelle]
+definition cost_1_iteration $\equiv$ 
+  cost ''call'' 1 + cost ''check_l_empty'' 1 + cost ''if'' 1 +
+  cost ''pick_splitter'' 1 + cost ''update_split'' 1
+\end{lstlisting}
+
+Then, given a suitable definition \texttt{estimate} for the inner expression in $T$ -- i.e.\ the ``raw'' estimate -- the estimate for the loop is defined as the product\footnote{The operator \texttt{{\color{isa_blue}*m}} lifts multiplication to cost expressions.} of this constant factor and the inner expression, as follows:
+
+\begin{lstlisting}[language=Isabelle]
+definition estimate_iteration where
+  estimate_iteration $\mathcal{A}$ PL $\equiv$ cost_1_iteration ${\text{\color{isa_blue}{*m}}}$ estimate $\mathcal{A}$ PL
+\end{lstlisting}
+
+\paragraph{Defining the estimate in Isabelle} Finding a suitable definition for the inner expression in $T$ is not straightforward. The first attempt was to define it as follows:
+
+\begin{lstlisting}[language=Isabelle]
+definition estimate1 ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
+  $\sum${(card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)))*log(card(snd s)) | s. s $\in$ L} +
+  $\sum${(card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)))*log(card(snd s)/2) | s. s $\in$ $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P - L}
+\end{lstlisting}
+
+The problem with this definition is that the function $s := (a, C) \mapsto |\preds{a}{C}| \log |C|$ has no reason to be injective, and thus the set comprehension expressions within the sums may actually contain duplicates that are merged together. One way to fix this is to sum over multisets.
+
+
 
 
 % \printglossary[type=\acronymtype]
