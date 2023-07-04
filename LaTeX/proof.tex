@@ -20,10 +20,10 @@
 % Define custom language for syntax highlighting
 \lstdefinelanguage{Isabelle}{
   % List of custom keywords
-  keywords=[1]{definition, if, then, else, let, in, case, of, do},
+  keywords=[1]{definition, if, then, else, let, in, case, of, do, SOME},
   % Custom keyword styles
   keywordstyle=[1]\color{isa_blue},
-  keywords=[2]{where},
+  keywords=[2]{where, and},
   keywordstyle=[2]\color{isa_green},
   keywords=[3]{RETURNT, monadic_WHILEIET, SPEC, ASSERT, consume, cost},
   keywordstyle=[3]\color{isa_red},
@@ -88,6 +88,8 @@
 %     \ifnum\c@secnumdepth>0
 %         \thesection
 % }
+
+\newcommand{\midtilde}{\raisebox{0.5ex}{\texttildelow}}
 
 % theorems
 \theoremstyle{definition}
@@ -517,7 +519,7 @@ We follow a top-down strategy, from the abstract level to the implementation.
 
 The purpose of this section is to explain how the analysis at the abstract level is structured without adding too many details about Isabelle.
 
-\paragraph{Setting up the framework}
+\paragraph{Setting up the framework:}
 First, we define the algorithm on the abstract level using the NREST framework as shown below:
 
 \noindent
@@ -596,7 +598,8 @@ definition estimate_iteration where
   estimate_iteration $\mathcal{A}$ PL $\equiv$ cost_1_iteration ${\text{\color{isa_blue}{*m}}}$ estimate $\mathcal{A}$ PL
 \end{lstlisting}
 
-\paragraph{Defining the estimate in Isabelle} Finding a suitable definition for the inner expression in $T$ is not straightforward. The first attempt was to define it as follows:
+\paragraph{Finding a suitable definition for the estimate:}
+Finding a suitable definition for the inner expression in $T$ is not straightforward. The first attempt was to define it as follows:
 
 \begin{lstlisting}[language=Isabelle]
 definition estimate1 ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
@@ -604,8 +607,32 @@ definition estimate1 ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L
   $\sum${(card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)))*log(card(snd s)/2) | s. s $\in$ $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P - L}
 \end{lstlisting}
 
-The problem with this definition is that the function $s := (a, C) \mapsto |\preds{a}{C}| \log |C|$ has no reason to be injective, and thus the set comprehension expressions within the sums may actually contain duplicates that are merged together. One way to fix this is to sum over multisets.
+The problem with this definition is that the function $s := (a, C) \mapsto |\preds{a}{C}| \log |C|$ has no reason to be injective either on $L$ or its complement and thus the set comprehension expressions within the sums may actually contain duplicates that are merged together. One way to fix this is to sum over multisets. Multisets can also be defined via set comprehension in Isabelle, however having a structure allowing for induction is often more convenient. Thus, we prefer lists to multisets. 
 
+A very convenient way to link lists and multisets is to use permutations, which are defined in Isabelle using multisets: a list $\ell$ is a permutation of a list $\ell'$ if and only if $\ell$ and $\ell'$ have the same multiset, i.e.\ in Isabelle if and only if \texttt{mset $\ell$ = mset $\ell'$}. We can lift this definition\footnote{A list $\ell$ permutes a set $S$, which we denote by \texttt{$\ell$ <\midtilde\midtilde\midtilde> $S$}, iff \texttt{mset $\ell$ = mset\_set $S$}.} to permutations between lists and sets with the help of the function \texttt{mset\_set} in Isabelle. Thus, we can define the estimate as follows:
+
+\begin{lstlisting}[language=Isabelle]
+definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
+  let xs = (SOME xs. xs <$\midtilde\midtilde\midtilde$> L) and
+      ys = (SOME ys. ys <$\midtilde\midtilde\midtilde$> $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P - L) in
+  $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s)) +
+  $\sum$s$\leftarrow$ys. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s)/2)
+\end{lstlisting}
+
+\begin{remark}
+    This definition makes use of the non-deterministic choice operator \texttt{SOME} of Isabelle to choose a permutation of $L$ and $\Sigma \times P - L$ respectively. Since we are working with finite automata, such permutations always exist.
+\end{remark}
+
+\paragraph{Simplifying the estimate:}
+Unfortunately, this definition makes proofs very difficult. For a state transition $(P, L) \rightarrow (P', L')$, we would have to examine all cases for all blocks whether they are splitters in $L$ (or not) or whether they are split by some other splitter (or not) or whether there are new splitters created from this splitter in $L'$ (or not). This would be very tedious to formalize, but here is a sketch of some ideas.
+
+Splitters of the workset can be uniquely characterized thanks to ``$a$-$q$-splitters''. It is defined as follows for a state $(P, L)$:
+
+\begin{definition}
+Let $a \in \Sigma$ and $q \in \mathcal{Q}$. Let $B$ be the unique block of the partition $P$ containing $q$. If $(a, B) \in L$, it is the \textbf{$a$-$q$-splitter}. Otherwise, there is no $a$-$q$-splitter.
+\end{definition}
+
+This can be achieved in Isabelle using the option type. Although this is a good characterization of splitters, it is not easy to work with it. For example, if we want to show that the number of splitters decreases, we would have to show that the number of $a$-$q$-splitters decreases for any $a \in \Sigma$ and any $q \in \mathcal{Q}$. This is rather tricky to formalize.
 
 
 
