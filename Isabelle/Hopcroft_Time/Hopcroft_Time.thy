@@ -1114,6 +1114,19 @@ proof-
     have fold_mem_zs:"y \<in> set (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) zs []) = (\<exists>x\<in>set zs. y = fst (f x) \<or> y = snd (f x))" for y
       by (simp add: foldI_eq, unfold I_def, blast)
 
+    have inj_disj: "\<lbrakk>x \<in> set zs \<and> y \<in> set zs; fst (f x) = fst (f y) \<or> fst (f x) = snd (f y) \<or> snd (f x) = fst (f y) \<or> snd (f x) = snd (f y)\<rbrakk> \<Longrightarrow> x = y" for x y
+    proof-
+      assume "x \<in> set zs \<and> y \<in> set zs" "fst (f x) = fst (f y) \<or> fst (f x) = snd (f y) \<or> snd (f x) = fst (f y) \<or> snd (f x) = snd (f y)"
+      then show ?thesis
+        apply auto
+        unfolding f_def
+        by (insert
+              theI''[OF unique_split]
+              Hopcroft_splitted_split_pred[OF is_partition_P]
+              split_pred_split_aux2[OF is_partition_P],
+            metis (no_types, lifting) prod.expand split_pred_sym)+
+    qed
+
     have "distinct (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) zs [])" (is "distinct ?fold")
       apply (rule fold_map_distinct[OF distinct(3), of f])
       subgoal for x
@@ -1125,6 +1138,8 @@ proof-
           unfolding f_def Hopcroft_splitted_def is_partition_P split_language_equiv_partition_def split_set_def
           by blast
         done
+      subgoal
+        using inj_disj by blast
       done
 
     from set_eq_iff_mset_eq_distinct[OF this distinct(6), simplified foldI_eq I_zs'_eq simp_thms(6,11) Un_empty_right[simplified empty_set]]
