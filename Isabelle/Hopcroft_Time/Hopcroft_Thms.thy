@@ -2296,7 +2296,46 @@ next
     by argo
 qed
 
-lemma fold_map_distinct:"\<lbrakk>distinct xs; \<And>x. x \<in> set xs \<Longrightarrow> fst (f x) \<noteq> snd (f x) \<and> fst (fst (f x)) = fst (snd (f x)) \<and> is_partition (snd x) {snd (fst (f x)), snd (snd (f x))}\<rbrakk> \<Longrightarrow> distinct (fold ((@) \<circ> (\<lambda>x. [fst(f x), snd(f x)])) xs [])"
-  sorry
+lemma fold_map_distinct_aux:"set (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) xs []) = \<Union>{{fst (f B), snd (f B)} | B. B \<in> set xs}"
+  using fold_map_Un_eq[of "\<lambda>x. [fst (f x), snd (f x)]" xs "[]"]
+  by simp
+
+lemma fold_map_distinct:
+  "\<lbrakk>distinct xs;
+    \<And>x. x \<in> set xs \<Longrightarrow> fst (f x) \<noteq> snd (f x) \<and> fst (fst (f x)) = fst (snd (f x)) \<and> is_partition (snd x) {snd (fst (f x)), snd (snd (f x))};
+    \<And>x y. x \<in> set xs \<and> y \<in> set xs \<Longrightarrow> (fst (f x) = fst (f y) \<or> fst (f x) = snd (f y) \<or> snd (f x) = fst (f y) \<or> snd (f x) = snd (f y) \<Longrightarrow> x = y)\<rbrakk> \<Longrightarrow>
+    distinct (fold ((@) \<circ> (\<lambda>x. [fst(f x), snd(f x)])) xs [])"
+proof (induction xs)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons x xs)
+  then have "fst (f x) \<noteq> snd (f x) \<and> fst (fst (f x)) = fst (snd (f x)) \<and> is_partition (snd x) {snd (fst (f x)), snd (snd (f x))}"
+    by simp
+  moreover have "distinct (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) xs [])"
+    using Cons.IH[OF conjunct2[OF Cons(2)[simplified distinct.simps(2)]]] Cons.prems(2)[OF list.set_intros(2)] Cons.prems(3) list.set_intros(2)
+    by fast
+
+  moreover have "fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) (x # xs) [] = (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) xs []) @ [fst (f x), snd (f x)]"
+    apply (simp add: fold_simps(2))
+    using append.right_neutral comp_apply fold_append_concat_rev fold_map
+    by (metis (mono_tags, lifting))
+
+  moreover have "set ([fst (f x), snd (f x)]) \<inter> set (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) xs []) = {}"
+  proof (rule ccontr)
+    assume "set [fst (f x), snd (f x)] \<inter> set (fold ((@) \<circ> (\<lambda>x. [fst (f x), snd (f x)])) xs []) \<noteq> {}"
+    then obtain e where e_def:"e \<in> set [fst (f x), snd (f x)]" "e \<in> \<Union>{{fst (f B), snd (f B)} | B. B \<in> set xs}"
+      by (simp add: fold_map_distinct_aux[of f xs], blast)
+    then obtain y where y_def:"y \<in> set xs" "e = fst (f y) \<or> e = snd (f y)"
+      by blast
+    from e_def y_def Cons.prems(3)[of x y] have "x = y"
+      by force
+    then show False
+      using Cons.prems(1) y_def(1) by simp
+  qed
+
+  ultimately show ?case
+    by (metis (no_types, lifting) Int_commute distinct_append distinct_length_2_or_more distinct_singleton)
+qed
 
 end
