@@ -642,15 +642,11 @@ In order to simplify the expression of the estimate (\ref{eq:estimate}), we can 
     T & \leq \theta \cdot \left(\sum_{(a, C) \in \mathcal{L}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{L}} | \preds{a}{B} | \log | B | \right)\\
     & = \theta \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \log | C |
 \end{align*}
-
 Thus, we work with the following simplified estimate:
-
 \begin{equation}
     \hat{T} := \theta \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \log | C |
 \end{equation}
-
 The definition in Isabelle is also simpler:
-
 \begin{lstlisting}[language=Isabelle]
 definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
   let xs = (SOME xs. xs <$\midtilde\midtilde\midtilde$> $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P) in
