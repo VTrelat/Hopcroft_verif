@@ -580,9 +580,9 @@ where \texttt{preds $\mathcal{A}$ a p} represents the set of all predecessors $\
 \bigskip
 
 The most important part of this definition is the estimate of the cost for the loop, i.e.\ the amount of resource consumed by the loop. From lemma \ref{lem:bound}, we have the following estimate:
-\begin{equation*}
-    T = \theta \cdot \left(\sum_{(a, C) \in \mathcal{W}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \preds{a}{B} | \log \frac{| B |}{2} \right)
-\end{equation*}
+\begin{equation}\label{eq:estimate}
+    T = \theta \cdot \left(\sum_{(a, C) \in \mathcal{L}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{L}} | \preds{a}{B} | \log \frac{| B |}{2} \right)
+\end{equation}
 The constant $\theta$ comes from lemma \ref{lem:time_iteration} and represents constant costs inherent to the loop body, like the cost of checking emptiness, calling a function, etc. In Isabelle, this factor $\theta$ is defined following the definition of \texttt{Hopcroft\_abstract\_f} and \texttt{check\_b\_spec} as follows:
 
 \begin{lstlisting}[language=Isabelle]
@@ -624,7 +624,7 @@ definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L)
 \end{remark}
 
 \paragraph{Simplifying the estimate:}
-Unfortunately, this definition makes proofs very difficult. For a state transition $(P, L) \rightarrow (P', L')$, we would have to examine all cases for all blocks whether they are splitters in $L$ (or not) or whether they are split by some other splitter (or not) or whether there are new splitters created from this splitter in $L'$ (or not). This would be very tedious to formalize, but here is a sketch of some ideas.
+Unfortunately, such a definition makes the proofs very difficult. For a state transition $(P, L) \rightarrow (P', L')$, we would have to examine all cases for all blocks whether they are splitters in $L$ or whether they are split by some other splitter or whether there are new splitters created from this splitter in $L'$. This would be very tedious to formalize, but here is a sketch of some ideas.
 
 Splitters of the workset can be uniquely characterized thanks to ``$a$-$q$-splitters''. It is defined as follows for a state $(P, L)$:
 
@@ -634,6 +634,28 @@ Let $a \in \Sigma$ and $q \in \mathcal{Q}$. Let $B$ be the unique block of the p
 
 This can be achieved in Isabelle using the option type. Although this is a good characterization of splitters, it is not easy to work with it. For example, if we want to show that the number of splitters decreases, we would have to show that the number of $a$-$q$-splitters decreases for any $a \in \Sigma$ and any $q \in \mathcal{Q}$. This is rather tricky to formalize.
 
+\bigskip
+
+In order to simplify the expression of the estimate (\ref{eq:estimate}), we can remove the halving factor in the second term, which allows both term to be gathered together under one sum. We obtain an upper bound for the previous expression and the difference between the two is ``small'':
+
+\begin{align*}
+    T & \leq \theta \cdot \left(\sum_{(a, C) \in \mathcal{L}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{L}} | \preds{a}{B} | \log | B | \right)\\
+    & = \theta \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \log | C |
+\end{align*}
+
+Thus, we work with the following simplified estimate:
+
+\begin{equation}
+    \hat{T} := \theta \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \log | C |
+\end{equation}
+
+The definition in Isabelle is also simpler:
+
+\begin{lstlisting}[language=Isabelle]
+definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
+  let xs = (SOME xs. xs <$\midtilde\midtilde\midtilde$> $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P) in
+  $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
+\end{lstlisting}
 
 
 % \printglossary[type=\acronymtype]
