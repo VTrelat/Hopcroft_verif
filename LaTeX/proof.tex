@@ -365,11 +365,11 @@ From Req.\ \ref{req:2} and Req.\ \ref{req:3}, we can show that for a state $q$ i
     We now show the result for Algorithm \ref{alg:modern}. A splitter ${s =: (a, C)}$ is picked from $\mathcal{W}$.
     Then, we iterate over all blocks $B \in \mathcal{P}$ that may be split with $s$. Let $B \in \mathcal{P}$.
     \begin{align*}
-        s\ \text{splits}\ B &\iff \exists q_1, q_2 \in B, \delta(q_1, a) \in C \land \delta(q_2, a) \notin C\\
+        s\ \text{splits}\ B &\iff \exists q_1, q_2 \in B \quad \delta(q_1, a) \in C \land \delta(q_2, a) \notin C\\
+        &\iff \{q_1 \in B, \delta(q_1, a) \in C\} \neq \varnothing \land \{q_2 \in B, \delta(q_2, a) \notin C\} \neq \varnothing \\
         &\iff \left(\bigcup_{q \in C} \delta^{-1}(q, a)\right)\cap B \neq \varnothing \land \left(\bigcup_{q \in B}\delta(q, a)\right)\setminus C \neq \varnothing
     \end{align*}
     \ednote{VT}{we may express the right-hand conjunct in terms of $\delta^{-1}$ in order to prepare the paragraph that follows (But it wouldn't be the same union because you have to start from states outside $C$)}
-    \ednote{VT}{The second equation may be a little too quick, especially for the right-hand conjunct.}
     Likewise, instead of examining all blocks $B \in \mathcal{P}$, we go through $\delta^{-1}$ and we update the splitters for all symbols in $\Sigma$ and one iteration of the loop runs in time
     $$\Theta \left( \left| \Sigma \right| \cdot \left| \bigcup_{q \in C} \delta^{-1}(q, a) \right| \right) $$
 \end{proof}
@@ -507,8 +507,10 @@ This gives a way to characterize splitters throughout the whole execution.
 \begin{proof}
 From lemma \ref{lem:bound}, we obtain in particular that for the initial partition the time spent in the loop until termination is bounded by:
 $$T = \theta \cdot \sum_{a \in \Sigma}\left(| \preds{a}{P_1} | \log | P_1 | + | \preds{a}{P_2} | \log \frac{| P_2 |}{2}\right)$$
+where $\theta$ is the constant of proportionality obtained in lemma \ref{lem:time_iteration} and $\{P_1, P_2\}$ is the initial partition.
+
 Thus using concavity of the logarithm, the following holds:
-$$T \leq \theta \sum_{a \in \Sigma} (\underset{\leq 2|\preds{a}{\mathcal{Q}}|}{\underbrace{|\preds{a}{P_1}| + |\preds{a}{P_2}|}})\log(\underset{= |\mathcal{Q}|}{\underbrace{|P_1| + |P_2|}}) \leq 2 \theta|\Sigma||\mathcal{Q}| \log |\mathcal{Q}|$$
+$$T \leq \theta \sum_{a \in \Sigma} (\underset{\leq |\mathcal{Q}|}{\underbrace{|\preds{a}{P_1}| + |\preds{a}{P_2}|}})\log(\underset{\leq |\mathcal{Q}|}{\underbrace{|P_1| + |P_2|}}) \leq \theta|\Sigma||\mathcal{Q}| \log |\mathcal{Q}|$$
 \end{proof}
 
 \subsection{Towards a formal proof}
