@@ -13,11 +13,21 @@
 -   [22.05.2023 - 04.06.2023](#22052023---04062023)
 -   [05.06.2023 - 18.06.2023](#05062023---18062023)
 -   [19.06.2023 - 02.07.2023](#19062023---02072023)
+-   [03.07.2023 - 16.07.2023](#03072023---16072023)
 -   [Remarks](#remarks)
 
 ---
 
 <div style="text-align: justify">
+
+## 03.07.2023 - 16.07.2023
+
+-   #### Notes
+
+    - Cleaned up the proof of lemma `estimate2_decrease`
+    - I am now at the interesting part of the project : the inequality in `estimate2_decrease` is large, we want a strict one.
+
+---
 
 ## 19.06.2023 - 02.07.2023
 
