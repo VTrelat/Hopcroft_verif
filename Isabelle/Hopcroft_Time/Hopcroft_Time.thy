@@ -379,6 +379,27 @@ definition "estimate2 \<A> \<equiv> \<lambda>(P,L).
   let xs = (SOME xs. xs <~~~> \<Sigma> \<A> \<times> P) in 
     \<Sum>s\<leftarrow>xs. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s))"
 
+
+
+lemma aux1:"finite S \<Longrightarrow> (let xs = (SOME xs. xs <~~~> S) in \<Sum>s\<leftarrow>xs. (f::'a \<Rightarrow> nat) s) = (\<Sum>s \<in> S. f s)"
+  apply (induction S rule: finite_induct)
+   apply simp
+  apply auto
+  sorry
+
+
+lemma (in DFA) aux2:"finite P \<Longrightarrow> estimate2 \<A> (P, L) = (\<Sum>s \<in> \<Sigma> \<A> \<times> P. card (preds \<A> (fst s) (snd s)) * Discrete.log (card (snd s)))"
+proof-
+  assume "finite P"
+  then have "finite (\<Sigma> \<A> \<times> P)"
+    using finite_\<Sigma> by blast
+  thus ?thesis
+    using aux1
+    unfolding estimate2_def
+    by fast
+qed
+
+
 (* lemma (in DFA) estimate2_induct:
   assumes "Hopcroft_abstract_invar \<A> (P, L)"
     "P' = Hopcroft_split \<A> C a {} P"
@@ -641,7 +662,7 @@ lemma (in DFA) estimate2_decrease:
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
   "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
   "a \<in> \<Sigma> \<A>"
-  shows "estimate2 \<A> (P', L') \<le> estimate2 \<A> (P,L)"
+shows "estimate2 \<A> (P', L') \<le> estimate2 \<A> (P,L)"
 proof-
   let ?S = "P \<inter> P'"\<comment>\<open>Set of blocks remained unchanged\<close>
   let ?P1 = "P - ?S"\<comment>\<open>Set of blocks that will be split\<close>
