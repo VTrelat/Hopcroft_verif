@@ -4,7 +4,6 @@
 \usepackage{textcomp} % straigth apos
 \usepackage{tikz}
 \usepackage{verbatim}
-\usepackage{tikzit}
 \usepackage{listings}
 \usepackage[ruled,vlined, linesnumbered]{algorithm2e}
 \usepackage{algorithmic,float}
@@ -163,7 +162,7 @@
 \subsection{DFA minimization by example}
 \begin{frame}
     \centering
-    \begin{tikzpicture}[shorten >=1pt,node distance=3cm, on grid, >={Stealth[round]},initial text=,
+    \begin{tikzpicture}[shorten >=1pt,node distance=2.5cm, on grid, >={Stealth[round]},initial text=,
         every state/.style={draw=maincolor,very thick,fill=maincolor!20}]
      
         \node[state, initial] (q0) {$q_0$};
@@ -173,34 +172,48 @@
         \node[state, accepting, right of=q2] (q4) {$q_4$};
         \node[state, right of=q3] (q5) {$q_5$};
 
-        \path[->] (q0) edge[bend left] node[left]{$0$} (q1);
-        \path[->] (q0) edge node[below]{$1$} (q2);
-        \path[->] (q1) edge[bend left] node[right]{$0$} (q0);
-        \path[->] (q1) edge node[above]{$1$} (q3);
-        \path[->] (q2) edge node[below]{$0$} (q4);
-        \path[->] (q2) edge node[left=.3cm]{$1$} (q5);
-        \path[->] (q3) edge node[above]{$1$} (q5);
-        \path[->] (q3) edge node[above=.3cm]{$0$} (q4);
-        \path[->] (q4) edge[loop right] node[right]{$0$} (q4);
-        \path[->] (q4) edge node[right]{$1$} (q5);
-        \path[->] (q5) edge[loop right] node[right]{$0,1$} (q5);
+        \path[->] (q0) edge[bend left] node[left]{$\alpha$} (q1);
+        \path[->] (q0) edge node[below]{$\beta$} (q2);
+        \path[->] (q1) edge[bend left] node[right]{$\alpha$} (q0);
+        \path[->] (q1) edge node[above]{$\beta$} (q3);
+        \path[->] (q2) edge node[below]{$\alpha$} (q4);
+        \path[->] (q2) edge node[left=.3cm]{$\beta$} (q5);
+        \path[->] (q3) edge node[above]{$\beta$} (q5);
+        \path[->] (q3) edge node[above=.3cm]{$\alpha$} (q4);
+        \path[->] (q4) edge[loop right] node[right]{$\alpha$} (q4);
+        \path[->] (q4) edge node[right]{$\beta$} (q5);
+        \path[->] (q5) edge[loop right] node[right]{$\alpha,\beta$} (q5);
     \end{tikzpicture}
+
+    % table
+    \begin{table}
+        \centering
+        \small
+        \begin{tabular}{c|c|c}
+            Splitter & Partition & Workset\\
+            \hline
+            -- & $\{q_0,q_1, q_5\}\{q_2, q_3, q_4\}$ & $(\alpha, \{q_0,q_1,q_5\})\ (\beta, \{q_0, q_1, q_5\})$\\
+            $(\beta, \{q_0, q_1, q_5\})$ & $\{q_0,q_1\}\{q_5\}\{q_2, q_3, q_4\}$ & $(\alpha, \{q_0,q_1\})\ (\alpha, \{q_5\})$\\
+            $(\alpha, \{q_0,q_1\})$ & $\{q_0,q_1\}\{q_5\}\{q_2, q_3, q_4\}$ & $(\alpha, \{q_5\})$\\
+            $(\alpha, \{q_5\})$ & $\{q_0,q_1\}\{q_5\}\{q_2, q_3, q_4\}$ & $\varnothing$\\
+        \end{tabular}
+    \end{table}
 \end{frame}
 
 \begin{frame}
     \centering
-    \begin{tikzpicture}[shorten >=1pt,node distance=3cm, on grid, >={Stealth[round]},initial text=,
+    \begin{tikzpicture}[shorten >=1pt,node distance=2.5cm, on grid, >={Stealth[round]},initial text=,
         every state/.style={draw=maincolor,very thick,fill=maincolor!20}]
      
         \node[state, initial] (Q0) {$q_0, q_1$};
         \node[state, accepting, right of=Q0] (Q1) {$q_2,q_3,q_4$};
         \node[state, right of=Q1] (Q2) {$q_5$};
 
-        \path[->] (Q0) edge[loop above] node[above]{$0$} (Q0);
-        \path[->] (Q0) edge node[above]{$1$} (Q1);
-        \path[->] (Q1) edge[loop above] node[above]{$0$} (Q1);
-        \path[->] (Q1) edge node[above]{$1$} (Q2);
-        \path[->] (Q2) edge[loop above] node[above]{$0,1$} (Q2);
+        \path[->] (Q0) edge[loop above] node[above]{$\alpha$} (Q0);
+        \path[->] (Q0) edge node[above]{$\beta$} (Q1);
+        \path[->] (Q1) edge[loop above] node[above]{$\alpha$} (Q1);
+        \path[->] (Q1) edge node[above]{$\beta$} (Q2);
+        \path[->] (Q2) edge[loop above] node[above]{$\alpha,\beta$} (Q2);
     \end{tikzpicture}
 \end{frame}
 
