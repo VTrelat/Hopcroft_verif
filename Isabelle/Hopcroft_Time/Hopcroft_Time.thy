@@ -269,6 +269,31 @@ next
   qed
 qed
 
+lemma (in DFA) splitter_removed:
+  assumes "(a, C) \<in> L" "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_update_splitters_pred \<A> C a P L L'"
+  shows "(a, C) \<notin> L'"
+proof (rule ccontr)
+  assume "\<not> (a, C) \<notin> L'" hence asm:"(a, C) \<in> L'" by simp
+  from asm assms(3) have "(a, C) \<in> L - {(a, C)} \<and> (\<forall>pa pb. (C, pa, pb) \<notin> Hopcroft_splitted \<A> C a {} P) \<or> (\<exists>p' pa pb. (p', pa, pb) \<in> Hopcroft_splitted \<A> C a {} P \<and> a \<in> \<Sigma> \<A> \<and> (C = pa \<or> C = pb))"
+    unfolding Hopcroft_update_splitters_pred_unfold
+    by blast
+  then obtain p' pa pb where
+    part_def:"(p', pa, pb) \<in> Hopcroft_splitted \<A> C a {} P" "C = pa \<or> C = pb"
+    by blast
+  with Hopcroft_splitted_aux[OF part_def(1)] obtain C' where
+    C_part:"p' = C \<union> C'" "C \<inter> C' = {}" "C' \<noteq> {}" "p' \<in> P"
+    by blast
+  moreover from assms(1) assms(2) have "C \<in> P" "p' \<inter> C \<noteq> {}"
+    unfolding Hopcroft_abstract_invar_def
+    using Hopcroft_splitted_aux[OF part_def(1)] part_def(2) by (fastforce, blast)
+  moreover from assms(2) have "is_partition (\<Q> \<A>) P"
+    unfolding Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def
+    by simp
+  ultimately show False
+    unfolding is_partition_def
+    by blast
+qed
+
 definition aq_splitter where
   "aq_splitter a q L \<equiv> (if (\<exists> (a, B) \<in> L. q \<in> B) then 
                            let (a, B) = THE (a, B). (a, B) \<in> L \<and> q \<in> B in Some (a, B)
@@ -657,8 +682,16 @@ qed
 
 *)
 
+lemma (in DFA) iteration_workset_neq:
+  assumes "P' = Hopcroft_split \<A> C a {} P" "\<Q> \<A> \<noteq> {}" "\<Q> \<A> \<noteq> \<F> \<A>" "\<F> \<A> \<noteq> {}"
+  "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)" "Hopcroft_abstract_b (P', L')"
+  "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
+  shows "L \<noteq> L'" "(a, C) \<notin> L'"
+  using splitter_removed[OF \<open>(a, C) \<in> L\<close> \<open>Hopcroft_abstract_invar \<A> (P, L)\<close> assms(8)] assms(9)
+  by blast+
+
 lemma (in DFA) estimate2_decrease:
-  assumes "P' = Hopcroft_split \<A> C a {} P" "DFA \<A>" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}"
+  assumes "P' = Hopcroft_split \<A> C a {} P" "\<Q> \<A> \<noteq> {}" "\<F> \<A> \<noteq> {}"
   "Hopcroft_abstract_invar \<A> (P, L)" "Hopcroft_abstract_b (P, L)"
   "Hopcroft_update_splitters_pred \<A> C a P L L'" "(a, C) \<in> L"
   "a \<in> \<Sigma> \<A>"
@@ -667,9 +700,9 @@ proof-
   let ?S = "P \<inter> P'"\<comment>\<open>Set of blocks remained unchanged\<close>
   let ?P1 = "P - ?S"\<comment>\<open>Set of blocks that will be split\<close>
   let ?P1'= "P' - ?S"\<comment>\<open>Set of split blocks (unordered)\<close>
-  note is_partition_P = conjunct1[OF conjunct1[OF case_prodD[OF assms(5)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]]]]
-  note is_partition_P'= split_is_partition[OF assms(5, 9, 8), simplified assms(1)[symmetric]]
-  note block_cases = DFA.Hopcroft_split_in2[OF assms(2) conjunct1[OF conjunct1[OF case_prodD[OF assms(5)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]]]] assms(9), of _ C, simplified assms(1)[symmetric]]
+  note is_partition_P = conjunct1[OF conjunct1[OF case_prodD[OF assms(4)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]]]]
+  note is_partition_P'= split_is_partition[OF assms(4,8,7), simplified assms(1)[symmetric]]
+  note block_cases = DFA.Hopcroft_split_in2[OF DFA_axioms conjunct1[OF conjunct1[OF case_prodD[OF assms(4)[simplified Hopcroft_abstract_invar_def is_weak_language_equiv_partition_def]]]] assms(8), of _ C, simplified assms(1)[symmetric]]
 
   have P1_cases:"B \<in> ?P1 \<Longrightarrow> (\<exists> B' B''. B' \<in> ?P1' \<and> B'' \<in> ?P1' \<and> (B, B', B'') \<in> Hopcroft_splitted \<A> C a {} P)" for B
     \<comment>\<open>A block in the set of blocks that are going to be split is actually
@@ -693,7 +726,7 @@ proof-
       by blast
 
     have "B' \<in> P'" "B'' \<in> P'"
-      using DFA.split_block_in_partition_prop1[OF assms(2) assms(1) is_partition_P disjI1[OF split]]
+      using DFA.split_block_in_partition_prop1[OF DFA_axioms assms(1) is_partition_P disjI1[OF split]]
       by blast+
 
     moreover have "B' \<in> ?P1'"
@@ -999,12 +1032,12 @@ proof-
       using list_set_eq(4) by fastforce+
     have "\<exists>! (B, B''). B \<in> set xs \<and> B'' \<in> set zs' \<and> split_pred \<A> P (snd B) a C (snd B') (snd B'') \<and> fst B = fst B' \<and> fst B = fst B''"
     proof-
-      from block_in_split_partition[OF is_partition_P assms(1) \<open>snd B' \<in> P'\<close> assms(9)] \<open>snd B' \<notin> P\<close>
+      from block_in_split_partition[OF is_partition_P assms(1) \<open>snd B' \<in> P'\<close> assms(8)] \<open>snd B' \<notin> P\<close>
       have uniqueBB'':"\<exists>!(B, B''). B \<in> P \<and> B'' \<in> P'-P \<and> split_pred \<A> P B a C (snd B') B''"
         by argo
       obtain B B'' where BB''_def:"(B, B'') = (THE (B, B''). B \<in> P \<and> B'' \<in> P'-P \<and> split_pred \<A> P B a C (snd B') B'')"
         using theI'[OF uniqueBB''] by fastforce
-      with block_in_split_partition[OF is_partition_P assms(1) \<open>snd B' \<in> P'\<close> assms(9)] \<open>snd B' \<notin> P\<close> assms(1,5) split_block_in_partition_prop2[OF _ assms(5), of B a C "snd B'" B'']
+      with block_in_split_partition[OF is_partition_P assms(1) \<open>snd B' \<in> P'\<close> assms(8)] \<open>snd B' \<notin> P\<close> assms(1,4) split_block_in_partition_prop2[OF _ assms(4), of B a C "snd B'" B'']
       have "B \<in> ?P1"
         by (metis (mono_tags, lifting) Diff_iff Int_iff fst_conv snd_conv split_beta the_equality)
       from BB''_def uniqueBB'' have "split_pred \<A> P B a C (snd B') B''"
@@ -1035,9 +1068,9 @@ proof-
           then obtain \<sigma> D D'' where x_split:"x = ((\<sigma>, D),(\<sigma>, D''))"
             by (metis prod.exhaust_sel)
 
-          with asm xs_perm split_xs'(3) assms(1) assms(5)
+          with asm xs_perm split_xs'(3) assms(1) assms(4)
             split_pred_split_aux2[OF is_partition_P, where a=a and C=C and B'="snd B'"]
-            split_block_in_partition_prop2[OF _ assms(5)] \<open>B \<in> ?P1\<close>
+            split_block_in_partition_prop2[OF _ assms(4)] \<open>B \<in> ?P1\<close>
           have "D \<in> P \<and> D'' \<in> P'-P \<and> split_pred \<A> P D a C (snd B') D''"
             by (metis Diff_iff Int_iff fst_conv snd_conv split_pred_def)
 
@@ -1093,7 +1126,7 @@ proof-
         "(B, B'') = (THE (B, B''). B \<in> set xs \<and> B'' \<in> set zs' \<and> split_pred \<A> P (snd B) a C (snd x) (snd B'') \<and> fst B = fst x \<and> fst B = fst B'')"
         by fastforce
       hence "B \<in> set zs"
-        using theI'[OF unique_split_conv[OF \<open>x \<in> set zs'\<close>]]  assms(1) split_block_in_partition_prop2[OF _ assms(5)] split_xs(1,2) by fastforce
+        using theI'[OF unique_split_conv[OF \<open>x \<in> set zs'\<close>]]  assms(1) split_block_in_partition_prop2[OF _ assms(4)] split_xs(1,2) by fastforce
 
       from f_def have "f B = (THE (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B'')"
         by blast
@@ -1102,7 +1135,7 @@ proof-
 
       with theI''[OF unique_split_conv[OF \<open>x \<in> set zs'\<close>], simplified BB''_def[symmetric] fst_conv snd_conv] assms(1) BB''_def \<open>x \<in> set zs'\<close> unique_split[OF \<open>B \<in> set zs\<close>]
       have fcase:"f B = (x, B'') \<or> f B = (B'', x)"
-        using DFA.Hopcroft_splitted_unique[OF \<open>DFA \<A>\<close>, of "snd B" _ _ C a P]
+        using DFA.Hopcroft_splitted_unique[OF DFA_axioms, of "snd B" _ _ C a P]
           the_equality[of "\<lambda>(B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''"]
         unfolding split_pred_def
         by (smt (verit, best) case_prodI)
@@ -1200,15 +1233,15 @@ proof-
             OF fin_preds fin_preds
                preds_disj_eq(2)[
                  OF
-                   DFA.Hopcroft_splitted_split_pred[OF \<open>DFA \<A>\<close> is_partition_P conjunct2[OF conjunct2[OF f_ok]]]
+                   DFA.Hopcroft_splitted_split_pred[OF DFA_axioms is_partition_P conjunct2[OF conjunct2[OF f_ok]]]
                    is_partition_P fst_zs[OF \<open>s \<in> set zs\<close>]
                  ],
                  simplified
-                   preds_disj_eq(1)[OF DFA.Hopcroft_splitted_split_pred[OF \<open>DFA \<A>\<close> is_partition_P conjunct2[OF conjunct2[OF f_ok]]] is_partition_P fst_zs[OF \<open>s \<in> set zs\<close>],symmetric],
+                   preds_disj_eq(1)[OF DFA.Hopcroft_splitted_split_pred[OF DFA_axioms is_partition_P conjunct2[OF conjunct2[OF f_ok]]] is_partition_P fst_zs[OF \<open>s \<in> set zs\<close>],symmetric],
                  symmetric].
 
       show "card (snd (fst (f s))) + card (snd (snd (f s))) = card (snd s)"
-        apply (rule card_Un_disjoint[OF _ _ split_disj_union(2)[OF assms(1) is_partition_P DFA.Hopcroft_splitted_split_pred[OF \<open>DFA \<A>\<close> is_partition_P conjunct2[OF conjunct2[OF f_ok]]]], simplified split_disj_union(1)[OF assms(1) is_partition_P DFA.Hopcroft_splitted_split_pred[OF \<open>DFA \<A>\<close> is_partition_P conjunct2[OF conjunct2[OF f_ok]]], symmetric], symmetric])
+        apply (rule card_Un_disjoint[OF _ _ split_disj_union(2)[OF assms(1) is_partition_P DFA.Hopcroft_splitted_split_pred[OF DFA_axioms is_partition_P conjunct2[OF conjunct2[OF f_ok]]]], simplified split_disj_union(1)[OF assms(1) is_partition_P DFA.Hopcroft_splitted_split_pred[OF DFA_axioms is_partition_P conjunct2[OF conjunct2[OF f_ok]]], symmetric], symmetric])
         using is_partition_memb_finite[OF finite_\<Q> is_partition_P conjunct1[OF Hopcroft_splitted_aux[OF conjunct2[OF conjunct2[OF f_ok]]]], simplified conjunct1[OF conjunct2[OF Hopcroft_splitted_aux[OF conjunct2[OF conjunct2[OF f_ok]]]]] finite_Un]
         by blast+
     qed
@@ -1243,7 +1276,7 @@ lemma (in DFA) estimate2_progress:
           + card (\<Sigma> \<A>) * card (preds \<A> a p) < estimate2 \<A> (P,L)" 
   unfolding estimate2_def preds_def
   apply simp
-  using estimate2_decrease[OF assms(3) DFA_axioms assms(1,2,4,5,6,7,8)]
+  using DFA.estimate2_decrease[OF DFA_axioms assms(3) assms(1,2,4,5,6,7,8)]
   sorry
 
   

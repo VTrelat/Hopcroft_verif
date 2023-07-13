@@ -1674,6 +1674,15 @@ next
   done
 qed
 
+lemmas Hopcroft_update_splitters_pred_unfold =
+  Hopcroft_update_splitters_pred_def
+  Hopcroft_update_splitters_pred_aux_def
+  Hopcroft_update_splitters_pred_aux_lower_def
+  Hopcroft_update_splitters_pred_aux_lower_def
+  Hopcroft_update_splitters_pred_aux_lower_not_splitted_def
+  Hopcroft_update_splitters_pred_aux_lower_splitted_in_L_def
+  Hopcroft_update_splitters_pred_aux_lower_splitted_def
+  Hopcroft_update_splitters_pred_aux_upper_def
 
 definition Hopcroft_abstract_invar where
   "Hopcroft_abstract_invar \<A> = (\<lambda>(P, L). 
