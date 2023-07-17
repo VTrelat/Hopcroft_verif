@@ -26,7 +26,9 @@
 
     -   Cleaned up the proof of lemma `estimate2_decrease`
     -   I am now at the interesting part of the project : the inequality in `estimate2_decrease` is large, we want a strict one.
-    -   Now spending time on documenting the proofs in a separate TeX file [`proof.tex`](LaTex/proof.tex)
+    -   Now spending time on documenting the proofs :
+        -   in a separate TeX file [`proof.tex`](LaTex/proof.tex)
+        -   started some slides for the presentation in [`slides.tex`](LaTex/slides/slides.tex)
 
 ---
 
