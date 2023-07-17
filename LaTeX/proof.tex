@@ -268,7 +268,7 @@ The algorithm starts with an initial partition that distinguishes accepting stat
 
 During each iteration, the algorithm examines each symbol in the alphabet and checks if it distinguishes any pair of states in different equivalence classes. If a symbol does distinguish a pair, it splits the equivalence class containing those states into two new classes. This process continues until no more splits can be made, and the resulting partition represents the minimal DFA.
 
-To prove the correctness of Hopcroft's algorithm, one needs to demonstrate two key properties:
+To prove the correctness of Hopcroft's algorithm, one needs to show two key properties:
 \begin{itemize}
     \item the resulting partition is a valid equivalence relation, meaning it satisfies the properties of reflexivity, symmetry, and transitivity,
     \item the resulting partition is indeed the minimal partition that correctly distinguishes states based on their language equivalence.
@@ -431,7 +431,7 @@ This gives a way to characterize splitters throughout the whole execution.
 \begin{lemma}\label{lem:bound}
     Let us consider some step in the algorithm such that $\mathcal{P}$ is the current partition. We give an estimation of the total time spent in the loop until termination as an upper bound:
     $$ T := \theta \cdot \left(\sum_{(a, C) \in \mathcal{W}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \preds{a}{B} | \log \frac{| B |}{2} \right)$$
-    where $\theta$ is the constant of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
+    where $\theta$ is the constant factor of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
 \end{lemma}
 \begin{proof}
     We show the result by induction over the steps.
@@ -648,6 +648,11 @@ Thus, we work with the following simplified estimate:
 \begin{equation}
     \hat{T} := \theta \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \log | C |
 \end{equation}
+The error $\Delta T$ is given by:
+\begin{equation}
+    \Delta T := |\hat{T} - T| = \theta \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{L}} | \preds{a}{B} | \log \frac{| B |}{2}
+\end{equation}
+Thus, performing this simplification does not change the asymptotic behavior of the estimate.
 The definition in Isabelle is also simpler:
 \begin{lstlisting}[language=Isabelle]
 definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
@@ -655,6 +660,75 @@ definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L)
   $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
 \end{lstlisting}
 
+\begin{remark}
+The previous definition could be equivalently achieved by using Isabelle's summation over sets:
+\begin{lstlisting}[language=Isabelle]
+definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
+$\sum$ s $\in$ $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P. card (preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * Discrete.log (card (snd s))
+\end{lstlisting}
+Unfortunately, I noticed it after the formalization was done. It may shorten some proofs.
+\end{remark}
+
+\paragraph{Proving that the estimate decreases:} We can now prove that the estimate decreases. We can consider two approaches:
+\begin{itemize}
+    \item[(1)] either we follow the idea of the paper proof given in theorem \ref{thm:complexity} and a non-strict inequality is sufficient,
+    \item[(2)] or we follow the rules given by the Refinement Framework (for a \textit{while} loop given an estimate of the time spent in the loop) and we show a strict inequality.
+\end{itemize}
+We start with approach (1) since it is easier to prove. We first sketch out the idea of the proof, followed by some technical details about the proof in Isabelle. Given a state $(P, L)$ satisfying some invariants and a state transition $(P, L) \rightarrow (P', L')$, we have to show that
+\begin{equation*}
+    \hat{T}(P', L') \leq \hat{T}(P, L)
+\end{equation*}
+Forgetting the constant $\theta$, we have to show that
+\begin{equation*}
+    \sum_{(a, C) \in \Sigma\times \mathcal{P'}} | \preds{a}{C} | \log | C | \leq \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \log | C |
+\end{equation*}
+Let $\{P_1, \dots, P_m\} := \mathcal{P}$ be an enumeration of the $m$ blocks of $\mathcal{P}$ such that the first $k$ blocks $P_1, \dots, P_k$ are split and $P_{k+1}, \dots, P_m$ are not.
+This means that for each $i \in \{1, \dots, k\}$, there exists $P_i'$ and $P_i''$ in $\mathcal{P'}$ resulting from the split of $P_i$ in $\mathcal{P}$.
+Thus, $\mathcal{P'}$ can be written as follows:
+
+\begin{equation*}
+    \mathcal{P'} = \{P_1', P_1'', \dots, P_k', P_k'', P_{k+1}, \dots, P_m\}
+\end{equation*}
+
+Therefore, we can rewrite the previous inequality as follows:
+\begin{equation*}
+    \sum_{(a, C) \in \Sigma\times \{P_1', P_1'', \dots, P_k', P_k'', P_{k+1}, \dots, P_m\}} | \preds{a}{C} | \log | C | \leq \sum_{(a, C) \in \Sigma\times \{P_1, \dots, P_m\}} | \preds{a}{C} | \log | C |
+\end{equation*}
+By splitting the left-hand side sum into two sums over $\{P_1', P_1'', \dots, P_k', P_k''\}$ and $\{P_{k+1}, \dots, P_m\}$ and subtracting the terms over $\{P_{k+1}, \dots, P_m\}$ on both sides, we can reduce the problem to showing that
+\begin{equation*}
+    \sum_{(a, C) \in \Sigma\times \{P_1', P_1'', \dots, P_k', P_k''\}} | \preds{a}{C} | \log | C | \leq \sum_{(a, C) \in \Sigma\times \{P_1, \dots, P_k\}} | \preds{a}{C} | \log | C |
+\end{equation*}
+that is,
+\begin{equation*}
+    \sum_{i=1}^k \left(| \preds{a}{P_i'} | \log | P_i' | + | \preds{a}{P_i''} | \log | P_i'' |\right) \leq \sum_{i=1}^k | \preds{a}{P_i} | \log | P_i |
+\end{equation*}
+
+\bigskip
+
+Then, we consider the following facts\footnote{The proofs of those facts are omitted here since they are simple and not very interesting.}:
+\begin{itemize}
+    \item A property induced by the concavity of the logarithm:
+    \begin{equation*}
+        \forall a, b, x, y \in \mathbb{R}_+^* \quad (a+b)\log (x+y) > a\log x + b\log y
+    \end{equation*}
+    \item A property on the set of predecessors and the definition of a split:
+    \begin{equation*}
+        (a, B) \text{ splits } C \text{ into } (C', C'') \Longrightarrow \preds{a}{C} = \preds{a}{C'} \cup \preds{a}{C''} \land \preds{a}{C'} \cap \preds{a}{C''} = \varnothing
+    \end{equation*}
+    from which we deduce that
+    \begin{equation*}
+        (a, B) \text{ splits } C \text{ into } (C', C'') \Longrightarrow |\preds{a}{C}| = |\preds{a}{C'}| + |\preds{a}{C''}|
+    \end{equation*}
+    \item A property on the definition of a split:
+    \begin{equation*}
+        (a, B) \text{ splits } C \text{ into } (C', C'') \Longrightarrow |C| = |C'| + |C''|
+    \end{equation*}
+\end{itemize}
+Given those properties, we show that
+\begin{equation*}
+    \forall i \in \{1, \dots, k\} \quad | \preds{a}{P_i'} | \log | P_i' | + | \preds{a}{P_i''} | \log | P_i'' | \leq | \preds{a}{P_i} | \log | P_i |
+\end{equation*}
+which is sufficient to conclude the proof.
 
 % \printglossary[type=\acronymtype]
 
