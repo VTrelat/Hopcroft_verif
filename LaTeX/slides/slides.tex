@@ -119,25 +119,18 @@
         \caption{Some photos of Munich}
     \end{figure}
     }
-    \onslide<3->{
-    \begin{figure}
-        \centering
-        \includegraphics[height=3cm]{img/beer0.jpeg}
-        \onslide<4->{\includegraphics[height=3.2cm]{img/beer1.jpeg}}
-        \onslide<5->{\includegraphics[height=3.2cm]{img/beer2.jpeg}}
-        \onslide<6->{\includegraphics[height=3.2cm]{img/beer3.jpeg}}\\
-        \vfill
-        \onslide<7->{\includegraphics[height=3.2cm]{img/beer4.jpeg}}
-        \onslide<8->{\includegraphics[height=3.2cm]{img/beer5.jpeg}}
-        \onslide<9->{\includegraphics[height=3.2cm]{img/beer6.jpeg}}
-        \onslide<10->{\includegraphics[height=3.2cm]{img/beer7.jpeg}}
-    \end{figure}
-    }
 \end{frame}
 
 \subsection{Technical University of Munich}
 
 \begin{frame}
+    \only<1>{
+    \begin{figure}
+        \includegraphics[width=\textwidth]{img/TUM_aerial.png}
+        \caption{Technical University of Munich (TUM), Garching campus}
+    \end{figure}
+    }
+    \only<2>{
     \begin{figure}
         \begin{subfigure}{0.3\textwidth}
             \centering
@@ -149,8 +142,26 @@
             \centering
             \includegraphics[height=6cm]{img/TUM.jpeg}
         \end{subfigure}
-        \caption{Technical University of Munich (TUM)}
+        \caption{Technical University of Munich (TUM), Garching campus}
     \end{figure}
+    }
+\end{frame}
+
+\begin{frame}
+\onslide<+->{
+\begin{figure}
+    \centering
+    \includegraphics[height=3cm]{img/beer0.jpeg}
+    \onslide<+->{\includegraphics[height=3.2cm]{img/beer1.jpeg}}
+    \onslide<+->{\includegraphics[height=3.2cm]{img/beer2.jpeg}}
+    \onslide<+->{\includegraphics[height=3.2cm]{img/beer3.jpeg}}\\
+    \vfill
+    \onslide<+->{\includegraphics[height=3.2cm]{img/beer4.jpeg}}
+    \onslide<+->{\includegraphics[height=3.2cm]{img/beer5.jpeg}}
+    \onslide<+->{\includegraphics[height=3.2cm]{img/beer6.jpeg}}
+    \onslide<+->{\includegraphics[height=3.2cm]{img/beer7.jpeg}}
+\end{figure}
+}
 \end{frame}
 
 \section{Hopcroft's algorithm}
@@ -166,22 +177,22 @@
     \begin{tikzpicture}[shorten >=1pt,node distance=2.5cm, on grid, >={Stealth[round]},initial text=,
         every state/.style={draw=maincolor,very thick,fill=maincolor!20}]
      
-        \only<1>{\node[state, initial] (q0) {$q_0$}};
-        \only<2->{\node[state, initial, fill=orange!60, draw=orange!90!black] (q0) {$q_0$}};
+        \only<1-4>{\node[state, initial] (q0) {$q_0$}};
+        \only<5->{\node[state, initial, fill=orange!60, draw=orange!90!black] (q0) {$q_0$}};
 
-        \only<1>{\node[state, above of=q0] (q1) {$q_1$}};
-        \only<2->{\node[state, above of=q0, fill=orange!60, draw=orange!90!black] (q1) {$q_1$}};
-        \only<1>{\node[state, accepting, right of=q0] (q2) {$q_2$}};
-        \only<2->{\node[state, accepting, right of=q0, fill=blue!40, draw=blue!70] (q2) {$q_2$}};
+        \only<1-4>{\node[state, above of=q0] (q1) {$q_1$}};
+        \only<5->{\node[state, above of=q0, fill=orange!60, draw=orange!90!black] (q1) {$q_1$}};
+        \only<1-4>{\node[state, accepting, right of=q0] (q2) {$q_2$}};
+        \only<5->{\node[state, accepting, right of=q0, fill=blue!40, draw=blue!70] (q2) {$q_2$}};
 
-        \only<1>{\node[state, accepting, above of=q2] (q3) {$q_3$}};
-        \only<2->{\node[state, accepting, above of=q2, fill=blue!40, draw=blue!70] (q3) {$q_3$}};
+        \only<1-4>{\node[state, accepting, above of=q2] (q3) {$q_3$}};
+        \only<5->{\node[state, accepting, above of=q2, fill=blue!40, draw=blue!70] (q3) {$q_3$}};
 
-        \only<1>{\node[state, accepting, right of=q2] (q4) {$q_4$}};
-        \only<2->{\node[state, accepting, right of=q2, fill=blue!40, draw=blue!70] (q4) {$q_4$}};
-        \only<1>{\node[state, right of=q3] (q5) {$q_5$}};
-        \only<2>{\node[state, right of=q3, fill=orange!60, draw=orange!90!black] (q5) {$q_5$}};
-        \only<3->{\node[state, right of=q3] (q5) {$q_5$}};
+        \only<1-4>{\node[state, accepting, right of=q2] (q4) {$q_4$}};
+        \only<5->{\node[state, accepting, right of=q2, fill=blue!40, draw=blue!70] (q4) {$q_4$}};
+        \only<1-4>{\node[state, right of=q3] (q5) {$q_5$}};
+        \only<5>{\node[state, right of=q3, fill=orange!60, draw=orange!90!black] (q5) {$q_5$}};
+        \only<6->{\node[state, right of=q3] (q5) {$q_5$}};
 
         \path[->] (q0) edge[bend left] node[left]{$\alpha$} (q1);
         \path[->] (q0) edge node[below]{$\beta$} (q2);
@@ -197,22 +208,29 @@
     \end{tikzpicture}
     }
 
-    \only<1-5>{
+    \only<1-8>{
     \begin{table}
         \centering
         \small
-        \onslide<2-5>{\begin{tabular}{c|c|c}
+        \only<1-4>{
+            \begin{itemize}
+                \item<2-> Successively partitions the set of states into equivalence classes
+                \item<3-> Initial partition: accepting and non-accepting states
+                \item<4-> Each iteration: pick a splitter and split all blocks of the current partition
+            \end{itemize}
+        }
+        \only<5-8>{\begin{tabular}{c|c|c}
             Splitter & Partition & Workset\\
             \hline
             -- & $\{{\color{orange!80!black}q_0,q_1, q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{orange!80!black}q_0,q_1, q_5}\})\ (\beta, \{{\color{orange!80!black}q_0,q_1, q_5}\})$\\
-            \onslide<3->{$(\beta, \{{\color{orange!80!black}q_0,q_1, q_5}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{orange!80!black}q_0,q_1}\})\ (\alpha, \{{\color{maincolor!80!black}q_5}\})$}\\
-            \onslide<4->{$(\alpha, \{{\color{orange!80!black}q_0,q_1}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{maincolor!80!black}q_5}\})$}\\
-            \onslide<5->{$(\alpha, \{{\color{maincolor!80!black}q_5}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $\varnothing$}\\
+            \onslide<6->{$(\beta, \{{\color{orange!80!black}q_0,q_1, q_5}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{orange!80!black}q_0,q_1}\})\ (\alpha, \{{\color{maincolor!80!black}q_5}\})$}\\
+            \onslide<7->{$(\alpha, \{{\color{orange!80!black}q_0,q_1}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{maincolor!80!black}q_5}\})$}\\
+            \onslide<8->{$(\alpha, \{{\color{maincolor!80!black}q_5}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $\varnothing$}\\
         \end{tabular}}
     \end{table}
     }
 
-    \only<6>{
+    \only<9>{
     \begin{tikzpicture}[shorten >=1pt,node distance=2.5cm, on grid, >={Stealth[round]},initial text=,
         every state/.style={draw=maincolor,very thick,fill=maincolor!20}]
         

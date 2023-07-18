@@ -443,8 +443,8 @@ This gives a way to characterize splitters throughout the whole execution.
     
     We know from lemma \ref{lem:time_iteration} that an iteration of the loop for $(a, P_i)$ takes $\theta | \preds{a}{P_i} | $ time.
     \begin{itemize}
-        \item From lemma \ref{lem:log}, for all $a\in\Sigma$, $(a, P_1)$ can be processed at most $\log \| (a, P_1) \| = \log |P_1|$ times\footnote{We drop the floor operator for simplicity.
-        Note that since we are giving upper bounds, this is completely valid.}, hence the total time for $(a, P_1)$ is bounded by $\theta | \preds{a}{P_1} | \log | P_1 |$ and thus the total time for any splitter $(a, P_1)$ is bounded by:
+        \item From lemma \ref{lem:log}, for all $a\in\Sigma$, $(a, P_1)$ can be processed at most $\log \| (a, P_1) \| = \log |P_1|$ times\footnote{We drop the floor function for simplicity.
+        Note that since we are giving upper bounds, this is completely valid. However, the floor function will have some importance later in the formalization.}, hence the total time for $(a, P_1)$ is bounded by $\theta | \preds{a}{P_1} | \log | P_1 |$ and thus the total time for any splitter $(a, P_1)$ is bounded by:
         $$\theta | \preds{a}{P_1} | \log | P_1 |$$
 
         \item From lemma \ref{lem:log_non_splitter}, for all $a\in\Sigma$, $(a, P_2)$ can be processed at most $\log \frac{\| (a, P_2) \|}{2} = \log \frac{| P_2 |}{2}$ times. Thus, the total time for any non-splitter $(a, P_2)$ is bounded by:
@@ -605,11 +605,17 @@ Finding a suitable definition for the inner expression in $T$ is not straightfor
 
 \begin{lstlisting}[language=Isabelle]
 definition estimate1 ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
-  $\sum${(card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)))*log(card(snd s)) | s. s $\in$ L} +
-  $\sum${(card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)))*log(card(snd s)/2) | s. s $\in$ $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P - L}
+  $\sum${(card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)))*Discrete.log(card(snd s)) | s. s $\in$ L} +
+  $\sum${(card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)))*Discrete.log(card(snd s)/2) | s. s $\in$ $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P - L}
 \end{lstlisting}
 
+\begin{remark}
+    The function \texttt{Discrete.log :: nat $\Rightarrow$ nat} is the floor of the logarithm in base 2, i.e.\ it formalizes the function $x \mapsto \lfloor \log_2 x \rfloor$. Unlike the informal proof of lemma \ref{lem:bound}, the floor function cannot be dropped -- as is -- in Isabelle, mostly because the Refinement Framework works with natural numbers for the costs. This makes sense because the logarithm essentially captures the number of times blocks are split, which is a natural number.
+\end{remark}
+
 The problem with this definition is that the function $s := (a, C) \mapsto |\preds{a}{C}| \log |C|$ has no reason to be injective either on $L$ or its complement and thus the set comprehension expressions within the sums may actually contain duplicates that are merged together. One way to fix this is to sum over multisets. Multisets can also be defined via set comprehension in Isabelle, however having a structure allowing for induction is often more convenient. Thus, we prefer lists to multisets. 
+
+\bigskip
 
 A very convenient way to link lists and multisets is to use permutations, which are defined in Isabelle using multisets: a list $\ell$ is a permutation of a list $\ell'$ if and only if $\ell$ and $\ell'$ have the same multiset, i.e.\ in Isabelle if and only if \texttt{mset $\ell$ = mset $\ell'$}. We can lift this definition\footnote{A list $\ell$ permutes a set $S$, which we denote by \texttt{$\ell$ <\midtilde\midtilde\midtilde> $S$}, iff \texttt{mset $\ell$ = mset\_set $S$}.} to permutations between lists and sets with the help of the function \texttt{mset\_set} in Isabelle. Thus, we can define the estimate as follows:
 
@@ -617,8 +623,8 @@ A very convenient way to link lists and multisets is to use permutations, which 
 definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
   let xs = (SOME xs. xs <$\midtilde\midtilde\midtilde$> L) and
       ys = (SOME ys. ys <$\midtilde\midtilde\midtilde$> $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P - L) in
-  $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s)) +
-  $\sum$s$\leftarrow$ys. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s)/2)
+  $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * Discrete.log(card(snd s)) +
+  $\sum$s$\leftarrow$ys. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * Discrete.log(card(snd s)/2)
 \end{lstlisting}
 
 \begin{remark}
@@ -657,7 +663,7 @@ The definition in Isabelle is also simpler:
 \begin{lstlisting}[language=Isabelle]
 definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
   let xs = (SOME xs. xs <$\midtilde\midtilde\midtilde$> $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P) in
-  $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
+  $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * Discrete.log(card(snd s))
 \end{lstlisting}
 
 \begin{remark}
@@ -729,6 +735,19 @@ Given those properties, we show that
     \forall i \in \{1, \dots, k\} \quad | \preds{a}{P_i'} | \log | P_i' | + | \preds{a}{P_i''} | \log | P_i'' | \leq | \preds{a}{P_i} | \log | P_i |
 \end{equation*}
 which is sufficient to conclude the proof.
+
+\bigskip
+
+We now give some technical details about the proof in Isabelle. The definition of the estimate using permutations allows us to do the disjunction between split and non-split blocks in the partition. First, we have to obtain a list \texttt{xs} permuting $\Sigma \times \mathcal{P}$ such that
+\begin{lstlisting}[language=Isabelle]
+estimate ${\color{isa_dark_blue}\mathcal{A}}$ (P, L) = $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
+\end{lstlisting}
+Then, we obtain two lists \texttt{ys} and \texttt{zs} such that
+\begin{lstlisting}[language=Isabelle]
+xs = ys @ zs $\land$
+$\forall$ e $\in$ set ys. snd e $\in$ P $\cap$ P' $\land$
+$\forall$ e $\in$ set zs. snd e $\notin$ P $\cap$ P'
+\end{lstlisting}
 
 % \printglossary[type=\acronymtype]
 
