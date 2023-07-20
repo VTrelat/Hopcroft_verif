@@ -1087,8 +1087,13 @@ proof-
   } note unique_split_conv=this
 
   thm unique_split unique_split_conv
-  \<comment>\<open>We do not directly have an equivalence, however this is sufficient for the following.
-  The important is to have unicity.\<close>
+  text
+    \<open>
+      We do not directly have an equivalence, however this is sufficient for the following.
+      The important is to have unicity.
+      Moreover, we could prove a stronger property to insist on the duality of both properties,
+      namely that B is in zs, but this does not matter here.
+    \<close>
 
   define f :: "('a \<times> 'q set) \<Rightarrow> ('a \<times> 'q set) \<times> ('a \<times> 'q set)" where
     "f = (\<lambda>B. (THE (B', B''). B' \<in> set zs' \<and> B'' \<in> set zs' \<and> (snd B, snd B', snd B'') \<in> Hopcroft_splitted \<A> C a {} P \<and> fst B = fst B' \<and> fst B = fst B''))"

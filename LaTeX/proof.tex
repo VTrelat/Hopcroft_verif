@@ -20,7 +20,7 @@
 % Define custom language for syntax highlighting
 \lstdefinelanguage{Isabelle}{
   % List of custom keywords
-  keywords=[1]{definition, if, then, else, let, in, case, of, do, SOME},
+  keywords=[1]{definition, if, then, else, let, in, case, of, do, SOME, lemma, note},
   % Custom keyword styles
   keywordstyle=[1]\color{isa_blue},
   keywords=[2]{where, and},
@@ -738,16 +738,80 @@ which is sufficient to conclude the proof.
 
 \bigskip
 
-We now give some technical details about the proof in Isabelle. The definition of the estimate using permutations allows us to do the disjunction between split and non-split blocks in the partition. First, we have to obtain a list \texttt{xs} permuting $\Sigma \times \mathcal{P}$ such that
+We now give some technical details about the proof in Isabelle. The goal is to show the following lemma:
+
+\begin{lstlisting}[language=Isabelle]
+lemma estimate_decrease: estimate ${\color{isa_dark_blue}\mathcal{A}}$ (P', L') $\leq$ estimate ${\color{isa_dark_blue}\mathcal{A}}$ (P, L)
+\end{lstlisting}
+
+
+The definition of the estimate using permutations allows us to do the disjunction between split and non-split blocks in the partition. First, we have to obtain a list \texttt{xs} (resp. \texttt{xs'}) permuting $\Sigma \times \mathcal{P}$ (resp. $\Sigma \times \mathcal{P'}$) such that
 \begin{lstlisting}[language=Isabelle]
 estimate ${\color{isa_dark_blue}\mathcal{A}}$ (P, L) = $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
 \end{lstlisting}
-Then, we obtain two lists \texttt{ys} and \texttt{zs} such that
+resp.
+\begin{lstlisting}[language=Isabelle]
+estimate ${\color{isa_dark_blue}\mathcal{A}}$ (P', L') = $\sum$s$\leftarrow$xs'. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
+\end{lstlisting}
+Then, we obtain two lists \texttt{ys} and \texttt{zs} (resp. \texttt{ys'} and \texttt{zs'}) such that
 \begin{lstlisting}[language=Isabelle]
 xs = ys @ zs $\land$
 $\forall$ e $\in$ set ys. snd e $\in$ P $\cap$ P' $\land$
 $\forall$ e $\in$ set zs. snd e $\notin$ P $\cap$ P'
 \end{lstlisting}
+resp.
+\begin{lstlisting}[language=Isabelle]
+xs' = ys' @ zs' $\land$
+$\forall$ e $\in$ set ys'. snd e $\in$ P $\cap$ P' $\land$
+$\forall$ e $\in$ set zs'. snd e $\notin$ P $\cap$ P'
+\end{lstlisting}
+Just like above, by showing that \texttt{ys = ys'} we reduce the current goal to showing that
+\begin{lstlisting}[language=Isabelle]
+$\sum$s$\leftarrow$zs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s)) $\leq$
+$\sum$s$\leftarrow$zs'. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
+\end{lstlisting}
+
+\bigskip
+
+Then, we show two key properties which will be useful to conclude the proof.
+Since picking any $(A, B) \in \mathcal{P'} \times \mathcal{P'}$ does not imply that $A$ and $B$ result from the same split, we cannot directly obtain a single property with an equivalence capturing the whole idea.
+Instead, we have to prove two separate implications that are dual properties.
+
+The idea is that given a block of the current partition, we can find the two blocks of the new partition resulting from the split of this block.
+Conversely, given a block of the new partition, we can find the other block of the new partition and the block from the current partition such that the two blocks from the new partition result from the split of the block from the current partition.
+The latter property is the one making a formulation with an equivalence quite tedious since we cannot directly pick such two blocks together from the new partition.
+
+Those two properties are named \texttt{unique\_split} and \texttt{unique\_split\_conv} and are defined in Isabelle as follows:
+\newcommand{\isavar}[1]{\color{isa_dark_green}\text{#1}}
+\newcommand{\isafixed}[1]{\color{isa_dark_blue}\text{#1}}
+\begin{lstlisting}[language=Isabelle]
+note unique_split=
+$\isafixed{B}$ $\in$ set $\isafixed{zs}$ $\Longrightarrow$ $\exists$!($\isavar{B1}$, $\isavar{B2}$). $\isavar{B1}$ $\in$ set $\isafixed{zs'}$ $\land$ $\isavar{B2}$ $\in$ set $\isafixed{zs'}$ $\land$
+    (snd $\isafixed{B}$, snd $\isavar{B1}$, snd $\isavar{B2}$) $\in$ Hopcroft_splitted ${\color{isa_dark_blue}\mathcal{A}}$ $\isafixed{C}$ $\isafixed{a}$ {} $\isafixed{P}$ $\land$
+    fst $\isafixed{B}$ = fst $\isavar{B1}$ $\land$ fst $\isafixed{B}$ = fst $\isavar{B2}$
+\end{lstlisting}
+and
+\begin{lstlisting}[language=Isabelle]
+note unique_split_conv=
+$\isafixed{B1}$ $\in$ set $\isafixed{zs'}$ $\Longrightarrow$ $\exists$!($\isavar{B}$, $\isavar{B2}$). $\isafixed{B1}$ $\in$ set $\isafixed{zs}$ $\land$ $\isavar{B2}$ $\in$ set $\isafixed{zs'}$ $\land$
+    split_pred ${\color{isa_dark_blue}\mathcal{A}}$ $\isafixed{P}$ (snd $\isavar{B}$) $\isafixed{a}$ $\isafixed{C}$ (snd $\isafixed{B1}$) (snd $\isavar{B2}$) $\land$
+    fst $\isavar{B}$ = fst $\isafixed{B1}$ $\land$ fst $\isavar{B}$ = fst $\isavar{B2}$
+\end{lstlisting}
+
+Let us dissect those two properties and translate them into words in order to understand their meaning.
+\begin{itemize}
+    \item[\texttt{unique\_split}:] Let $\sigma \in \Sigma$ be a label and let $B \in \mathcal{P} \setminus \mathcal{P'}$ be a block of the current partition $\mathcal{P}$ that is about to be split, i.e.\ that is not in $\mathcal{P'}$ -- which is represented in Isabelle by $(\sigma, B)$ being a member of the list \texttt{zs}.
+    
+    We can find two unique blocks $B_1$ and $B_2$ of the new partition $\mathcal{P'}$ -- actually, in $\mathcal{P'} \setminus \mathcal{P}$ which is represented in Isabelle by $(\alpha, B_1)$ and $(\alpha, B_2)$ being members of the list \texttt{zs'} for some label $\alpha \in \Sigma$ -- such that $B_1$ and $B_2$ are the result of the split of $B$ by some splitter\footnote{Any splitter, in particular it can be with the label $\sigma$ or with the block $B$ itself.} -- and $B_1$ and $B_2$ are both labelled by the same letter $\sigma$ if they are splitters in the new workset, i.e.\ if $(\sigma, B) \in L$ then $(\sigma, B_1) \in L'$ and $(\sigma, B_2) \in L'$.
+
+    This property allows us to uniquely characterize and obtain blocks resulting from a split.
+
+    \item[\texttt{unique\_split\_conv}:] Let $\sigma \in \Sigma$ be a label and let $B_1 \in \mathcal{P'} \setminus \mathcal{P}$ be a block of the new partition $\mathcal{P'}$ that is not in $\mathcal{P}$ -- which is represented in Isabelle by $(\sigma, B_1)$ being a member of the list \texttt{zs'}.
+
+    We can find two unique blocks $B$ of the current partition $\mathcal{P}$ and $B_2$ of the new partition $\mathcal{P'}$ -- actually, in $\mathcal{P} \setminus \mathcal{P'}$ (resp. $\mathcal{P'} \setminus \mathcal{P}$) which is represented in Isabelle by $(\alpha, B)$ (resp. $(\alpha, B_2)$) being a member of the list \texttt{zs} (resp. \texttt{zs'}) for some label $\alpha \in \Sigma$ -- such that $B_1$ and $B_2$ result from the split of $B$ by some splitter and $B$, $B_1$ and $B_2$ are all labelled by the same letter $\sigma$ if they are splitters in the current and new workset, i.e.\ if $(\sigma, B_1) \in L'$ then $(\sigma, B) \in L$ and $(\sigma, B_2) \in L'$.
+\end{itemize}
+
+
 
 % \printglossary[type=\acronymtype]
 
