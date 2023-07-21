@@ -11,22 +11,26 @@
 
 % Colors definition
 \definecolor{isa_red}{RGB}{255, 58, 71}
+\definecolor{isa_orange}{RGB}{219, 130, 57}
+\definecolor{isa_light_blue}{RGB}{0, 163, 255}
 \definecolor{isa_blue}{RGB}{0, 103, 158}
+\definecolor{isa_dark_blue}{RGB}{26, 0, 253}
 \definecolor{isa_green}{RGB}{0, 157, 97}
 \definecolor{isa_dark_green}{RGB}{0,131, 0}
 \definecolor{isa_purple}{RGB}{174, 5, 238}
-\definecolor{isa_dark_blue}{RGB}{26, 0, 253}
 
 % Define custom language for syntax highlighting
 \lstdefinelanguage{Isabelle}{
   % List of custom keywords
-  keywords=[1]{definition, if, then, else, let, in, case, of, do, SOME, lemma, note},
+  keywords=[1]{definition, if, then, else, let, in, case, of, do, SOME, lemma, note, THE},
   % Custom keyword styles
   keywordstyle=[1]\color{isa_blue},
   keywords=[2]{where, and},
   keywordstyle=[2]\color{isa_green},
   keywords=[3]{RETURNT, monadic_WHILEIET, SPEC, ASSERT, consume, cost},
   keywordstyle=[3]\color{isa_red},
+  keywords=[4]{assume, define},
+  keywordstyle=[4]\color{isa_light_blue},
   literate={`}{\textasciigrave\ }1,
   % Other language elements styles
   commentstyle=\color{isa_dark_green},
@@ -90,6 +94,9 @@
 % }
 
 \newcommand{\midtilde}{\raisebox{0.5ex}{\texttildelow}}
+
+\newcommand{\isavar}[1]{{\color{isa_dark_green}\text{#1}}}
+\newcommand{\isafixed}[1]{{\color{isa_dark_blue}\text{#1}}}
 
 % theorems
 \theoremstyle{definition}
@@ -747,28 +754,28 @@ lemma estimate_decrease: estimate ${\color{isa_dark_blue}\mathcal{A}}$ (P', L') 
 
 The definition of the estimate using permutations allows us to do the disjunction between split and non-split blocks in the partition. First, we have to obtain a list \texttt{xs} (resp. \texttt{xs'}) permuting $\Sigma \times \mathcal{P}$ (resp. $\Sigma \times \mathcal{P'}$) such that
 \begin{lstlisting}[language=Isabelle]
-estimate ${\color{isa_dark_blue}\mathcal{A}}$ (P, L) = $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
+estimate ${\color{isa_dark_blue}\mathcal{A}}$ ($\isafixed{P}$, $\isafixed{L}$) = $\sum\isavar{s}\leftarrow\color{isa_orange}\text{xs}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$))
 \end{lstlisting}
 resp.
 \begin{lstlisting}[language=Isabelle]
-estimate ${\color{isa_dark_blue}\mathcal{A}}$ (P', L') = $\sum$s$\leftarrow$xs'. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
+estimate ${\color{isa_dark_blue}\mathcal{A}}$ ($\isafixed{P'}$, $\isafixed{L'}$) = $\sum\isavar{s}\leftarrow\color{isa_orange}\text{xs'}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$))
 \end{lstlisting}
 Then, we obtain two lists \texttt{ys} and \texttt{zs} (resp. \texttt{ys'} and \texttt{zs'}) such that
 \begin{lstlisting}[language=Isabelle]
-xs = ys @ zs $\land$
-$\forall$ e $\in$ set ys. snd e $\in$ P $\cap$ P' $\land$
-$\forall$ e $\in$ set zs. snd e $\notin$ P $\cap$ P'
+$\color{isa_orange}\text{xs}$ = $\color{isa_orange}\text{ys}$ @ $\color{isa_orange}\text{zs}$ $\land$
+$\forall$ $\isavar{e}$ $\in$ set $\color{isa_orange}\text{ys}$. snd $\isavar{e}$ $\in$ $\isafixed{P}$ $\cap$ $\isafixed{P'}$ $\land$
+$\forall$ $\isavar{e}$ $\in$ set $\color{isa_orange}\text{zs}$. snd $\isavar{e}$ $\notin$ $\isafixed{P}$ $\cap$ $\isafixed{P'}$
 \end{lstlisting}
 resp.
 \begin{lstlisting}[language=Isabelle]
-xs' = ys' @ zs' $\land$
-$\forall$ e $\in$ set ys'. snd e $\in$ P $\cap$ P' $\land$
-$\forall$ e $\in$ set zs'. snd e $\notin$ P $\cap$ P'
+$\color{isa_orange}\text{xs'}$ = $\color{isa_orange}\text{ys'}$ @ $\color{isa_orange}\text{zs'}$ $\land$
+$\forall$ $\isavar{e}$ $\in$ set $\color{isa_orange}\text{ys'}$. snd $\isavar{e}$ $\in$ $\isafixed{P}$ $\cap$ $\isafixed{P'}$ $\land$
+$\forall$ $\isavar{e}$ $\in$ set $\color{isa_orange}\text{zs'}$. snd $\isavar{e}$ $\notin$ $\isafixed{P}$ $\cap$ $\isafixed{P'}$
 \end{lstlisting}
 Just like above, by showing that \texttt{ys = ys'} we reduce the current goal to showing that
 \begin{lstlisting}[language=Isabelle]
-$\sum$s$\leftarrow$zs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s)) $\leq$
-$\sum$s$\leftarrow$zs'. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * log(card(snd s))
+$\sum\isavar{s}\leftarrow\color{isa_orange}\text{zs}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$)) $\leq$
+$\sum\isavar{s}\leftarrow\color{isa_orange}\text{zs'}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$))
 \end{lstlisting}
 
 \bigskip
@@ -782,18 +789,16 @@ Conversely, given a block of the new partition, we can find the other block of t
 The latter property is the one making a formulation with an equivalence quite tedious since we cannot directly pick such two blocks together from the new partition.
 
 Those two properties are named \texttt{unique\_split} and \texttt{unique\_split\_conv} and are defined in Isabelle as follows:
-\newcommand{\isavar}[1]{\color{isa_dark_green}\text{#1}}
-\newcommand{\isafixed}[1]{\color{isa_dark_blue}\text{#1}}
 \begin{lstlisting}[language=Isabelle]
 note unique_split=
-$\isafixed{B}$ $\in$ set $\isafixed{zs}$ $\Longrightarrow$ $\exists$!($\isavar{B1}$, $\isavar{B2}$). $\isavar{B1}$ $\in$ set $\isafixed{zs'}$ $\land$ $\isavar{B2}$ $\in$ set $\isafixed{zs'}$ $\land$
+$\isafixed{B}$ $\in$ set $\color{isa_orange}\text{zs}$ $\Longrightarrow$ $\exists$!($\isavar{B1}$, $\isavar{B2}$). $\isavar{B1}$ $\in$ set $\color{isa_orange}\text{zs'}$ $\land$ $\isavar{B2}$ $\in$ set $\color{isa_orange}\text{zs'}$ $\land$
     (snd $\isafixed{B}$, snd $\isavar{B1}$, snd $\isavar{B2}$) $\in$ Hopcroft_splitted ${\color{isa_dark_blue}\mathcal{A}}$ $\isafixed{C}$ $\isafixed{a}$ {} $\isafixed{P}$ $\land$
     fst $\isafixed{B}$ = fst $\isavar{B1}$ $\land$ fst $\isafixed{B}$ = fst $\isavar{B2}$
 \end{lstlisting}
 and
 \begin{lstlisting}[language=Isabelle]
 note unique_split_conv=
-$\isafixed{B1}$ $\in$ set $\isafixed{zs'}$ $\Longrightarrow$ $\exists$!($\isavar{B}$, $\isavar{B2}$). $\isafixed{B1}$ $\in$ set $\isafixed{zs}$ $\land$ $\isavar{B2}$ $\in$ set $\isafixed{zs'}$ $\land$
+$\isafixed{B1}$ $\in$ set $\color{isa_orange}\text{zs'}$ $\Longrightarrow$ $\exists$!($\isavar{B}$, $\isavar{B2}$). $\isafixed{B1}$ $\in$ set $\color{isa_orange}\text{zs}$ $\land$ $\isavar{B2}$ $\in$ set $\color{isa_orange}\text{zs'}$ $\land$
     split_pred ${\color{isa_dark_blue}\mathcal{A}}$ $\isafixed{P}$ (snd $\isavar{B}$) $\isafixed{a}$ $\isafixed{C}$ (snd $\isafixed{B1}$) (snd $\isavar{B2}$) $\land$
     fst $\isavar{B}$ = fst $\isafixed{B1}$ $\land$ fst $\isavar{B}$ = fst $\isavar{B2}$
 \end{lstlisting}
@@ -808,10 +813,34 @@ Let us dissect those two properties and translate them into words in order to un
 
     \item[\texttt{unique\_split\_conv}:] Let $\sigma \in \Sigma$ be a label and let $B_1 \in \mathcal{P'} \setminus \mathcal{P}$ be a block of the new partition $\mathcal{P'}$ that is not in $\mathcal{P}$ -- which is represented in Isabelle by $(\sigma, B_1)$ being a member of the list \texttt{zs'}.
 
-    We can find two unique blocks $B$ of the current partition $\mathcal{P}$ and $B_2$ of the new partition $\mathcal{P'}$ -- actually, in $\mathcal{P} \setminus \mathcal{P'}$ (resp. $\mathcal{P'} \setminus \mathcal{P}$) which is represented in Isabelle by $(\alpha, B)$ (resp. $(\alpha, B_2)$) being a member of the list \texttt{zs} (resp. \texttt{zs'}) for some label $\alpha \in \Sigma$ -- such that $B_1$ and $B_2$ result from the split of $B$ by some splitter and $B$, $B_1$ and $B_2$ are all labelled by the same letter $\sigma$ if they are splitters in the current and new workset, i.e.\ if $(\sigma, B_1) \in L'$ then $(\sigma, B) \in L$ and $(\sigma, B_2) \in L'$.
+    We can find two unique blocks $B$ of the current partition $\mathcal{P}$ and $B_2$ of the new partition $\mathcal{P'}$ -- actually, in $\mathcal{P} \setminus \mathcal{P'}$ (resp. $\mathcal{P'} \setminus \mathcal{P}$) which is represented in Isabelle by $(\alpha, B)$ (resp. $(\alpha, B_2)$) being a member of the list \texttt{zs} (resp. \texttt{zs'}) for some label $\alpha \in \Sigma$ -- such that $B_1$ and $B_2$ result from the split of $B$ by some splitter and $B$, $B_1$ and $B_2$ are all labelled by the same letter $\sigma$ if they are splitters in the current and new worksets, i.e.\ if $(\sigma, B_1) \in L'$ then $(\sigma, B) \in L$ and $(\sigma, B_2) \in L'$.
 \end{itemize}
 
+Then, we define\footnote{This definition is local to this proof, thus $f$ depends on all formerly obtained variables appearing in its definition.} a function $f$ which maps a block of the current partition to the two blocks of the new partition resulting from the split of this block. This function is defined as follows:
 
+\begin{lstlisting}[language=Isabelle]
+define $\color{isa_orange}f$ = $\lambda$$\isavar{B}$. (THE ($\isavar{B1}$, $\isavar{B2}$).
+    $\isavar{B1}$ $\in$ set ${\color{isa_orange}\text{zs'}}$ $\land$ $\isavar{B2}$ $\in$ set ${\color{isa_orange}\text{zs'}}$ $\land$
+    (snd $\isavar{B}$, snd $\isavar{B1}$, snd $\isavar{B2}$) $\in$ Hopcroft_splitted $\color{isa_dark_blue}\mathcal{A}$ $\isafixed{C}$ $\isafixed{a}$ {} $\isafixed{P}$ $\land$
+    fst $\isavar{B}$ = fst $\isavar{B1}$ $\land$ fst $\isavar{B}$ = fst $\isavar{B2}$)
+\end{lstlisting}
+The operator {\color{isa_blue}\texttt{THE}} in Isabelle allows us to select ``the'' element satisfying a predicate. Thanks to the property \texttt{unique\_split} giving unicity for this predicate, the function $f$ is well-defined.
+
+Then, we prove that the image of \texttt{zs} by $f$ is exactly (a permutation of) \texttt{zs'}. Formally, we prove that
+\begin{lstlisting}[language=Isabelle]
+$\bigcup${{fst ($\color{isa_orange}\text{f}$ $\isavar{B}$), snd ($\color{isa_orange}\text{f}$ $\isavar{B}$)} | $\isavar{B}$. $\isavar{B}$ $\in$ set $\color{isa_orange}\text{zs}$} = set $\color{isa_orange}\text{zs'}$
+\end{lstlisting}
+and
+\begin{lstlisting}[language=Isabelle]
+fold ((@) $\circ$ ($\lambda\isavar{x}$. [fst ($\color{isa_orange}\text{f}$ $\isavar{x}$), snd ($\color{isa_orange}\text{f}$ $\isavar{x}$)])) $\color{isa_orange}\text{zs}$ [] <$\midtilde\midtilde$> $\color{isa_orange}\text{zs'}$
+\end{lstlisting}
+
+We can then replace in the sum for the estimate for $(P', L')$ over \texttt{zs'} the blocks by their preimages in \texttt{zs} by $f$ and we obtain the sum for the estimate for $(P, L)$ over \texttt{zs}. Formally, we prove that
+\begin{lstlisting}[language=Isabelle]
+$\sum\isavar{s}\leftarrow$$\color{isa_orange}\text{zs'}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$)) =
+$\sum\isavar{s}\leftarrow$$\color{isa_orange}\text{zs}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst (fst ($\color{isa_orange}\text{f}$ $\isavar{s}$))) (snd (fst ($\color{isa_orange}\text{f}$ $\isavar{s}$)))) * log(card(snd (fst ($\color{isa_orange}\text{f}$ $\isavar{s}$)))) +
+          card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst (snd ($\color{isa_orange}\text{f}$ $\isavar{s}$))) (snd (snd ($\color{isa_orange}\text{f}$ $\isavar{s}$)))) * log(card(snd (snd ($\color{isa_orange}\text{f}$ $\isavar{s}$))))
+\end{lstlisting}
 
 % \printglossary[type=\acronymtype]
 
