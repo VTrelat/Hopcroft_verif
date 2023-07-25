@@ -881,7 +881,7 @@ Indeed, we can prove that for any state transition $(\mathcal{P}, \mathcal{L}) \
     \begin{figure}[!ht]
     \centering
     \begin{tikzpicture}[shorten >=1pt,node distance=2.5cm, on grid, >={Stealth[round]},initial text=,
-        every state/.style={very thick}]
+        every state/.style={thick}]
         \node[state, initial] (q0) {$q_0$};
         \node[state, initial] (q0) {$q_0$};
 
@@ -928,7 +928,15 @@ Indeed, we can prove that for any state transition $(\mathcal{P}, \mathcal{L}) \
     Note that the partition is stable after the second iteration of the algorithm. The workset however changes after each iteration.
 \end{remark}
 
-Thus, it may happen that the estimate $\hat{T}$ does not decrease after a state transition where the partition does not change. With the estimate $T$, we are sure that at each step, a splitter is used and thus a term in the sum over $\mathcal{L}$ is removed and ``goes'' into the sum over $\Sigma \times \mathcal{P} \setminus \mathcal{L}$. This remark is very informal. However, because of the floor operation, we still cannot garantee strict decrease of the estimate $T$\footnote{Just think about $\lfloor \log_2 n \rfloor$ and $\lfloor \log_2 n+1 \rfloor$: the bigger $n$ is, the more likely it is that both values are equal. Such terms might show up in border cases such as when a splitter splits off only one element from a block.}.
+Thus, it may happen that the estimate $\hat{T}$ does not decrease after a state transition where the partition does not change.
+With the estimate $T$, we are sure that at each step, a splitter is used and thus a term in the sum over $\mathcal{L}$ is removed and ``goes'' into the sum over $\Sigma \times \mathcal{P} \setminus \mathcal{L}$.
+This remark is very informal.
+However, because of the floor operation, we still cannot garantee that the estimate $T$ strictly decreases\footnote{Consider $\lfloor \log_2 n \rfloor$ and $\lfloor \log_2 n+1 \rfloor$: the bigger $n$ is, the more likely it is that both values are equal. Such terms might show up in border cases such as when a splitter splits off only one element from a block.}.
+
+\section{Further work}
+As mentioned above, finding a proof for a strict inequality is still a work in progress. It involves finding a suitable estimate, although the estimate $T$ seems to be a good candidate. However, this estimate makes the formalization more complex since it involves to consider separately elements from the workset and its complement and how they are affected by a state transition.
+
+Everything linked to the estimate left aside, the formalization is still at a very early stage since we only focussed on the abstract level. However, this was the most important part of the formalization since it is the most complex one. The next steps would be to dive into the successive refinements and refine the abstract currencies. The formalization of the concrete currencies will be more straightforward since it will be mostly about implementing the abstract currencies with the chosen data structures, which probably already exists.
 
 % \printglossary[type=\acronymtype]
 
