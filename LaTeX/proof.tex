@@ -698,7 +698,7 @@ The previous definition could be equivalently achieved by using Isabelle's summa
 definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$($\isavar{P}$,$\isavar{L}$).
 $\sum \isavar{s} \in$ $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ $\isavar{P}$. card (preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * Discrete.log (card (snd $\isavar{s}$))
 \end{lstlisting}
-Unfortunately, I noticed it after the formalization was done. It may shorten some proofs.
+Unfortunately, I noticed it after the formalization was done. It may shorten some proofs and improve overall understanding, so it is worth switching to this definition.
 \end{remark}
 
 \paragraph{Proving that the estimate decreases:} We can now prove that the estimate decreases. We can consider two approaches:
