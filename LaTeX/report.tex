@@ -9,24 +9,31 @@
 \usepackage[ruled, linesnumbered]{algorithm2e}
 
 
+\usetikzlibrary {arrows.meta,automata,positioning} 
+\usetikzlibrary{automata}
+
 % Colors definition
 \definecolor{isa_red}{RGB}{255, 58, 71}
+\definecolor{isa_orange}{RGB}{219, 130, 57}
+\definecolor{isa_light_blue}{RGB}{0, 163, 255}
 \definecolor{isa_blue}{RGB}{0, 103, 158}
+\definecolor{isa_dark_blue}{RGB}{26, 0, 253}
 \definecolor{isa_green}{RGB}{0, 157, 97}
 \definecolor{isa_dark_green}{RGB}{0,131, 0}
 \definecolor{isa_purple}{RGB}{174, 5, 238}
-\definecolor{isa_dark_blue}{RGB}{26, 0, 253}
 
 % Define custom language for syntax highlighting
 \lstdefinelanguage{Isabelle}{
   % List of custom keywords
-  keywords=[1]{definition, if, then, else, let, in, case, of, do},
+  keywords=[1]{definition, if, then, else, let, in, case, of, do, SOME, lemma, note, THE},
   % Custom keyword styles
   keywordstyle=[1]\color{isa_blue},
-  keywords=[2]{where},
+  keywords=[2]{where, and},
   keywordstyle=[2]\color{isa_green},
   keywords=[3]{RETURNT, monadic_WHILEIET, SPEC, ASSERT, consume, cost},
   keywordstyle=[3]\color{isa_red},
+  keywords=[4]{assume, define},
+  keywordstyle=[4]\color{isa_light_blue},
   literate={`}{\textasciigrave\ }1,
   % Other language elements styles
   commentstyle=\color{isa_dark_green},
@@ -89,6 +96,11 @@
 %         \thesection
 % }
 
+\newcommand{\midtilde}{\raisebox{0.5ex}{\texttildelow}}
+
+\newcommand{\isavar}[1]{{\color{isa_dark_green}\text{#1}}}
+\newcommand{\isafixed}[1]{{\color{isa_dark_blue}\text{#1}}}
+
 % theorems
 \theoremstyle{definition}
 \newtheorem{theorem}{Theorem}
@@ -142,7 +154,30 @@
 
 \pagebreak
 
+\section{Abstract}
+
+This internship report is the result of a 6-month internship at the Chair of Logic and Verification of the Technical University of Munich (TUM) under the supervision of Tobias Nipkow and Peter Lammich.
+The main goal of this internship was to verify Hopcroft's algorithm for minimizing DFAs in Isabelle/HOL and to analyze its worst-case time complexity using the Refinement Framework.
+Some considerable work had already been carried out by Peter Lammich and Thomas T\"urk on the proof of correctness ten years ago in an older version of Isabelle \cite{lammich:hop}.
+The goal was to port this proof to the latest version of Isabelle and to extend it with a time complexity analysis.
+
+\pagebreak
+
 \section{Preamble}
+
+The Technical University of Munich (TUM) stands as a beacon of academic excellence, renowned globally for its commitment to cutting-edge research, innovation, and education. Nestled in the heart of Germany, TUM's legacy spans over 150 years, consistently ranking among the top universities worldwide. At TUM, scholars and students alike converge to explore and shape the forefront of various fields, fostering a dynamic environment that thrives on intellectual curiosity and collaboration.
+
+Within the expansive landscape of TUM's academic endeavors lies the Chair of Logic and Verification —- a distinguished hub of expertise dedicated to the study and application of formal methods -- which operates at the intersection of computer science, mathematics, logic and engineering, harnessing the power of logical reasoning to ensure the precision and reliability of complex systems.
+
+\bigskip
+
+Among the illustrious figures leading the charge at the Chair of Logic and Verification is Professor Tobias Nipkow. A luminary in the realm of formal methods, he has made indelible contributions to the development and propagation of logical verification techniques.
+
+Central to the Chair's accomplishments is the Isabelle proof assistant —- an innovation born from the ingenuity of Professor Tobias Nipkow and his dedicated team. Isabelle stands as a testament to the power of collaborative intellect, serving as a versatile tool for rigorous formal reasoning. This proof assistant facilitates the creation, manipulation, and verification of mathematical proofs, underpinning the very essence of formal methods' application. Its impact reverberates not only through academic corridors but also through the industries and systems that rely on robust verification.
+
+In summary, the Technical University of Munich's Chair of Logic and Verification represents an ecosystem of brilliance, where researchers, developers, and applied experts converge to elevate the tenets of formal methods. Professor Tobias Nipkow's visionary leadership and the Isabelle proof assistant embody the spirit of innovation that defines this dynamic academic haven, propelling the boundaries of formal reasoning and verification.
+
+\section{Introduction}
 
 Since the whole project relies on many deeply theoretical notions such as abstraction, logic or semantics, this section only gives a brief introduction to formal methods in general and their purpose.
 
@@ -174,12 +209,19 @@ The principle is to model costs of operations with resources and currencies and 
 
 Since the project also relies on automata theory, it is recommended to have some basic knowledge about automata theory and formal languages.
 
-\section{Introduction}
+\subsection{Setting up the environment}
+In order to be able to comfortably browse the theories and inspect the proofs, it is recommended to use Isabelle\footnote{The project was carried out using \href{https://isabelle.in.tum.de/}{Isabelle2022}.}/jEdit. Yet, the project is not part of the \href{https://www.isa-afp.org/}{Archive of Formal Proofs} (AFP) and can only be downloaded from the \href{https://github.com/VTrelat/Hopcroft_Verif}{GitHub repository}.
 
-This internship report is the result of a 6-month internship at the Chair of Logic and Verification of the Technical University of Munich (TUM) under the supervision of Tobias Nipkow and Peter Lammich.
-The main goal of this internship was to verify Hopcroft's algorithm for minimizing DFAs in Isabelle/HOL and to analyze its worst-case time complexity using the Refinement Framework.
-Some considerable work had already been carried out by Peter Lammich and Thomas T\"urk on the proof of correctness ten years ago in an older version of Isabelle \cite{lammich:hop}.
-The goal was to port this proof to the latest version of Isabelle and to extend it with a time complexity analysis.
+Then, building an image of the main framework is strongly recommended, as it will greatly speed up the compilation of the theories, especially for the time complexity analysis. This may take a few minutes, but only needs to be done once:
+\begin{lstlisting}[language=bash]
+cd Hopcroft_Verif/Hopcroft_Time
+isabelle build -d . -l Isabelle_LLVM_Time Hopcroft_Time.thy
+\end{lstlisting}
+
+Isabelle may then be launched with jEdit by running the following command. This will open the main theory file \texttt{Hopcroft\_Time.thy} in jEdit and should take less than a minute:
+\begin{lstlisting}[language=bash]
+isabelle jedit -d . -l Isabelle_LLVM_Time Hopcroft_Time.thy
+\end{lstlisting}
 
 \subsection{Hopcroft's algorithm}
 John E. Hopcroft's algorithm for minimizing deterministic finite automata (DFA) was first presented in his original 1971 paper \cite{Hop71} as a formal algorithm.
@@ -292,7 +334,31 @@ This results in a useless $O(|\Sigma|)$ computation.
 Another difference in that case is that it would return the partition $\min\{\mathcal{F}, \mathcal{Q}\setminus\mathcal{F}\}$ -- where $\min$ returns the set with the least number of elements --  which we avoid in the modern version by just returning $\mathcal{Q}$.
 
 \section{Proof of correctness}
+
+Since the proof of correctness is not the purpose of this paper, we do not go into details. John E. Hopcroft's original paper \cite{Hop71} contains a proof of correctness for his low-level algorithm, however the ideas behind the invariants are the same for the formalisation. 
+
+The proof of correctness for Hopcroft's algorithm for DFA minimization typically involves two main components: partition refinement and equivalence checking.
+
+The basic idea of the proof is to show that the algorithm correctly partitions the states of the input DFA into equivalence classes, where states within the same class are indistinguishable from each other with respect to the language recognized by the DFA. This partition represents the minimal DFA that recognizes the same language as the input DFA.
+
+The algorithm starts with an initial partition that distinguishes accepting states from non-accepting states. Then, it iteratively refines this partition by considering pairs of states that are currently in different equivalence classes and determining if they can be distinguished by a symbol from the input alphabet.
+
+During each iteration, the algorithm examines each symbol in the alphabet and checks if it distinguishes any pair of states in different equivalence classes. If a symbol does distinguish a pair, it splits the equivalence class containing those states into two new classes. This process continues until no more splits can be made, and the resulting partition represents the minimal DFA.
+
+To prove the correctness of Hopcroft's algorithm, one needs to show two key properties:
+\begin{itemize}
+    \item the resulting partition is a valid equivalence relation, meaning it satisfies the properties of reflexivity, symmetry, and transitivity,
+    \item the resulting partition is indeed the minimal partition that correctly distinguishes states based on their language equivalence.
+\end{itemize}
+
+The proof typically involves reasoning about the behavior of the algorithm during each iteration, considering how the partition is refined inductively and ensuring that it converges to the minimal partition.
+
+In the Refinement Framework, the algorithm is first described at the abstract level, so its correctness can be proved independently of any implementation details. Then, the algorithm is progressively refined into a concrete implementation, and the correctness of each refinement until the implementation is proved by showing that it refines the abstract algorithm.
+
+
 \section{Time complexity analysis}
+
+In order to give an idea of what I did during this project, we sketch the main ideas behind the time complexity analysis of Hopcroft's algorithm, since it was the main goal of this internship.
 
 \subsection{Paper proof}
 
@@ -317,11 +383,10 @@ Vectors must be maintained to indicate whether a state is in a given set.
 Sets such as $P_i$ must be represented in a way that allows $O(1)$ time for addition and deletion at any given position.
 \end{requirement}
 
-\begin{requirement}
+\begin{remark}
     \label{req:4}
-For a state $q$ in the representation of a set $P_i$ or $s_{a,i}$, its ``position'' -- in the implemented data structure -- must be determined in $O(1)$ time.
-\ednote{VT}{Maybe not necessary? This should be provable from Req.\ \ref{req:2} and Req.\ \ref{req:3}.}
-\end{requirement}
+From Req.\ \ref{req:2} and Req.\ \ref{req:3}, we can show that for a state $q$ in the representation of a set $P_i$ or $s_{a,i}$, its ``position'' -- in the implemented data structure -- must be determined in $O(1)$ time.
+\end{remark}
 
 \bigskip
 
@@ -335,7 +400,7 @@ For a state $q$ in the representation of a set $P_i$ or $s_{a,i}$, its ``positio
 \bigskip
 
 \begin{lemma}\label{lem:time_iteration}
-    An iteration of the while loop in both algorithms for a splitter $s = (a, C)$ takes a time proportional to the number of transitions terminating in $C$ and the number of symbols in the alphabet, i.e. $\Theta\left(\left| \Sigma \right| \cdot \left| \delta^{-1}(C, a) \right| \right)$ time.
+    An iteration of the \textit{while} loop in both algorithms for a splitter $s = (a, C)$ takes a time proportional to the number of transitions terminating in $C$ and the number of symbols in the alphabet, i.e. $\Theta\left(\left| \Sigma \right| \cdot \left| \delta^{-1}(C, a) \right| \right)$ time.
 \end{lemma}
 \begin{proof}
     We start by showing it for Algorithm \ref{alg:original}. We pick $a \in \Sigma$ such that $L_a \neq \varnothing$ and an $i \in L_a$. We need to examine all $j < k$ such that $\exists q \in P_j, \delta(q, a) \in s_{a,i}$ to construct the sets corresponding to splitting the block $P_j$ w.r.t.\ $a$ and $P_i$.
@@ -380,11 +445,11 @@ For a state $q$ in the representation of a set $P_i$ or $s_{a,i}$, its ``positio
     We now show the result for Algorithm \ref{alg:modern}. A splitter ${s =: (a, C)}$ is picked from $\mathcal{W}$.
     Then, we iterate over all blocks $B \in \mathcal{P}$ that may be split with $s$. Let $B \in \mathcal{P}$.
     \begin{align*}
-        s\ \text{splits}\ B &\iff \exists q_1, q_2 \in B, \delta(q_1, a) \in C \land \delta(q_2, a) \notin C\\
+        s\ \text{splits}\ B &\iff \exists q_1, q_2 \in B \quad \delta(q_1, a) \in C \land \delta(q_2, a) \notin C\\
+        &\iff \{q_1 \in B, \delta(q_1, a) \in C\} \neq \varnothing \land \{q_2 \in B, \delta(q_2, a) \notin C\} \neq \varnothing \\
         &\iff \left(\bigcup_{q \in C} \delta^{-1}(q, a)\right)\cap B \neq \varnothing \land \left(\bigcup_{q \in B}\delta(q, a)\right)\setminus C \neq \varnothing
     \end{align*}
     \ednote{VT}{we may express the right-hand conjunct in terms of $\delta^{-1}$ in order to prepare the paragraph that follows (But it wouldn't be the same union because you have to start from states outside $C$)}
-    \ednote{VT}{The second equation may be a little too quick, especially for the right-hand conjunct.}
     Likewise, instead of examining all blocks $B \in \mathcal{P}$, we go through $\delta^{-1}$ and we update the splitters for all symbols in $\Sigma$ and one iteration of the loop runs in time
     $$\Theta \left( \left| \Sigma \right| \cdot \left| \bigcup_{q \in C} \delta^{-1}(q, a) \right| \right) $$
 \end{proof}
@@ -445,8 +510,8 @@ This gives a way to characterize splitters throughout the whole execution.
 
 \begin{lemma}\label{lem:bound}
     Let us consider some step in the algorithm such that $\mathcal{P}$ is the current partition. We give an estimation of the total time spent in the loop until termination as an upper bound:
-    $$ T := \theta \left(\sum_{(a, C) \in \mathcal{W}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \preds{a}{B} | \log \frac{| B |}{2} \right)$$
-    where $\theta$ is the constant of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
+    $$ T := \theta \cdot \left(\sum_{(a, C) \in \mathcal{W}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{W}} | \preds{a}{B} | \log \frac{| B |}{2} \right)$$
+    where $\theta$ is the constant factor of proportionality that may be obtained from lemma \ref{lem:time_iteration}.
 \end{lemma}
 \begin{proof}
     We show the result by induction over the steps.
@@ -458,8 +523,8 @@ This gives a way to characterize splitters throughout the whole execution.
     
     We know from lemma \ref{lem:time_iteration} that an iteration of the loop for $(a, P_i)$ takes $\theta | \preds{a}{P_i} | $ time.
     \begin{itemize}
-        \item From lemma \ref{lem:log}, for all $a\in\Sigma$, $(a, P_1)$ can be processed at most $\log \| (a, P_1) \| = \log |P_1|$ times\footnote{We drop the floor operator for simplicity.
-        Note that since we are giving upper bounds, this is completely valid.}, hence the total time for $(a, P_1)$ is bounded by $\theta | \preds{a}{P_1} | \log | P_1 |$ and thus the total time for any splitter $(a, P_1)$ is bounded by:
+        \item From lemma \ref{lem:log}, for all $a\in\Sigma$, $(a, P_1)$ can be processed at most $\log \| (a, P_1) \| = \log |P_1|$ times\footnote{We drop the floor function for simplicity.
+        Note that since we are giving upper bounds, this is completely valid. However, the floor function will have some importance later in the formalization.}, hence the total time for $(a, P_1)$ is bounded by $\theta | \preds{a}{P_1} | \log | P_1 |$ and thus the total time for any splitter $(a, P_1)$ is bounded by:
         $$\theta | \preds{a}{P_1} | \log | P_1 |$$
 
         \item From lemma \ref{lem:log_non_splitter}, for all $a\in\Sigma$, $(a, P_2)$ can be processed at most $\log \frac{\| (a, P_2) \|}{2} = \log \frac{| P_2 |}{2}$ times. Thus, the total time for any non-splitter $(a, P_2)$ is bounded by:
@@ -522,8 +587,10 @@ This gives a way to characterize splitters throughout the whole execution.
 \begin{proof}
 From lemma \ref{lem:bound}, we obtain in particular that for the initial partition the time spent in the loop until termination is bounded by:
 $$T = \theta \cdot \sum_{a \in \Sigma}\left(| \preds{a}{P_1} | \log | P_1 | + | \preds{a}{P_2} | \log \frac{| P_2 |}{2}\right)$$
+where $\theta$ is the constant of proportionality obtained in lemma \ref{lem:time_iteration} and $\{P_1, P_2\}$ is the initial partition.
+
 Thus using concavity of the logarithm, the following holds:
-$$T \leq \theta \sum_{a \in \Sigma} (\underset{\leq 2|\preds{a}{\mathcal{Q}}|}{\underbrace{|\preds{a}{P_1}| + |\preds{a}{P_2}|}})\log(\underset{= |\mathcal{Q}|}{\underbrace{|P_1| + |P_2|}}) \leq 2 \theta|\Sigma||\mathcal{Q}| \log |\mathcal{Q}|$$
+$$T \leq \theta \sum_{a \in \Sigma} (\underset{\leq |\mathcal{Q}|}{\underbrace{|\preds{a}{P_1}| + |\preds{a}{P_2}|}})\log(\underset{\leq |\mathcal{Q}|}{\underbrace{|P_1| + |P_2|}}) \leq \theta|\Sigma||\mathcal{Q}| \log |\mathcal{Q}|$$
 \end{proof}
 
 \subsection{Towards a formal proof}
@@ -531,8 +598,14 @@ The objective of the project is to obtain a formal proof for the time complexity
 We follow a top-down strategy, from the abstract level to the implementation.
 
 \subsubsection{Abstract level}
-The purpose of this section is to explain how the analysis at the abstract level is structured without adding too many details.
+
+The purpose of this section is to explain how the analysis at the abstract level is structured without adding too many details about Isabelle.
+
+\paragraph{Setting up the framework:}
 First, we define the algorithm on the abstract level using the NREST framework as shown below:
+
+\noindent
+\begin{minipage}{\linewidth}
 \begin{lstlisting}[language=Isabelle]
 definition Hopcroft_abstractT where
 Hopcroft_abstractT $\color{isa_dark_blue}\mathcal{A}$ $\equiv$
@@ -541,20 +614,27 @@ Hopcroft_abstractT $\color{isa_dark_blue}\mathcal{A}$ $\equiv$
     do {
       PL $\leftarrow$ init_spec $\color{isa_dark_blue}\mathcal{A}$;
       (P, _) $\leftarrow$ monadic_WHILEIET (Hopcroft_abstract_invar $\color{isa_dark_blue}\mathcal{A}$) 
-          ($\lambda$ s. cost_iteration $\color{isa_dark_blue}\mathcal{A}$ s) check_b_spec (Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$) PL;
+          ($\lambda \isavar{s}$. estimate_iteration $\color{isa_dark_blue}\mathcal{A}$ $\isavar{s}$) check_b_spec (Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$) PL;
       RETURNT P
     }
 \end{lstlisting}
+\end{minipage}
+
 It is parameterized by abstract costs for each operation, like checking emptiness, returning an empty partition or a singleton, initializing the state\footnote{States in this setting are tuples $(P, L)$ where $P$ is a partition of the set of states $\mathcal{Q}$ of $\mathcal{A}$ together with a workset $L$ of splitters.}, etc.
 For the sake of simplicity and since names are rather self-explanatory, we only give the definition of \texttt{check\_states\_empty\_spec} as an example and detail the \textit{while} loop. Checking emptiness for the set of states costs one coin of the currency \texttt{check\_states\_empty} and can be defined as follows:
+
 \begin{lstlisting}[language=Isabelle]
-definition check_states_empty_spec $\mathcal{A}$ $\equiv$
-  consume (RETURNT ($\mathcal{Q}$ $\mathcal{A}$ = {})) (cost ''check_states_empty'' 1)
+definition check_states_empty_spec ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$
+  consume (RETURNT ($\mathcal{Q}$ ${\color{isa_dark_blue}\mathcal{A}}$ = {})) (cost ''check_states_empty'' 1)
 \end{lstlisting}
+
 The purpose of using currencies is to be able to give an abstract description of the costs, and then to instantiate them with concrete values in the implementation which will be expressed in terms of concrete elementary costs like the number of comparisons or assignments. For example, if the set of states is represented as a tree \texttt{t}, there should be a method or an attribute \texttt{t.isempty} kept up to date during the execution of the algorithm, so that the cost of checking emptiness is equal to the cost of a function call plus the cost for reading memory at the location of the boolean \texttt{t.isempty}, that is constant time.
 
-The \textit{while} loop requires to be provided with an invariant, an estimation\edmargin{VT}{To be detailed} of the total amount of resource -- here time -- to be consumed, the loop condition, the function to be executed in the loop body and the initial state.
+The \textit{while} loop requires to be provided with an invariant, an estimation of the total amount of resource to be consumed -- here time, and this estimation has to decrease over an iteration, the loop condition, the function to be executed in the loop body and the initial state.
 The loop body defined in \texttt{Hopcroft\_abstract\_f} is given below:
+
+\noindent
+\begin{minipage}{\linewidth}
 \begin{lstlisting}[language=Isabelle]
 definition Hopcroft_abstract_f where
 Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$ = 
@@ -565,9 +645,12 @@ Hopcroft_abstract_f $\color{isa_dark_blue}\mathcal{A}$ =
     RETURNT PL'
   }
 \end{lstlisting}
+\end{minipage}
+
 The main operation, i.e.\ splitting blocks of the partition and updating the workset accordingly is specified in \texttt{update\_split\_spec}.
 As written in the informal paper proof of lemma \ref{lem:time_iteration}, this operation is a bit tricky since both splitting and updating are performed on-the-fly at the same time, thus they are gathered together for the moment.
 The definition of \texttt{update\_split\_spec} is given below:
+
 \begin{lstlisting}[language=Isabelle]
 definition update_split_spec $\color{isa_dark_blue}\mathcal{A}$ $\equiv$ $\lambda$(P,L) a p.
   SPEC ($\lambda$(P', L').
@@ -575,6 +658,356 @@ definition update_split_spec $\color{isa_dark_blue}\mathcal{A}$ $\equiv$ $\lambd
   ) ($\lambda$_. cost ''update_split'' (enat ($|\Sigma$ $\color{isa_dark_blue}\mathcal{A}|$ * $|$ preds $\color{isa_dark_blue}\mathcal{A}$ a p $|$)))
 \end{lstlisting}
 where \texttt{preds $\mathcal{A}$ a p} represents the set of all predecessors $\bigcup_{q \in p} \delta^{-1}(q, a) = \preds{a}{p}$ of all states of $p$ labelled by $a$. The cost specified by this definition stems from the result of lemma \ref{lem:time_iteration}, namely that the cost for splitting and updating the partition and the workset is $\Theta(|\Sigma| \cdot |\preds{a}{p}|)$.
+
+\bigskip
+
+The most important part of this definition is the estimate of the cost for the loop, i.e.\ the amount of resource consumed by the loop. From lemma \ref{lem:bound}, we have the following estimate:
+\begin{equation}\label{eq:estimate}
+    T = \theta \cdot \left(\sum_{(a, C) \in \mathcal{L}} | \preds{a}{C} | \lfloor \log_2 | C | \rfloor + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{L}} | \preds{a}{B} | \lfloor \log_2 \frac{| B |}{2} \rfloor \right)
+\end{equation}
+
+\begin{remark}
+In the following, we denote $x \mapsto \lfloor \log_2 x \rfloor$ by $\mapsto \log x$ for simplicity.
+\end{remark}
+
+The constant $\theta$ comes from lemma \ref{lem:time_iteration} and represents constant costs inherent to the loop body, like the cost of checking emptiness, calling a function, etc.
+In Isabelle, this factor $\theta$ is defined following the definition of \texttt{Hopcroft\_abstract\_f} and \texttt{check\_b\_spec} as follows:
+
+\begin{lstlisting}[language=Isabelle]
+definition cost_1_iteration $\equiv$ 
+  cost ''call'' 1 + cost ''check_l_empty'' 1 + cost ''if'' 1 +
+  cost ''pick_splitter'' 1 + cost ''update_split'' 1
+\end{lstlisting}
+
+Then, given a suitable definition \texttt{estimate} for the inner expression in $T$ -- i.e.\ the ``raw'' estimate -- the estimate for the loop is defined as the product\footnote{The operator \texttt{{\color{isa_blue}*m}} lifts multiplication to cost expressions.} of this constant factor and the inner expression, as follows:
+
+\begin{lstlisting}[language=Isabelle]
+definition estimate_iteration where
+  estimate_iteration $\mathcal{A}$ PL $\equiv$ cost_1_iteration ${\text{\color{isa_blue}{*m}}}$ estimate $\mathcal{A}$ PL
+\end{lstlisting}
+
+\paragraph{Finding a suitable definition for the estimate:}
+Finding a suitable definition for the inner expression in $T$ is not straightforward. The first attempt was to define it as follows:
+
+\begin{lstlisting}[language=Isabelle]
+definition estimate1 ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
+  $\sum${(card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)))*Discrete.log(card(snd s)) | s. s $\in$ L} +
+  $\sum${(card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)))*Discrete.log(card(snd s)/2) | s. s $\in$ $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P - L}
+\end{lstlisting}
+
+\begin{remark}
+    The function \texttt{Discrete.log :: nat $\Rightarrow$ nat} is the floor of the logarithm in base 2, i.e.\ it formalizes the function $x \mapsto \lfloor \log_2 x \rfloor$. Unlike the informal proof of lemma \ref{lem:bound}, the floor function cannot be dropped -- as is -- in Isabelle, mostly because the Refinement Framework works with natural numbers for the costs. This makes sense because the logarithm essentially captures the number of times blocks are split, which is a natural number.
+\end{remark}
+
+The problem with this definition is that the function $s := (a, C) \mapsto |\preds{a}{C}| \log |C|$ has no reason to be injective either on $L$ or its complement and thus the set comprehension expressions within the sums may actually contain duplicates that are merged together. One way to fix this is to sum over multisets. Multisets can also be defined via set comprehension in Isabelle, however having a structure allowing for induction is often more convenient. Thus, we prefer lists to multisets. 
+
+\bigskip
+
+A very convenient way to link lists and multisets is to use permutations, which are defined in Isabelle using multisets: a list $\ell$ is a permutation of a list $\ell'$ if and only if $\ell$ and $\ell'$ have the same multiset, i.e.\ in Isabelle if and only if \texttt{mset $\ell$ = mset $\ell'$}. We can lift this definition\footnote{A list $\ell$ permutes a set $S$, which we denote by \texttt{$\ell$ <\midtilde\midtilde\midtilde> $S$}, iff \texttt{mset $\ell$ = mset\_set $S$}.} to permutations between lists and sets with the help of the function \texttt{mset\_set} in Isabelle. Thus, we can define the estimate as follows:
+
+\begin{lstlisting}[language=Isabelle]
+definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$(P,L).
+  let xs = (SOME xs. xs <$\midtilde\midtilde\midtilde$> L) and
+      ys = (SOME ys. ys <$\midtilde\midtilde\midtilde$> $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ P - L) in
+  $\sum$s$\leftarrow$xs. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * Discrete.log(card(snd s)) +
+  $\sum$s$\leftarrow$ys. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst s) (snd s)) * Discrete.log(card(snd s)/2)
+\end{lstlisting}
+
+\begin{remark}
+    This definition makes use of the non-deterministic choice operator \texttt{SOME} of Isabelle to choose a permutation of $L$ and $\Sigma \times \mathcal{P} \setminus \mathcal{L}$ respectively. Since we are working with finite automata, such permutations always exist.
+\end{remark}
+
+\paragraph{Simplifying the estimate:}
+Unfortunately, such a definition makes the proofs very difficult. For a state transition $(\mathcal{P}, \mathcal{L}) \rightarrow (\mathcal{P}', \mathcal{L}')$, we would have to examine all cases for all blocks whether they are splitters in $L$ or whether they are split by some other splitter or whether there are new splitters created from this splitter in $L'$. This would be very tedious to formalize, but here is a sketch of some ideas.
+
+Splitters of the workset can be uniquely characterized thanks to ``$a$-$q$-splitters''. It is defined as follows for a state $(P, L)$:
+
+\begin{definition}
+Let $a \in \Sigma$ and $q \in \mathcal{Q}$. Let $B$ be the unique block of the partition $\mathcal{P}$ containing $q$. If $(a, B) \in L$, it is the \textbf{$a$-$q$-splitter}. Otherwise, there is no $a$-$q$-splitter.
+\end{definition}
+
+This can be achieved in Isabelle using the option type. Although this is a good characterization of splitters, it is not easy to work with it. For example, if we want to show that the number of splitters decreases, we would have to show that the number of $a$-$q$-splitters decreases for any $a \in \Sigma$ and any $q \in \mathcal{Q}$. This is rather tricky to formalize.
+
+\bigskip
+
+In order to simplify the expression of the estimate (\ref{eq:estimate}), we can remove the halving factor in the second term, which allows both term to be gathered together under one sum. We obtain an upper bound for the previous expression and the difference between the two is ``small'':
+
+\begin{align*}
+    T & \leq \theta \cdot \left(\sum_{(a, C) \in \mathcal{L}} | \preds{a}{C} | \log | C | + \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{L}} | \preds{a}{B} | \log | B | \right)\\
+    & = \theta \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \log | C |
+\end{align*}
+Thus, we work with the following simplified estimate:
+\begin{equation}\label{eq:estimate_simplified}
+    \hat{T} := \theta \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \log | C |
+\end{equation}
+
+\begin{remark}
+Recall that we dropped the floor function in the notations for simplicity.
+However, the floor function will have some importance later in the formalization.
+The full expression of the estimate is given by
+\begin{equation*}
+    \hat{T} = \theta \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \lfloor \log_2 | C | \rfloor
+\end{equation*}
+\end{remark}
+
+\noindent
+The error $\Delta T$ is given by
+\begin{equation}
+    \Delta T := |\hat{T} - T| = \theta \sum_{(a, B) \in (\Sigma\times \mathcal{P})\setminus \mathcal{L}} | \preds{a}{B} | \log \frac{| B |}{2}
+\end{equation}
+Thus, performing this simplification does not change the asymptotic behavior of the estimate.
+The definition in Isabelle is also simpler:
+\begin{lstlisting}[language=Isabelle]
+definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$($\isavar{P}$,$\isavar{L}$).
+  let $\isavar{xs}$ = (SOME $\isavar{xs}$. $\isavar{xs}$ <$\midtilde\midtilde\midtilde$> $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ $\isavar{P}$) in
+  $\sum \isavar{s} \leftarrow \isavar{xs}$. card (preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * Discrete.log (card (snd $\isavar{s}$))
+\end{lstlisting}
+
+\begin{remark}
+The previous definition could be equivalently achieved by using Isabelle's summation over sets:
+\begin{lstlisting}[language=Isabelle]
+definition estimate ${\color{isa_dark_blue}\mathcal{A}}$ $\equiv$ $\lambda$($\isavar{P}$,$\isavar{L}$).
+$\sum \isavar{s} \in$ $\Sigma$ ${\color{isa_dark_blue}\mathcal{A}}$ $\times$ $\isavar{P}$. card (preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * Discrete.log (card (snd $\isavar{s}$))
+\end{lstlisting}
+Unfortunately, I noticed it after the formalization was done. It may shorten some proofs and improve overall understanding, so it is worth switching to this definition.
+\end{remark}
+
+\paragraph{Proving that the estimate decreases:} We can now prove that the estimate decreases. We can consider two approaches:
+\begin{itemize}
+    \item[(1)] either we follow the idea of the paper proof given in theorem \ref{thm:complexity} and a non-strict inequality is sufficient,
+    \item[(2)] or we follow the rules given by the Refinement Framework (for a \textit{while} loop given an estimate of the time spent in the loop) and we show a strict inequality.
+\end{itemize}
+We start with approach (1) since it is easier to prove. We first sketch out the idea of the proof, followed by some technical details about the proof in Isabelle. Given a state $(\mathcal{P}, \mathcal{L})$ satisfying some invariants and a state transition $(\mathcal{P}, \mathcal{L}) \rightarrow (\mathcal{P}', \mathcal{L}')$, we have to show that
+\begin{equation*}
+    \hat{T}(\mathcal{P}', \mathcal{L}') \leq \hat{T}(\mathcal{P}, \mathcal{L})
+\end{equation*}
+Forgetting the constant $\theta$, we have to show that
+\begin{equation*}
+    \sum_{(a, C) \in \Sigma\times \mathcal{P'}} | \preds{a}{C} | \log | C | \leq \sum_{(a, C) \in \Sigma\times \mathcal{P}} | \preds{a}{C} | \log | C |
+\end{equation*}
+Let $\{P_1, \dots, P_m\} := \mathcal{P}$ be an enumeration of the $m$ blocks of $\mathcal{P}$ such that the first $k$ blocks $P_1, \dots, P_k$ are split and $P_{k+1}, \dots, P_m$ are not.
+This means that for each $i \in \{1, \dots, k\}$, there exists $P_i'$ and $P_i''$ in $\mathcal{P'}$ resulting from the split of $P_i$ in $\mathcal{P}$.
+Thus, $\mathcal{P'}$ can be written as follows:
+
+\begin{equation*}
+    \mathcal{P'} = \{P_1', P_1'', \dots, P_k', P_k'', P_{k+1}, \dots, P_m\}
+\end{equation*}
+
+Therefore, we can rewrite the previous inequality as follows:
+\begin{equation*}
+    \sum_{(a, C) \in \Sigma\times \{P_1', P_1'', \dots, P_k', P_k'', P_{k+1}, \dots, P_m\}} | \preds{a}{C} | \log | C | \leq \sum_{(a, C) \in \Sigma\times \{P_1, \dots, P_m\}} | \preds{a}{C} | \log | C |
+\end{equation*}
+By splitting the left-hand side sum into two sums over $\{P_1', P_1'', \dots, P_k', P_k''\}$ and $\{P_{k+1}, \dots, P_m\}$ and subtracting the terms over $\{P_{k+1}, \dots, P_m\}$ on both sides, we can reduce the problem to showing that
+\begin{equation*}
+    \sum_{(a, C) \in \Sigma\times \{P_1', P_1'', \dots, P_k', P_k''\}} | \preds{a}{C} | \log | C | \leq \sum_{(a, C) \in \Sigma\times \{P_1, \dots, P_k\}} | \preds{a}{C} | \log | C |
+\end{equation*}
+that is,
+\begin{equation*}
+    \sum_{i=1}^k \left(| \preds{a}{P_i'} | \log | P_i' | + | \preds{a}{P_i''} | \log | P_i'' |\right) \leq \sum_{i=1}^k | \preds{a}{P_i} | \log | P_i |
+\end{equation*}
+
+\bigskip
+
+Then, we consider the following facts\footnote{The proofs of those facts are omitted here since they are simple and not very interesting.}:
+\begin{itemize}
+    \item A property induced by the concavity of the logarithm:
+    \begin{equation*}
+        \forall a, b, x, y \in \mathbb{R}_+^* \quad (a+b)\log (x+y) > a\log x + b\log y
+    \end{equation*}
+    \item A property on the set of predecessors and the definition of a split:
+    \begin{equation*}
+        (a, B) \text{ splits } C \text{ into } (C', C'') \Longrightarrow \preds{a}{C} = \preds{a}{C'} \cup \preds{a}{C''} \land \preds{a}{C'} \cap \preds{a}{C''} = \varnothing
+    \end{equation*}
+    from which we deduce that
+    \begin{equation*}
+        (a, B) \text{ splits } C \text{ into } (C', C'') \Longrightarrow |\preds{a}{C}| = |\preds{a}{C'}| + |\preds{a}{C''}|
+    \end{equation*}
+    \item A property on the definition of a split:
+    \begin{equation*}
+        (a, B) \text{ splits } C \text{ into } (C', C'') \Longrightarrow |C| = |C'| + |C''|
+    \end{equation*}
+\end{itemize}
+Given those properties, we show that
+\begin{equation*}
+    \forall i \in \{1, \dots, k\} \quad | \preds{a}{P_i'} | \log | P_i' | + | \preds{a}{P_i''} | \log | P_i'' | \leq | \preds{a}{P_i} | \log | P_i |
+\end{equation*}
+which is sufficient to conclude the proof.
+
+\bigskip
+
+We now give some technical details about the proof in Isabelle. The goal is to show the following lemma:
+
+\begin{lstlisting}[language=Isabelle]
+lemma estimate_decrease: estimate ${\color{isa_dark_blue}\mathcal{A}}$ ($\isafixed{P'}$, $\isafixed{L'}$) $\leq$ estimate ${\color{isa_dark_blue}\mathcal{A}}$ ($\isafixed{P}$, $\isafixed{L}$)
+\end{lstlisting}
+
+
+The definition of the estimate using permutations allows us to do the disjunction between split and non-split blocks in the partition. First, we have to obtain a list \texttt{xs} (resp. \texttt{xs'}) permuting $\Sigma \times \mathcal{P}$ (resp. $\Sigma \times \mathcal{P'}$) such that
+\begin{lstlisting}[language=Isabelle]
+estimate ${\color{isa_dark_blue}\mathcal{A}}$ ($\isafixed{P}$, $\isafixed{L}$) = $\sum\isavar{s}\leftarrow\color{isa_orange}\text{xs}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$))
+\end{lstlisting}
+resp.
+\begin{lstlisting}[language=Isabelle]
+estimate ${\color{isa_dark_blue}\mathcal{A}}$ ($\isafixed{P'}$, $\isafixed{L'}$) = $\sum\isavar{s}\leftarrow\color{isa_orange}\text{xs'}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$))
+\end{lstlisting}
+Then, we obtain two lists \texttt{ys} and \texttt{zs} (resp. \texttt{ys'} and \texttt{zs'}) such that
+\begin{lstlisting}[language=Isabelle]
+$\color{isa_orange}\text{xs}$ = $\color{isa_orange}\text{ys}$ @ $\color{isa_orange}\text{zs}$ $\land$
+$\forall$ $\isavar{e}$ $\in$ set $\color{isa_orange}\text{ys}$. snd $\isavar{e}$ $\in$ $\isafixed{P}$ $\cap$ $\isafixed{P'}$ $\land$
+$\forall$ $\isavar{e}$ $\in$ set $\color{isa_orange}\text{zs}$. snd $\isavar{e}$ $\notin$ $\isafixed{P}$ $\cap$ $\isafixed{P'}$
+\end{lstlisting}
+resp.
+\begin{lstlisting}[language=Isabelle]
+$\color{isa_orange}\text{xs'}$ = $\color{isa_orange}\text{ys'}$ @ $\color{isa_orange}\text{zs'}$ $\land$
+$\forall$ $\isavar{e}$ $\in$ set $\color{isa_orange}\text{ys'}$. snd $\isavar{e}$ $\in$ $\isafixed{P}$ $\cap$ $\isafixed{P'}$ $\land$
+$\forall$ $\isavar{e}$ $\in$ set $\color{isa_orange}\text{zs'}$. snd $\isavar{e}$ $\notin$ $\isafixed{P}$ $\cap$ $\isafixed{P'}$
+\end{lstlisting}
+Just like above, by showing that \texttt{ys = ys'} we reduce the current goal to showing that
+\begin{lstlisting}[language=Isabelle]
+$\sum\isavar{s}\leftarrow\color{isa_orange}\text{zs}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$)) $\leq$
+$\sum\isavar{s}\leftarrow\color{isa_orange}\text{zs'}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$))
+\end{lstlisting}
+
+\bigskip
+
+Then, we show two key properties which will be useful to conclude the proof.
+Since picking any $(A, B) \in \mathcal{P'} \times \mathcal{P'}$ does not imply that $A$ and $B$ result from the same split, we cannot directly obtain a single property with an equivalence capturing the whole idea.
+Instead, we have to prove two separate implications that are dual properties.
+
+The idea is that given a block of the current partition, we can find the two blocks of the new partition resulting from the split of this block.
+Conversely, given a block of the new partition, we can find the other block of the new partition and the block from the current partition such that the two blocks from the new partition result from the split of the block from the current partition.
+The latter property is the one making a formulation with an equivalence quite tedious since we cannot directly pick such two blocks together from the new partition.
+
+Those two properties are named \texttt{unique\_split} and \texttt{unique\_split\_conv} and are defined in Isabelle as follows:
+\begin{lstlisting}[language=Isabelle]
+note unique_split=
+$\isafixed{B}$ $\in$ set $\color{isa_orange}\text{zs}$ $\Longrightarrow$ $\exists$!($\isavar{B1}$, $\isavar{B2}$). $\isavar{B1}$ $\in$ set $\color{isa_orange}\text{zs'}$ $\land$ $\isavar{B2}$ $\in$ set $\color{isa_orange}\text{zs'}$ $\land$
+    (snd $\isafixed{B}$, snd $\isavar{B1}$, snd $\isavar{B2}$) $\in$ Hopcroft_splitted ${\color{isa_dark_blue}\mathcal{A}}$ $\isafixed{C}$ $\isafixed{a}$ {} $\isafixed{P}$ $\land$
+    fst $\isafixed{B}$ = fst $\isavar{B1}$ $\land$ fst $\isafixed{B}$ = fst $\isavar{B2}$
+\end{lstlisting}
+and
+\begin{lstlisting}[language=Isabelle]
+note unique_split_conv=
+$\isafixed{B1}$ $\in$ set $\color{isa_orange}\text{zs'}$ $\Longrightarrow$ $\exists$!($\isavar{B}$, $\isavar{B2}$). $\isafixed{B1}$ $\in$ set $\color{isa_orange}\text{zs}$ $\land$ $\isavar{B2}$ $\in$ set $\color{isa_orange}\text{zs'}$ $\land$
+    split_pred ${\color{isa_dark_blue}\mathcal{A}}$ $\isafixed{P}$ (snd $\isavar{B}$) $\isafixed{a}$ $\isafixed{C}$ (snd $\isafixed{B1}$) (snd $\isavar{B2}$) $\land$
+    fst $\isavar{B}$ = fst $\isafixed{B1}$ $\land$ fst $\isavar{B}$ = fst $\isavar{B2}$
+\end{lstlisting}
+
+Let us dissect those two properties and translate them into words in order to understand their meaning.
+\begin{itemize}
+    \item[\texttt{unique\_split}:] Let $\sigma \in \Sigma$ be a label and let $B \in \mathcal{P} \setminus \mathcal{P'}$ be a block of the current partition $\mathcal{P}$ that is about to be split, i.e.\ that is not in $\mathcal{P'}$ -- which is represented in Isabelle by $(\sigma, B)$ being a member of the list \texttt{zs}.
+    
+    We can find two unique blocks $B_1$ and $B_2$ of the new partition $\mathcal{P'}$ -- actually, in $\mathcal{P'} \setminus \mathcal{P}$ which is represented in Isabelle by $(\alpha, B_1)$ and $(\alpha, B_2)$ being members of the list \texttt{zs'} for some label $\alpha \in \Sigma$ -- such that $B_1$ and $B_2$ are the result of the split of $B$ by some splitter\footnote{Any splitter, in particular it can be with the label $\sigma$ or with the block $B$ itself.} -- and $B_1$ and $B_2$ are both labelled by the same letter $\sigma$ if they are splitters in the new workset, i.e.\ if $(\sigma, B) \in \mathcal{L}$ then $(\sigma, B_1) \in \mathcal{L}'$ and $(\sigma, B_2) \in \mathcal{L}'$.
+
+    This property allows us to uniquely characterize and obtain blocks resulting from a split.
+
+    \item[\texttt{unique\_split\_conv}:] Let $\sigma \in \Sigma$ be a label and let $B_1 \in \mathcal{P'} \setminus \mathcal{P}$ be a block of the new partition $\mathcal{P'}$ that is not in $\mathcal{P}$ -- which is represented in Isabelle by $(\sigma, B_1)$ being a member of the list \texttt{zs'}.
+
+    We can find two unique blocks $B$ of the current partition $\mathcal{P}$ and $B_2$ of the new partition $\mathcal{P'}$ -- actually, in $\mathcal{P} \setminus \mathcal{P'}$ (resp. $\mathcal{P'} \setminus \mathcal{P}$) which is represented in Isabelle by $(\alpha, B)$ (resp. $(\alpha, B_2)$) being a member of the list \texttt{zs} (resp. \texttt{zs'}) for some label $\alpha \in \Sigma$ -- such that $B_1$ and $B_2$ result from the split of $B$ by some splitter and $B$, $B_1$ and $B_2$ are all labelled by the same letter $\sigma$ if they are splitters in the current and new worksets, i.e.\ if $(\sigma, B_1) \in \mathcal{L}'$ then $(\sigma, B) \in \mathcal{L}$ and $(\sigma, B_2) \in \mathcal{L}'$.
+\end{itemize}
+
+Then, we define\footnote{This definition is local to this proof, thus $f$ depends on all formerly obtained variables appearing in its definition.} a function $f$ which maps a block of the current partition to the two blocks of the new partition resulting from the split of this block. This function is defined as follows:
+
+\begin{lstlisting}[language=Isabelle]
+define $\color{isa_orange}f$ = $\lambda$$\isavar{B}$. (THE ($\isavar{B1}$, $\isavar{B2}$).
+    $\isavar{B1}$ $\in$ set ${\color{isa_orange}\text{zs'}}$ $\land$ $\isavar{B2}$ $\in$ set ${\color{isa_orange}\text{zs'}}$ $\land$
+    (snd $\isavar{B}$, snd $\isavar{B1}$, snd $\isavar{B2}$) $\in$ Hopcroft_splitted $\color{isa_dark_blue}\mathcal{A}$ $\isafixed{C}$ $\isafixed{a}$ {} $\isafixed{P}$ $\land$
+    fst $\isavar{B}$ = fst $\isavar{B1}$ $\land$ fst $\isavar{B}$ = fst $\isavar{B2}$)
+\end{lstlisting}
+The operator {\color{isa_blue}\texttt{THE}} in Isabelle allows us to select ``the'' element satisfying a predicate. Thanks to the property \texttt{unique\_split} giving unicity for this predicate, the function $f$ is well-defined.
+
+Then, we prove that the image of \texttt{zs} by $f$ is exactly (a permutation of) \texttt{zs'}. Formally, we prove that
+\begin{lstlisting}[language=Isabelle]
+$\bigcup${{fst ($\color{isa_orange}\text{f}$ $\isavar{B}$), snd ($\color{isa_orange}\text{f}$ $\isavar{B}$)} | $\isavar{B}$. $\isavar{B}$ $\in$ set $\color{isa_orange}\text{zs}$} = set $\color{isa_orange}\text{zs'}$
+\end{lstlisting}
+and
+\begin{lstlisting}[language=Isabelle]
+fold ((@) $\circ$ ($\lambda\isavar{x}$. [fst ($\color{isa_orange}\text{f}$ $\isavar{x}$), snd ($\color{isa_orange}\text{f}$ $\isavar{x}$)])) $\color{isa_orange}\text{zs}$ [] <$\midtilde\midtilde$> $\color{isa_orange}\text{zs'}$
+\end{lstlisting}
+
+\bigskip
+
+We can then replace the expression on the blocks\footnote{Actually, the tuples of letters and blocks.} in the sum corresponding to the estimate for $(P', L')$ over \texttt{zs'} by their preimages in \texttt{zs} by $f$ and we obtain the sum for the estimate for $(P, L)$ over \texttt{zs}.
+Formally, we prove that
+\begin{lstlisting}[language=Isabelle]
+$\sum\isavar{s}\leftarrow$$\color{isa_orange}\text{zs'}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst $\isavar{s}$) (snd $\isavar{s}$)) * log(card(snd $\isavar{s}$)) =
+$\sum\isavar{s}\leftarrow$$\color{isa_orange}\text{zs}$. card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst (fst ($\color{isa_orange}\text{f}$ $\isavar{s}$))) (snd (fst ($\color{isa_orange}\text{f}$ $\isavar{s}$)))) * log(card(snd (fst ($\color{isa_orange}\text{f}$ $\isavar{s}$)))) +
+          card(preds ${\color{isa_dark_blue}\mathcal{A}}$ (fst (snd ($\color{isa_orange}\text{f}$ $\isavar{s}$))) (snd (snd ($\color{isa_orange}\text{f}$ $\isavar{s}$)))) * log(card(snd (snd ($\color{isa_orange}\text{f}$ $\isavar{s}$))))
+\end{lstlisting}
+
+We then use the property \texttt{unique\_split\_conv} to show that the sum on the right-hand side is bounded by the estimate for $(P, L)$ over \texttt{zs}, which concludes the proof.
+
+\bigskip
+
+We now consider approach (2) which requires a strict inequality.
+This approach is still a work in progress and is not yet finished.
+We would need to find an estimate $\Gamma$ such that for any state transition $(\mathcal{P}, \mathcal{L}) \rightarrow (\mathcal{P}', \mathcal{L}')$, we have
+\begin{equation*}
+    \Gamma(\mathcal{P}', \mathcal{L}') < \Gamma(\mathcal{P}, \mathcal{L})
+\end{equation*}
+My guess is that the estimate $T$ defined in \ref{eq:estimate} would satisfy the strict inequality, however I am not sure that the estimate $\hat{T}$ defined in \ref{eq:estimate_simplified} would satisfy it. The reason for this intuition is that $T$ is defined on the workset $\mathcal{L}$ whereas $\hat{T}$ is defined on the partition $\mathcal{P}$.
+Indeed, we can prove that for any state transition $(\mathcal{P}, \mathcal{L}) \rightarrow (\mathcal{P}', \mathcal{L}')$ of the algorithm, we have $\mathcal{L} \neq \mathcal{L}'$ but it may happen that $\mathcal{P} = \mathcal{P}'$.
+\begin{remark}
+    Consider the following automaton:
+    \begin{figure}[!ht]
+    \centering
+    \begin{tikzpicture}[shorten >=1pt,node distance=2.5cm, on grid, >={Stealth[round]},initial text=,
+        every state/.style={thick}]
+        \node[state, initial] (q0) {$q_0$};
+        \node[state, initial] (q0) {$q_0$};
+
+        \node[state, above of=q0] (q1) {$q_1$};
+        \node[state, above of=q0] (q1) {$q_1$};
+        \node[state, accepting, right of=q0] (q2) {$q_2$};
+        \node[state, accepting, right of=q0] (q2) {$q_2$};
+
+        \node[state, accepting, above of=q2] (q3) {$q_3$};
+        \node[state, accepting, above of=q2] (q3) {$q_3$};
+
+        \node[state, accepting, right of=q2] (q4) {$q_4$};
+        \node[state, accepting, right of=q2] (q4) {$q_4$};
+        \node[state, right of=q3] (q5) {$q_5$};
+        \node[state, right of=q3] (q5) {$q_5$};
+        \node[state, right of=q3] (q5) {$q_5$};
+
+        \path[->] (q0) edge[bend left] node[left]{$\alpha$} (q1);
+        \path[->] (q0) edge node[below]{$\beta$} (q2);
+        \path[->] (q1) edge[bend left] node[right]{$\alpha$} (q0);
+        \path[->] (q1) edge node[above]{$\beta$} (q3);
+        \path[->] (q2) edge node[below]{$\alpha$} (q4);
+        \path[->] (q2) edge node[left=.3cm]{$\beta$} (q5);
+        \path[->] (q3) edge node[above]{$\beta$} (q5);
+        \path[->] (q3) edge node[above=.3cm]{$\alpha$} (q4);
+        \path[->] (q4) edge[loop right] node[right]{$\alpha$} (q4);
+        \path[->] (q4) edge node[right]{$\beta$} (q5);
+        \path[->] (q5) edge[loop right] node[right]{$\alpha,\beta$} (q5);
+    \end{tikzpicture}
+    \end{figure}
+
+    \begin{table}[!ht]
+        \centering
+        \small
+        \begin{tabular}{c|c|c}
+            Splitter & Partition $\mathcal{P}$ & Workset $\mathcal{L}$\\
+            \hline
+            -- & $\{q_0,q_1, q_5\}\{q_2, q_3, q_4\}$ & $(\alpha, \{q_0,q_1, q_5\})\ (\beta, \{q_0,q_1, q_5\})$\\
+            $(\beta, \{q_0,q_1, q_5\})$ & $\{q_0,q_1\}\{q_5\}\{q_2, q_3, q_4\}$ & $(\alpha, \{q_0,q_1\})\ (\alpha, \{q_5\})$\\
+            $(\alpha, \{q_0,q_1\})$ & $\{q_0,q_1\}\{q_5\}\{q_2, q_3, q_4\}$ & $(\alpha, \{q_5\})$\\
+            $(\alpha, \{q_5\})$ & $\{q_0,q_1\}\{q_5\}\{q_2, q_3, q_4\}$ & $\varnothing$\\
+        \end{tabular}
+    \end{table}
+    Note that the partition is stable after the second iteration of the algorithm. The workset however changes after each iteration.
+\end{remark}
+
+Thus, it may happen that the estimate $\hat{T}$ does not decrease after a state transition where the partition does not change.
+With the estimate $T$, we are sure that at each step, a splitter is used and thus a term in the sum over $\mathcal{L}$ is removed and ``goes'' into the sum over $\Sigma \times \mathcal{P} \setminus \mathcal{L}$.
+This remark is very informal.
+However, because of the floor operation, we still cannot garantee that the estimate $T$ strictly decreases\footnote{Consider $\lfloor \log_2 n \rfloor$ and $\lfloor \log_2 n+1 \rfloor$: the bigger $n$ is, the more likely it is that both values are equal. Such terms might show up in border cases such as when a splitter splits off only one element from a block.}.
+
+\section{Further work}
+As mentioned above, finding a proof for a strict inequality is still a work in progress. It involves finding a suitable estimate, although the estimate $T$ seems to be a good candidate. However, this estimate makes the formalization more complex since it involves to consider separately elements from the workset and its complement and how they are affected by a state transition.
+
+Everything linked to the estimate left aside, the formalization is still at a very early stage since we only focussed on the abstract level. However, this was the most important part of the formalization since it is the most complex one. The next steps would be to dive into the successive refinements and refine the abstract currencies. The formalization of the concrete currencies will be more straightforward since it will be mostly about implementing the abstract currencies with the chosen data structures, which probably already exists.
 
 
 % \printglossary[type=\acronymtype]
