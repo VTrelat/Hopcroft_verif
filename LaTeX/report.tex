@@ -1,13 +1,15 @@
 \documentclass[12pt, a4 paper]{article}
 \usepackage[british]{babel}
-\usepackage{graphicx, hyperref, xcolor, fancyhdr, amssymb, amsmath, amsthm, mdframed, tikz, listings}
+\usepackage{graphicx, hyperref, xcolor, fancyhdr, amssymb, amsmath, amsthm, tikz, listings}
+\usepackage[framemethod=TikZ]{mdframed}
 \usepackage{mathrsfs}
 \usepackage[acronym, toc]{glossaries}
 \usepackage{pdfpages}
 \usepackage{svg}
 \usepackage{algorithmic}
 \usepackage[ruled, linesnumbered]{algorithm2e}
-
+\usepackage{pgfgantt, lscape}
+\usepackage{fontawesome}
 
 \usetikzlibrary {arrows.meta,automata,positioning} 
 \usetikzlibrary{automata}
@@ -154,22 +156,23 @@
 
 \pagebreak
 
-\section{Abstract}
+\section{Preamble}
 
 This internship report is the result of a 6-month internship at the Chair of Logic and Verification of the Technical University of Munich (TUM) under the supervision of Tobias Nipkow and Peter Lammich.
+
 The main goal of this internship was to verify Hopcroft's algorithm for minimizing DFAs in Isabelle/HOL and to analyze its worst-case time complexity using the Refinement Framework.
 Some considerable work had already been carried out by Peter Lammich and Thomas T\"urk on the proof of correctness ten years ago in an older version of Isabelle \cite{lammich:hop}.
 The goal was to port this proof to the latest version of Isabelle and to extend it with a time complexity analysis.
 
+In order to bring the reader closer to the reality of the project, some sections of this report dive a little deeper into the details of the interesting parts of my research. They are marked with the following symbol \faGears\ and can be skipped without loss of understanding of the main ideas.
+
 \pagebreak
 
-\section{Preamble}
+\section{Technical University of Munich}
 
 The Technical University of Munich (TUM) stands as a beacon of academic excellence, renowned globally for its commitment to cutting-edge research, innovation, and education. Nestled in the heart of Germany, TUM's legacy spans over 150 years, consistently ranking among the top universities worldwide. At TUM, scholars and students alike converge to explore and shape the forefront of various fields, fostering a dynamic environment that thrives on intellectual curiosity and collaboration.
 
 Within the expansive landscape of TUM's academic endeavors lies the Chair of Logic and Verification —- a distinguished hub of expertise dedicated to the study and application of formal methods -- which operates at the intersection of computer science, mathematics, logic and engineering, harnessing the power of logical reasoning to ensure the precision and reliability of complex systems.
-
-\bigskip
 
 Among the illustrious figures leading the charge at the Chair of Logic and Verification is Professor Tobias Nipkow. A luminary in the realm of formal methods, he has made indelible contributions to the development and propagation of logical verification techniques.
 
@@ -196,7 +199,7 @@ We start from the highest level -- i.e.\ with the highest level of abstraction -
 As an example, if an algorithm manipulates sets at the abstract level, we may use lists or trees in its implementation.
 When performing a refinement, we have to give links -- and prove them -- between levels, e.g. that the behavior of the refined one does not contradict the abstract one.
 In Peter Lammich's Refinement Framework \cite{lammich:ref}, this is done via binary relations and abstraction/concretization functions\footnote{A concretization function maps an abstract value to a set of concrete values and conversely for an abstraction function, so that invariants can be carried and preserved through the refinements.
-For example, we may abstract the set $\mathbb{Z}$ of integers to $\{Neg, Zero, Pos\}$ where $Pos$ (resp.\ $Neg$) represents positive (resp.\ negative) integers and $Zero$ represents the singular set $\{0\}$.}.
+For example, we may abstract the set $\mathbb{Z}$ of integers to $\{Neg, Zero, Pos\}$ where $Pos$ (resp.\ $Neg$) represents positive (resp.\ negative) integers and $Zero$ represents the singular set $\{0\}$.}. The Refinement Framework is briefly introduced in the next section.
 
 \bigskip
 
@@ -209,7 +212,19 @@ The principle is to model costs of operations with resources and currencies and 
 
 Since the project also relies on automata theory, it is recommended to have some basic knowledge about automata theory and formal languages.
 
-\subsection{Setting up the environment}
+\subsection{The Refinement Framework}
+
+The Refinement Framework \cite{lammich:ref} is a methodology for designing and verifying computer systems, particularly in critical applications like aviation and healthcare.
+It was mostly developed by \href{https://people.utwente.nl/p.lammich}{Peter Lammich} and \href{https://www21.in.tum.de/~haslbema/}{Maximilian P. L. Haslbeck}, often in collaboration with tools like Isabelle.
+
+At its core, the Refinement Framework provides a systematic way to start with a high-level, abstract description of a system and gradually refine it into a concrete implementation.
+It works the same way one would build a house. First, a basic blueprint with the overall design and room layouts is designed: it is the abstract specification. Then, this plan is gradually refined by adding more detail at each step. For instance, the materials, dimensions, and exact placement of walls, plumbing, and electrical systems might be specified. Each refinement step brings the model closer to the actual construction until a fully detailed plan is obtained and ready for builders to follow.
+
+Software development, is completely analogous. We start with a high-level description of what a software system should do (the abstract specification), and it is refined through several stages, adding more and more detail until we have a concrete and reliable software implementation. This process helps ensure that the final software system matches what one originally intended, and it provides a way to verify that it works correctly.
+
+The key benefit of the Refinement Framework is that it helps catch errors and problems early in the development process, reducing costly mistakes and improving the quality of the final product. It's a systematic way to bridge the gap between abstract concepts and real-world software, making sure they align properly.
+
+\subsection{Setting up the environment \faGears}
 In order to be able to comfortably browse the theories and inspect the proofs, it is recommended to use Isabelle\footnote{The project was carried out using \href{https://isabelle.in.tum.de/}{Isabelle2022}.}/jEdit. Yet, the project is not part of the \href{https://www.isa-afp.org/}{Archive of Formal Proofs} (AFP) and can only be downloaded from the \href{https://github.com/VTrelat/Hopcroft_Verif}{GitHub repository}.
 
 Then, building an image of the main framework is strongly recommended, as it will greatly speed up the compilation of the theories, especially for the time complexity analysis. This may take a few minutes, but only needs to be done once:
@@ -234,7 +249,7 @@ Then, it iteratively refines the partitions by splitting them into smaller ones 
 The algorithm is guaranteed to terminate since the number of partitions is finite and strictly decreases at each iteration.
 The equivalence class of the set of states of the DFA is then the set of partitions, so that any two different sets of states from that partition recognize different languages.
 
-\bigskip
+\subsection{Original formalization \faGears}
 
 \begin{algorithm}[H]
 \SetAlgoLined
@@ -265,7 +280,7 @@ For all $a \in \Sigma$, construct $L_a := \underset{1 \leq i < k}{\operatorname*
 
 Algorithm~\ref{alg:original} is a direct translation of the original algorithm from \cite{Hop71} with only slight changes in the notations.
 
-\subsection{Modern formalisation}
+\subsection{Modern formalization}
 
 The algorithm is now usually given in a more mathematical and formalised way\footnote{see for example \cite{esparza2023automata}}, which loosens up the choice for an implementation.
 The algorithm is given below in Algorithm~\ref{alg:modern}.
@@ -333,9 +348,63 @@ If one of the two sets is empty, one of the $s_{a, 1}$ or $s_{a, 2}$ will be emp
 This results in a useless $O(|\Sigma|)$ computation.
 Another difference in that case is that it would return the partition $\min\{\mathcal{F}, \mathcal{Q}\setminus\mathcal{F}\}$ -- where $\min$ returns the set with the least number of elements --  which we avoid in the modern version by just returning $\mathcal{Q}$.
 
+\subsection{Objectives of the project}
+
+The project can be divided into two main parts:
+\begin{itemize}
+    \item[(i)] porting the old formalization of the algorithm and its proof of correctness to the latest version of Isabelle,
+    \item[(ii)] extending the proof with a time complexity analysis using the NREST Framework \cite{refwithtime}, i.e.\ the extension of the Refinement Framework to time.
+\end{itemize}
+
+The first part is rather straightforward since it only involves a good understanding of the original proof and the Refinement Framework. The main proofs are fixed by finding syntax changes and adapting them accordingly.
+
+the second one is more challenging since it requires a good understanding of the algorithm and the Refinement Framework, as well as a good knowledge of the NREST Framework.
+
+
+\begin{landscape}
+\subsection{Gantt chart}
+\begin{ganttchart}[
+    hgrid,
+    vgrid={*3{black,dotted}, *1{black, dashed}},
+    x unit=0.59cm,
+    y unit title=0.5cm,
+    y unit chart=0.7cm,
+    title height=1,
+    title/.style={fill=gray!20},
+    title label font=\bfseries,
+    group/.append style={fill=green!20!black!70},
+    bar/.style={fill=green!35!black!50},
+    bar height=0.5,
+    progress label text={\pgfmathprintnumber[precision=0,verbatim]{#1}\%},
+    group left shift=0,
+    group right shift=0
+  ]{1}{24}
+
+  % Months every 4 units
+  \gantttitle{Gantt chart}{24} \\
+  \gantttitle{March}{4}
+  \gantttitle{April}{4}
+  \gantttitle{May}{4}
+  \gantttitle{June}{4}
+  \gantttitle{July}{4}
+  \gantttitle{August}{4}\\
+  
+  \ganttgroup{Porting old theories}{1}{5} \\
+  \ganttbar{Reading documentation}{1}{2} \\
+  \ganttbar{Fixing proofs}{2}{5} \\ \ganttnewline
+  
+  \ganttgroup{Time Complexity Analysis}{6}{22} \\
+  \ganttbar{Paper proof}{6}{12} \\
+  \ganttbar{Getting used to NREST}{9}{13} \\
+  \ganttbar{Isabelle formalization}{13}{21} \\
+  \ganttbar[bar/.append style={fill=orange!60}]{Proof of \texttt{estimate2\_decrease}}{14}{18} \\
+  \ganttbar{Writing documentation}{20}{22}
+\end{ganttchart}
+\end{landscape}
+
 \section{Proof of correctness}
 
-Since the proof of correctness is not the purpose of this paper, we do not go into details. John E. Hopcroft's original paper \cite{Hop71} contains a proof of correctness for his low-level algorithm, however the ideas behind the invariants are the same for the formalisation. 
+Since the proof of correctness is not the purpose of this project, we do not go into details. John E. Hopcroft's original paper \cite{Hop71} contains a proof of correctness for his low-level algorithm, however the ideas behind the invariants are the same for the formalization. 
 
 The proof of correctness for Hopcroft's algorithm for DFA minimization typically involves two main components: partition refinement and equivalence checking.
 
@@ -358,7 +427,13 @@ In the Refinement Framework, the algorithm is first described at the abstract le
 
 \section{Time complexity analysis}
 
-In order to give an idea of what I did during this project, we sketch the main ideas behind the time complexity analysis of Hopcroft's algorithm, since it was the main goal of this internship.
+\subsection{Introduction}
+
+In order to give a glimpse of my contributions to this project, this section sketches the main ideas behind the time complexity analysis of Hopcroft's algorithm, since it was the main goal of this internship. First, I give my raw notes on the paper proof. This acts as a pre-strucutred draft for the formalization in Isabelle. Then, I give a brief overview of the formalization in Isabelle.
+
+\bigskip
+
+The idea of the proof is the following: the algorithm can be reduced to a loop, so first, we find an upper bound\footnote{This upper bound will depend on some parameters such as an input (a letter) and a set of states of the automaton (a block of the partition).} for the time taken for an iteration of this loop. Then, we have to find how many iterations are executed until termination of the algorithm. To do so, we design what is referred to as an ``estimate'' of the time spent in the loop until its termination. At each step, this estimate is refined with the actual time taken by the previous steps, so that it decreases at each step. Finding a good estimate is the meat of the proof.
 
 \subsection{Paper proof}
 
@@ -436,7 +511,7 @@ From Req.\ \ref{req:2} and Req.\ \ref{req:3}, we can show that for a state $q$ i
     
     Thus, instead of examining $P_j$ for all $j < k$, we rather go through the table of $\delta^{-1}$ and for each state $q$ such that $\delta(q, a) \in P_i$, we know from req.\ \ref{req:4} that we can determine the index $j < k$ (because there are $k$ blocks) of the block $P_j$ containing $q$ in $\Theta(1)$ time.
     The sets $P'_j$ and $P''_j = P_k$ resulting from the partition can be constructed on the fly without any additional time cost. The construction of the sets $s_{b, j}$ and $s_{b, k}$ as well as the update of $L_b$ for all $b \in \Sigma$ can also be done on the fly but require $\Theta(1)$ time for each symbol $b \in \Sigma$ and thus add up to a total of $\Theta(\left| \Sigma \right|)$ time.
-    \ednote{VT}{the on-the-fly computation part is a little hand-waving...}
+    %\ednote{VT}{the on-the-fly computation part is a little hand-waving...}
 
     Overall, one iteration of the loop runs in time
     $$\Theta \left( \left| \Sigma \right| \cdot \left| \bigcup_{q \in P_i} \delta^{-1}(q, a) \right| \right) $$
@@ -449,7 +524,7 @@ From Req.\ \ref{req:2} and Req.\ \ref{req:3}, we can show that for a state $q$ i
         &\iff \{q_1 \in B, \delta(q_1, a) \in C\} \neq \varnothing \land \{q_2 \in B, \delta(q_2, a) \notin C\} \neq \varnothing \\
         &\iff \left(\bigcup_{q \in C} \delta^{-1}(q, a)\right)\cap B \neq \varnothing \land \left(\bigcup_{q \in B}\delta(q, a)\right)\setminus C \neq \varnothing
     \end{align*}
-    \ednote{VT}{we may express the right-hand conjunct in terms of $\delta^{-1}$ in order to prepare the paragraph that follows (But it wouldn't be the same union because you have to start from states outside $C$)}
+    %\ednote{VT}{we may express the right-hand conjunct in terms of $\delta^{-1}$ in order to prepare the paragraph that follows (But it wouldn't be the same union because you have to start from states outside $C$)}
     Likewise, instead of examining all blocks $B \in \mathcal{P}$, we go through $\delta^{-1}$ and we update the splitters for all symbols in $\Sigma$ and one iteration of the loop runs in time
     $$\Theta \left( \left| \Sigma \right| \cdot \left| \bigcup_{q \in C} \delta^{-1}(q, a) \right| \right) $$
 \end{proof}
@@ -580,10 +655,12 @@ This gives a way to characterize splitters throughout the whole execution.
 
 \bigskip
 
-\begin{theorem}
-    \label{thm:complexity}
-    Algorithm \ref{alg:original} and Algorithm \ref{alg:modern} run in $O\left(|\Sigma|\cdot|\mathcal{Q}| \log |\mathcal{Q}|\right)$ time.
-\end{theorem}
+\begin{mdframed}[middlelinewidth=1.5pt, middlelinecolor=red, roundcorner=2pt]
+    \begin{theorem}
+        \label{thm:complexity}
+        Algorithm \ref{alg:original} and Algorithm \ref{alg:modern} run in $O\left(|\Sigma|\cdot|\mathcal{Q}| \log |\mathcal{Q}|\right)$ time.
+    \end{theorem}
+\end{mdframed}
 \begin{proof}
 From lemma \ref{lem:bound}, we obtain in particular that for the initial partition the time spent in the loop until termination is bounded by:
 $$T = \theta \cdot \sum_{a \in \Sigma}\left(| \preds{a}{P_1} | \log | P_1 | + | \preds{a}{P_2} | \log \frac{| P_2 |}{2}\right)$$
@@ -593,8 +670,8 @@ Thus using concavity of the logarithm, the following holds:
 $$T \leq \theta \sum_{a \in \Sigma} (\underset{\leq |\mathcal{Q}|}{\underbrace{|\preds{a}{P_1}| + |\preds{a}{P_2}|}})\log(\underset{\leq |\mathcal{Q}|}{\underbrace{|P_1| + |P_2|}}) \leq \theta|\Sigma||\mathcal{Q}| \log |\mathcal{Q}|$$
 \end{proof}
 
-\subsection{Towards a formal proof}
-The objective of the project is to obtain a formal proof for the time complexity of the algorithm using the Refinement Framework with its extension to runtime analysis.
+\subsection{Towards a formal proof \faGears}
+Although the paper proof looks rather simple and already formalized, the objective of the project is to obtain a formal proof for the time complexity of the algorithm using the Refinement Framework with its extension to runtime analysis.
 We follow a top-down strategy, from the abstract level to the implementation.
 
 \subsubsection{Abstract level}
@@ -1009,6 +1086,11 @@ As mentioned above, finding a proof for a strict inequality is still a work in p
 
 Everything linked to the estimate left aside, the formalization is still at a very early stage since we only focussed on the abstract level. However, this was the most important part of the formalization since it is the most complex one. The next steps would be to dive into the successive refinements and refine the abstract currencies. The formalization of the concrete currencies will be more straightforward since it will be mostly about implementing the abstract currencies with the chosen data structures, which probably already exists.
 
+\section{Conclusion}
+
+Although I was already quite used to working with Isabelle, this project was a great opportunity to improve my skills with the tool and in particular not develop bad habits, since I had the best source of advice and help I could have hoped for: Peter Lammich, Tobias Nipkow and the whole team at his chair at TUM. I am very grateful for their help and I thank them heartfully for their time, patience and welcome.
+
+Not only have I learned a lot about abstract concepts of formal verification, but I have also learned a lot about the implementation of Isabelle and its guts. I am now much more confident and my proofs -- be it for the \textit{apply}-style or the \textit{Isar}-style -- are much more robust and elegant. Even though intuition is not always a good feeling to follow in formal verification, it has been strengthened as much as my creativity in terms of problem solving.
 
 % \printglossary[type=\acronymtype]
 
