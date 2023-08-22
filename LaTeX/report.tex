@@ -158,25 +158,25 @@
 
 \section{Preamble}
 
-This internship report is the result of a 6-month internship at the Chair of Logic and Verification of the Technical University of Munich (TUM) under the supervision of Tobias Nipkow and Peter Lammich.
+This report is the result of a 6-month internship at the Chair of Logic and Verification of the Technical University of Munich (TUM) under the supervision of \href{https://www21.in.tum.de/~nipkow/}{Tobias Nipkow} and \href{https://people.utwente.nl/p.lammich}{Peter Lammich}.
 
-The main goal of this internship was to verify Hopcroft's algorithm for minimizing DFAs in Isabelle/HOL and to analyze its worst-case time complexity using the Refinement Framework.
+The main goal of this internship was to verify Hopcroft's algorithm for minimizing DFAs \cite{Hop71} in Isabelle/HOL and to analyze its worst-case time complexity using the Refinement Framework \cite{lammich:ref}.
 Some considerable work had already been carried out by Peter Lammich and Thomas T\"urk on the proof of correctness ten years ago in an older version of Isabelle \cite{lammich:hop}.
-The goal was to port this proof to the latest version of Isabelle and to extend it with a time complexity analysis.
+The goal was to port this proof to the latest version of Isabelle and to extend it with a time complexity analysis using the NREST framework, namely the extension of the Refinement Framework to time \cite{refwithtime}.
 
-In order to bring the reader closer to the reality of the project, some sections of this report dive a little deeper into the details of the interesting parts of my research. They are marked with the following symbol \faGears\ and can be skipped without loss of understanding of the main ideas.
+In order to bring the reader closer to the reality of the project, some sections of this report dive a little deeper into the details of the interesting parts of my research. They are marked with the following gear symbol \faGears\ and can be skipped without loss of understanding of the main ideas.
 
 \pagebreak
 
 \section{Technical University of Munich}
 
-The Technical University of Munich (TUM) stands as a beacon of academic excellence, renowned globally for its commitment to cutting-edge research, innovation, and education. Nestled in the heart of Germany, TUM's legacy spans over 150 years, consistently ranking among the top universities worldwide. At TUM, scholars and students alike converge to explore and shape the forefront of various fields, fostering a dynamic environment that thrives on intellectual curiosity and collaboration.
+The Technical University of Munich (TUM) stands as a beacon of academic excellence, renowned globally for its commitment to cutting-edge research, innovation, and education. Nestled in the heart of Germany, TUM's legacy spans over 150 years, consistently ranking among the top universities worldwide\footnote{TUM is ranked first in Europe in Computer Science and Mathematics. }. At TUM, scholars and students alike converge to explore and shape the forefront of various fields, fostering a dynamic environment that thrives on intellectual curiosity and collaboration.
 
-Within the expansive landscape of TUM's academic endeavors lies the Chair of Logic and Verification —- a distinguished hub of expertise dedicated to the study and application of formal methods -- which operates at the intersection of computer science, mathematics, logic and engineering, harnessing the power of logical reasoning to ensure the precision and reliability of complex systems.
+Within the expansive landscape of TUM's academic endeavors lies the Chair of Logic and Verification -- a distinguished hub of expertise dedicated to the study and application of formal methods -- which operates at the intersection of computer science, mathematics, logic and engineering, harnessing the power of logical reasoning to ensure the precision and reliability of complex systems.
 
 Among the illustrious figures leading the charge at the Chair of Logic and Verification is Professor Tobias Nipkow. A luminary in the realm of formal methods, he has made indelible contributions to the development and propagation of logical verification techniques.
 
-Central to the Chair's accomplishments is the Isabelle proof assistant —- an innovation born from the ingenuity of Professor Tobias Nipkow and his dedicated team. Isabelle stands as a testament to the power of collaborative intellect, serving as a versatile tool for rigorous formal reasoning. This proof assistant facilitates the creation, manipulation, and verification of mathematical proofs, underpinning the very essence of formal methods' application. Its impact reverberates not only through academic corridors but also through the industries and systems that rely on robust verification.
+Central to the Chair's accomplishments is the Isabelle proof assistant -- an innovation born from the ingenuity of Professor Tobias Nipkow and his dedicated team. Isabelle stands as a testament to the power of collaborative intellect, serving as a versatile tool for rigorous formal reasoning. This proof assistant facilitates the creation, manipulation, and verification of mathematical proofs, underpinning the very essence of formal methods' application. Its impact reverberates not only through academic corridors but also through the industries and systems that rely on robust verification.
 
 In summary, the Technical University of Munich's Chair of Logic and Verification represents an ecosystem of brilliance, where researchers, developers, and applied experts converge to elevate the tenets of formal methods. Professor Tobias Nipkow's visionary leadership and the Isabelle proof assistant embody the spirit of innovation that defines this dynamic academic haven, propelling the boundaries of formal reasoning and verification.
 
@@ -282,10 +282,9 @@ Algorithm~\ref{alg:original} is a direct translation of the original algorithm f
 
 \subsection{Modern formalization}
 
-The algorithm is now usually given in a more mathematical and formalised way\footnote{see for example \cite{esparza2023automata}}, which loosens up the choice for an implementation.
-The algorithm is given below in Algorithm~\ref{alg:modern}.
+The algorithm is now usually given in a more mathematical and formalised way\footnote{See for example \cite{esparza2023automata}.}, which loosens up the choice for an implementation.
+The algorithm is given below in Algorithm~\ref{alg:modern} using sets and partitions.
 
-\bigskip
 
 \begin{algorithm}[H]
     \SetAlgoLined
@@ -1025,7 +1024,6 @@ We would need to find an estimate $\Gamma$ such that for any state transition $(
 My guess is that the estimate $T$ defined in \ref{eq:estimate} would satisfy the strict inequality, however I am not sure that the estimate $\hat{T}$ defined in \ref{eq:estimate_simplified} would satisfy it. The reason for this intuition is that $T$ is defined on the workset $\mathcal{L}$ whereas $\hat{T}$ is defined on the partition $\mathcal{P}$.
 Indeed, we can prove that for any state transition $(\mathcal{P}, \mathcal{L}) \rightarrow (\mathcal{P}', \mathcal{L}')$ of the algorithm, we have $\mathcal{L} \neq \mathcal{L}'$ but it may happen that $\mathcal{P} = \mathcal{P}'$.
 \begin{remark}
-    Consider the following automaton:
     \begin{figure}[!ht]
     \centering
     \begin{tikzpicture}[shorten >=1pt,node distance=2.5cm, on grid, >={Stealth[round]},initial text=,
@@ -1059,6 +1057,7 @@ Indeed, we can prove that for any state transition $(\mathcal{P}, \mathcal{L}) \
         \path[->] (q4) edge node[right]{$\beta$} (q5);
         \path[->] (q5) edge[loop right] node[right]{$\alpha,\beta$} (q5);
     \end{tikzpicture}
+    \caption{Note that $q_3$ has a transition to $q_4$ with an $\alpha$ and $q_2$ has a transition to $q_5$ with a $\beta$. There is no ambiguity since it is a DFA.}\label{ex1}
     \end{figure}
 
     \begin{table}[!ht]
@@ -1073,13 +1072,16 @@ Indeed, we can prove that for any state transition $(\mathcal{P}, \mathcal{L}) \
             $(\alpha, \{q_5\})$ & $\{q_0,q_1\}\{q_5\}\{q_2, q_3, q_4\}$ & $\varnothing$\\
         \end{tabular}
     \end{table}
+    Consider the automaton given in Fig. \ref{ex1}.
     Note that the partition is stable after the second iteration of the algorithm. The workset however changes after each iteration.
 \end{remark}
 
 Thus, it may happen that the estimate $\hat{T}$ does not decrease after a state transition where the partition does not change.
-With the estimate $T$, we are sure that at each step, a splitter is used and thus a term in the sum over $\mathcal{L}$ is removed and ``goes'' into the sum over $\Sigma \times \mathcal{P} \setminus \mathcal{L}$.
-This remark is very informal.
+With the estimate $T$, we are sure that at each step, a splitter is used and thus a term in the sum over $\mathcal{L}$ is removed and ``goes'' into the sum over $\Sigma \times \mathcal{P} \setminus \mathcal{L}$\footnote{This remark is very informal.}.
+
 However, because of the floor operation, we still cannot garantee that the estimate $T$ strictly decreases\footnote{Consider $\lfloor \log_2 n \rfloor$ and $\lfloor \log_2 n+1 \rfloor$: the bigger $n$ is, the more likely it is that both values are equal. Such terms might show up in border cases such as when a splitter splits off only one element from a block.}.
+My thoughts on this are that ``most of the time'' there should exist at least one block in the partition that gets split in such a way that the corresponding term in the updated sum is strictly less than the term in the sum for the previous partition. The expression ``most of the time'' denotes a ``convenient split'', i.e.\ a split that actually cuts off a block in half or almost. In this case indeed, the term $\log n$ gets replaced by something close to $\log \frac{n}{2} = \log n - 1$.
+However, in cases for example when a splitter splits off only one element from a block, the term $\log n$ gets replaced by $\log (n-1)$ which is not necessarily strictly less than $\log n$ (recall that $\log$ denotes $\lfloor \log_2 \rfloor$). Cases were such a split occurs for all blocks should be studied, if they exist. If no such cases exist, we would be provided with a good start of a proof that the estimate $T$ strictly decreases. Otherwise, we would have to examine classes of automaton individually and check that the estimate $T$ actually strictly decreases for each of them as well.
 
 \section{Further work}
 As mentioned above, finding a proof for a strict inequality is still a work in progress. It involves finding a suitable estimate, although the estimate $T$ seems to be a good candidate. However, this estimate makes the formalization more complex since it involves to consider separately elements from the workset and its complement and how they are affected by a state transition.
@@ -1088,9 +1090,11 @@ Everything linked to the estimate left aside, the formalization is still at a ve
 
 \section{Conclusion}
 
-Although I was already quite used to working with Isabelle, this project was a great opportunity to improve my skills with the tool and in particular not develop bad habits, since I had the best source of advice and help I could have hoped for: Peter Lammich, Tobias Nipkow and the whole team at his chair at TUM. I am very grateful for their help and I thank them heartfully for their time, patience and welcome.
+Although I was already quite used to working with Isabelle, this project was a great opportunity to improve my skills with the tool and in particular not to develop bad habits, since I had the best source of advice and help I could have hoped for: Peter Lammich, Tobias Nipkow and the whole team at his chair at TUM. I am very grateful for their help and I thank them heartfully for their time, patience and welcome.
 
-Not only have I learned a lot about abstract concepts of formal verification, but I have also learned a lot about the implementation of Isabelle and its guts. I am now much more confident and my proofs -- be it for the \textit{apply}-style or the \textit{Isar}-style -- are much more robust and elegant. Even though intuition is not always a good feeling to follow in formal verification, it has been strengthened as much as my creativity in terms of problem solving.
+Not only have I learned a lot about abstract concepts of formal verification, but I have also learned a lot about the implementation of Isabelle and its guts. I am now much more confident and my proofs -- be it for the \textit{apply}-style or the \textit{Isar}-style -- are much more robust and elegant. Even though intuition is not always a good feeling to follow in formal verification, mine has been strengthened as much as my creativity in terms of problem solving.
+
+This project has given me a new taste of academic research and it has strengthened my will to pursue in this direction. Having been able to be part of such an internationally renowned team for a few months has been a great experience and I am very grateful for it.
 
 % \printglossary[type=\acronymtype]
 
