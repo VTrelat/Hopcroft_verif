@@ -347,6 +347,8 @@ If one of the two sets is empty, one of the $s_{a, 1}$ or $s_{a, 2}$ will be emp
 This results in a useless $O(|\Sigma|)$ computation.
 Another difference in that case is that it would return the partition $\min\{\mathcal{F}, \mathcal{Q}\setminus\mathcal{F}\}$ -- where $\min$ returns the set with the least number of elements --  which we avoid in the modern version by just returning $\mathcal{Q}$.
 
+\section{Overview of the project}
+
 \subsection{Objectives of the project}
 
 The project can be divided into two main parts:
@@ -401,11 +403,20 @@ the second one is more challenging since it requires a good understanding of the
 \end{ganttchart}
 \end{landscape}
 
+\subsection{Main difficulties}
+
+Like any project in formal methods, the main difficulty is to find a good abstraction level for the formalization and a good formalization. Fortunately, I could base mine on the existing one used for the proof of correctness in which the different levels of abstraction -- i.e.\ the different stages of refinement -- were already designed down to the implementation, so the choice for the datastructures was even already done.
+
+Of course, paper proofs serve as foundations for the formal proof. I consider them as the ``fun'' part since paper is the first place where actual research starts. Draft proofs may also be considered as the ``easy'' part since a lot of details -- of implementation, or formal details -- are often omitted\footnote{Be it deliberate or not!} during this phase. Finding a good paper proof involves being cautious with potential inaccuracies that would make the formal proof harder at a later stage: it happens that a paper proof seems correct at first but is actually wrong or unprovable formally -- at least modulo some changes.
+
+The ``real'' challenges lie in formalizing the different levels of abstraction: they should be gradual enough to make proofs digestible. My formalization follows the formalization used for the proof of correctness with slight adjustments for the time complexity analysis, so all the trouble I had with the formalization was linked to using the NREST framework properly. It involve theoretical notions of semantics and concepts such as, resources, currencies, and the NREST monad, but also practical notions such as specific commands or tactics in Isabelle that come with the framework.
+
+
 \section{Proof of correctness}
 
-Since the proof of correctness is not the purpose of this project, we do not go into details. John E. Hopcroft's original paper \cite{Hop71} contains a proof of correctness for his low-level algorithm, however the ideas behind the invariants are the same for the formalization. 
-
-The proof of correctness for Hopcroft's algorithm for DFA minimization typically involves two main components: partition refinement and equivalence checking.
+Since the proof of correctness is not the purpose of this project, I just sketch the main ideas that are also helpful for the time complexity analysis and stand as a good introduction to the formalization.
+John E. Hopcroft's original paper \cite{Hop71} contains a proof of correctness for his low-level algorithm, however the ideas behind the invariants are the same for the formalization.
+The proof typically involves two main components: partition refinement and equivalence checking.
 
 The basic idea of the proof is to show that the algorithm correctly partitions the states of the input DFA into equivalence classes, where states within the same class are indistinguishable from each other with respect to the language recognized by the DFA. This partition represents the minimal DFA that recognizes the same language as the input DFA.
 
