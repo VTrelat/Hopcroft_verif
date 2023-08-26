@@ -6,7 +6,7 @@
 \usepackage{verbatim}
 \usepackage{listings}
 \usepackage[ruled,vlined, linesnumbered]{algorithm2e}
-\usepackage{algorithmic,float}
+\usepackage{algorithmic,float,fontawesome}
 \usepackage[
   % audience=short
   audience=long
@@ -14,6 +14,7 @@
 
 \usetikzlibrary {arrows.meta,automata,positioning} 
 \usetikzlibrary{automata}
+\usetikzlibrary{shapes.geometric}
 
 \usefonttheme{serif}
 
@@ -164,6 +165,98 @@
 }
 \end{frame}
 
+\section{The Isabelle Refinement Framework}
+
+\begin{frame}
+    \tableofcontents[currentsection]
+\end{frame}
+
+\begin{frame}
+\frametitle{Understanding Refinement}
+
+% Spoken content:
+\begin{definition}
+  Refinement is a systematic process of refining a high-level abstract specification into a concrete implementation.
+\end{definition}
+
+\onslide<2->{
+\begin{center}
+  \begin{tikzpicture}
+    \small
+    \node[draw=maincolor, very thick, fill=maincolor!20, rounded corners=0.5cm, minimum width=3cm, minimum height=1cm] (spec) {Specification};
+    \node[minimum height=.5cm, below of=spec, yshift=-.5cm] (aux) {\dots};
+    \node[draw=orange!90!black, fill=orange!40, very thick, rounded corners=0.5cm, minimum width=3cm, minimum height=1cm, below of=aux, yshift=-.5cm] (impl) {Implementation};
+
+    \only<2>{
+    \node[minimum height=.5cm, left of=aux, xshift=-2cm] (topdown) {Top-down};
+
+    \draw[->] (spec) -- node[right] {Refinement} (aux);
+    \draw[->] (aux) -- node[right] {Refinement} (impl);
+    }
+    \only<3>{
+    \node[minimum height=.5cm, left of=aux, xshift=-2cm] (topdown) {Bottom-up};
+
+    \draw[->] (impl) -- node[right] {Abstraction} (aux);
+    \draw[->] (aux) -- node[right] {Abstraction} (spec);
+    }
+  \end{tikzpicture}
+\end{center}
+}
+\end{frame}
+
+\begin{frame}
+  Each refinement step preserves the intended behavior.
+
+  $$\texttt{Spec} \rightarrow \texttt{Ref}_1 \rightarrow \texttt{Ref}_2 \rightarrow \texttt{Impl}$$
+
+  \begin{center}
+  \begin{tikzpicture}
+    \small
+    \node[ellipse, thick, draw=maincolor, fill=maincolor!20, minimum width=5cm, minimum height=4cm] (spec) at (0,0) {}; 
+    \node[yshift=-.3cm] at (spec.north) {\color{maincolor!80!black}\texttt{Spec}};
+
+    \node[ellipse, thick, draw=blue!70!black, fill=blue!15, minimum width=4cm, minimum height=3.2cm] (spec) at (-.3cm,-.1cm) {}; 
+    \node[yshift=-.3cm] at (spec.north) {\color{blue!70!black}\texttt{Ref}$_1$};
+
+    \node[ellipse, thick, draw=purple!70!black, fill=purple!20, minimum width=3cm, minimum height=2.5cm] (spec) at (-.1cm,-.3cm) {}; 
+    \node[yshift=-.3cm] at (spec.north) {\color{purple!70!black}\texttt{Ref}$_2$};
+
+    \node[ellipse, thick, draw=orange!70!black, fill=orange!80!black!20, minimum width=2cm, minimum height=1.5cm] (spec) at (-.1cm,-.5cm) {}; 
+    \node[yshift=-.3cm] at (spec.north) {\color{orange!70!black}\texttt{Impl}};
+
+    \node[yshift=-2cm] at (spec.south) {\Large\faThumbsOUp};
+  \end{tikzpicture}
+  \hfill
+  \begin{tikzpicture}
+    \small
+    \node[ellipse, thick, draw=orange!70!black, fill=orange!80!black!20, minimum width=5cm, minimum height=4cm] (spec) at (0,0) {}; 
+    \node[yshift=-.3cm] at (spec.north) {\color{orange!70!black}\texttt{Impl}};
+
+    \node[ellipse, thick, draw=maincolor, fill=maincolor!20, minimum width=3cm, minimum height=2.5cm] (spec) at (-.1cm,-.3cm) {}; 
+    \node[yshift=-.3cm] at (spec.north) {\color{maincolor}\texttt{Spec}};
+
+    \node[yshift=-2cm] at (spec.south) {\Large\faThumbsODown};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Isabelle Refinement Framework}
+
+  % Spoken content:
+  % The Isabelle Refinement Framework is a powerful tool for applying refinement in a formal and mathematical way.
+  % It was designed by Peter Lammich and his collaborators.
+
+  \begin{block}{Isabelle Refinement Framework}
+    \begin{itemize}
+      \item Stepwise refinement approach to verified program development
+      \item Formal and mathematical
+      \item Ensures correctness at each step
+    \end{itemize}
+  \end{block}
+  Comes with the Isabelle Collection Framework, which provides an extensive library of reusable verified functional data structures.
+\end{frame}
+
 \section{Hopcroft's algorithm}
 
 \begin{frame}
@@ -178,20 +271,20 @@
         every state/.style={draw=maincolor,very thick,fill=maincolor!20}]
      
         \only<1-4>{\node[state, initial] (q0) {$q_0$}};
-        \only<5->{\node[state, initial, fill=orange!60, draw=orange!90!black] (q0) {$q_0$}};
+        \only<5->{\node[state, initial, fill=orange!40, draw=orange!90!black] (q0) {$q_0$}};
 
         \only<1-4>{\node[state, above of=q0] (q1) {$q_1$}};
-        \only<5->{\node[state, above of=q0, fill=orange!60, draw=orange!90!black] (q1) {$q_1$}};
+        \only<5->{\node[state, above of=q0, fill=orange!40, draw=orange!90!black] (q1) {$q_1$}};
         \only<1-4>{\node[state, accepting, right of=q0] (q2) {$q_2$}};
-        \only<5->{\node[state, accepting, right of=q0, fill=blue!40, draw=blue!70] (q2) {$q_2$}};
+        \only<5->{\node[state, accepting, right of=q0, fill=blue!30, draw=blue!70] (q2) {$q_2$}};
 
         \only<1-4>{\node[state, accepting, above of=q2] (q3) {$q_3$}};
-        \only<5->{\node[state, accepting, above of=q2, fill=blue!40, draw=blue!70] (q3) {$q_3$}};
+        \only<5->{\node[state, accepting, above of=q2, fill=blue!30, draw=blue!70] (q3) {$q_3$}};
 
         \only<1-4>{\node[state, accepting, right of=q2] (q4) {$q_4$}};
-        \only<5->{\node[state, accepting, right of=q2, fill=blue!40, draw=blue!70] (q4) {$q_4$}};
+        \only<5->{\node[state, accepting, right of=q2, fill=blue!30, draw=blue!70] (q4) {$q_4$}};
         \only<1-4>{\node[state, right of=q3] (q5) {$q_5$}};
-        \only<5>{\node[state, right of=q3, fill=orange!60, draw=orange!90!black] (q5) {$q_5$}};
+        \only<5>{\node[state, right of=q3, fill=orange!40, draw=orange!90!black] (q5) {$q_5$}};
         \only<6->{\node[state, right of=q3] (q5) {$q_5$}};
 
         \path[->] (q0) edge[bend left] node[left]{$\alpha$} (q1);
@@ -234,8 +327,8 @@
     \begin{tikzpicture}[shorten >=1pt,node distance=2.5cm, on grid, >={Stealth[round]},initial text=,
         every state/.style={draw=maincolor,very thick,fill=maincolor!20}]
         
-        \node[state, initial, draw=orange!90!black, fill=orange!60] (Q0) {$q_0, q_1$};
-        \node[state, accepting, right of=Q0, draw=blue!70, fill=blue!40] (Q1) {$q_2,q_3,q_4$};
+        \node[state, initial, draw=orange!90!black, fill=orange!40] (Q0) {$q_0, q_1$};
+        \node[state, accepting, right of=Q0, draw=blue!70, fill=blue!30] (Q1) {$q_2,q_3,q_4$};
         \node[state, right of=Q1] (Q2) {$q_5$};
         
         % Invisible for alignment
@@ -254,13 +347,6 @@
 
 \begin{frame}
     Formalization
-\end{frame}
-
-\section{The Refinement Framework}
-\subsection{Principle}
-
-\begin{frame}
-    Coming soon
 \end{frame}
 
 \subsection{Application to Hopcroft's algorithm}
