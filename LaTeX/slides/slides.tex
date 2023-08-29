@@ -5,8 +5,8 @@
 \usepackage{tikz}
 \usepackage{verbatim}
 \usepackage{listings}
-\usepackage[ruled,vlined, linesnumbered]{algorithm2e}
-\usepackage{algorithmic,float,fontawesome}
+\usepackage[noend]{algorithm2e}
+\usepackage{float,fontawesome}
 \usepackage[
   % audience=short
   audience=long
@@ -49,7 +49,8 @@
 \setbeamertemplate{subsection in toc}{%
   \hspace{1.2em}{\tiny\inserttocsectionnumber.\inserttocsubsectionnumber}~\small\inserttocsubsection\par}
 
-\setbeamertemplate{footline}{} % Remove footer
+% \setbeamertemplate{footline}{} % Remove footer
+\setbeamertemplate{footline}[frame number]
 \setbeamertemplate{navigation symbols}{} % Remove navigation symbols
 
 
@@ -267,26 +268,72 @@
 \begin{frame}
     \centering
     \small
+
     \onslide<1->{
+      \only<5->{
+      \setbeamercovered{transparent}
+      \begin{minipage}[c]{0.55\linewidth}
+        \setlength{\interspacetitleruled}{0pt}%
+        \setlength{\algotitleheightrule}{0pt}%
+        \SetKwIF{If}{ElseIf}{Else}{if}{}{else if}{else}{end if}%
+        \begin{algorithm}[H]
+          \scriptsize
+          \SetInd{0.6em}{0.6em}
+          \SetAlgoNoLine
+          \DontPrintSemicolon
+          \label{alg:modern}
+          \uncover<5>{
+          \KwData{a DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
+          }
+          \uncover<5>{
+          \eIf{$\mathcal{F} = \varnothing \lor \mathcal{Q} \setminus \mathcal{F} = \varnothing$}{
+              \Return $\mathcal{Q}$
+          }}{
+            \uncover<5-6>{
+              $\mathcal{P} := \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F} \}$ \;
+              $\mathcal{W} := \{ (a, \min \{ \mathcal{F}, \mathcal{Q} \setminus \mathcal{F}\}), a \in \Sigma \}$ \;
+            }
+            \uncover<5,7->{
+              \While{$\mathcal{W} \neq \varnothing$}{
+                  Pick $(a, C)$ from $\mathcal{W}$ and remove it\;
+                  \ForAll{$B \in \mathcal{P}$}{
+                      Split $B$ with $(a, C)$ into $B_0$ and $B_1$ \;
+                      $\mathcal{P} := (\mathcal{P} \setminus \{B\}) \cup \{B_0, B_1\}$ \;
+                      \ForAll{$b \in \Sigma$}{
+                          \eIf{$(b, B) \in \mathcal{W}$}{
+                              $\mathcal{W} := (\mathcal{W} \setminus \{(b, B)\}) \cup \{(b, B_0), (b, B_1)\}$ \;
+                          }{
+                              $\mathcal{W} := \mathcal{W} \cup \{(b, \min \{ B_0, B_1 \})\}$ \;
+                          }
+                      }
+                  }
+              }
+            }
+          }
+        \end{algorithm}
+      \end{minipage}
+      }
+    \setbeamercovered{invisible}
+    \begin{minipage}[c]{0.4\linewidth}
     \begin{tikzpicture}[shorten >=1pt,node distance=2cm, on grid, >={Stealth[round]},initial text=,
         every state/.style={draw=maincolor,very thick,fill=maincolor!20}]
      
-        \only<1-4>{\node[state, initial] (q0) {$q_0$}};
-        \only<5->{\node[state, initial, fill=orange!40, draw=orange!90!black] (q0) {$q_0$}};
+        \only<1-5>{\node[state, initial] (q0) {$q_0$}};
+        \only<6->{\node[state, initial, fill=orange!40, draw=orange!90!black] (q0) {$q_0$}};
 
-        \only<1-4>{\node[state, right of=q0] (q1) {$q_1$}};
-        \only<5->{\node[state, right of=q0, fill=orange!40, draw=orange!90!black] (q1) {$q_1$}};
-        \only<1-4>{\node[state, accepting, below of=q0] (q2) {$q_2$}};
-        \only<5->{\node[state, accepting, below of=q0, fill=blue!30, draw=blue!70] (q2) {$q_2$}};
+        \only<1-5>{\node[state, right of=q0] (q1) {$q_1$}};
+        \only<6->{\node[state, right of=q0, fill=orange!40, draw=orange!90!black] (q1) {$q_1$}};
+        \only<1-5>{\node[state, accepting, below of=q0] (q2) {$q_2$}};
+        \only<6->{\node[state, accepting, below of=q0, fill=blue!30, draw=blue!70] (q2) {$q_2$}};
 
-        \only<1-4>{\node[state, accepting, below of=q1] (q3) {$q_3$}};
-        \only<5->{\node[state, accepting, below of=q1, fill=blue!30, draw=blue!70] (q3) {$q_3$}};
+        \only<1-5>{\node[state, accepting, below of=q1] (q3) {$q_3$}};
+        \only<6->{\node[state, accepting, below of=q1, fill=blue!30, draw=blue!70] (q3) {$q_3$}};
 
-        \only<1-4>{\node[state, accepting, below of=q2] (q4) {$q_4$}};
-        \only<5->{\node[state, accepting, below of=q2, fill=blue!30, draw=blue!70] (q4) {$q_4$}};
-        \only<1-4>{\node[state, below of=q3] (q5) {$q_5$}};
-        \only<5>{\node[state, below of=q3, fill=orange!40, draw=orange!90!black] (q5) {$q_5$}};
-        \only<6->{\node[state, below of=q3] (q5) {$q_5$}};
+        \only<1-5>{\node[state, accepting, below of=q2] (q4) {$q_4$}};
+        \only<6->{\node[state, accepting, below of=q2, fill=blue!30, draw=blue!70] (q4) {$q_4$}};
+        \only<1-5>{\node[state, below of=q3] (q5) {$q_5$}};
+        \only<6-7>{\node[state, below of=q3, fill=orange!40, draw=orange!90!black] (q5) {$q_5$}};
+        \only<8->{\node[state, below of=q3] (q5) {$q_5$}};
 
         \path[->] (q0) edge[bend left] node[above]{$\alpha$} (q1);
         \path[->] (q0) edge node[left]{$\beta$} (q2);
@@ -301,8 +348,9 @@
         \path[->] (q5) edge[loop below] node[below]{$\alpha,\beta$} (q5);
     \end{tikzpicture}
     }
+    \end{minipage}
 
-    \only<1-8>{
+    \only<1-10>{
     \begin{table}
         \centering
         \small
@@ -313,13 +361,14 @@
                 \item<4-> Each iteration: pick a splitter and split all blocks of the current partition
             \end{itemize}
         }
-        \only<5-8>{\begin{tabular}{c|c|c}
+        \onslide<6->{\begin{tabular}{c|c|c}
+          \small
             Splitter & Partition & Workset\\
             \hline
             -- & $\{{\color{orange!80!black}q_0,q_1, q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{orange!80!black}q_0,q_1, q_5}\})\ (\beta, \{{\color{orange!80!black}q_0,q_1, q_5}\})$\\
-            \onslide<6->{$(\beta, \{{\color{orange!80!black}q_0,q_1, q_5}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{orange!80!black}q_0,q_1}\})\ (\alpha, \{{\color{maincolor!80!black}q_5}\})$}\\
-            \onslide<7->{$(\alpha, \{{\color{orange!80!black}q_0,q_1}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{maincolor!80!black}q_5}\})$}\\
-            \onslide<8->{$(\alpha, \{{\color{maincolor!80!black}q_5}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $\varnothing$}\\
+            \onslide<8->{$(\beta, \{{\color{orange!80!black}q_0,q_1, q_5}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{orange!80!black}q_0,q_1}\})\ (\alpha, \{{\color{maincolor!80!black}q_5}\})$}\\
+            \onslide<9->{$(\alpha, \{{\color{orange!80!black}q_0,q_1}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $(\alpha, \{{\color{maincolor!80!black}q_5}\})$}\\
+            \onslide<10->{$(\alpha, \{{\color{maincolor!80!black}q_5}\})$ & $\{{\color{orange!80!black}q_0,q_1}\}\{{\color{maincolor!80!black}q_5}\}\{{\color{blue!70}q_2, q_3, q_4}\}$ & $\varnothing$}\\
         \end{tabular}}
     \end{table}
     }

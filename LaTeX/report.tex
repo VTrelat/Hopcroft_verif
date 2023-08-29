@@ -290,8 +290,8 @@ The algorithm is given below in Algorithm~\ref{alg:modern} using sets and partit
     \SetAlgoLined
     \caption{Hopcroft's algorithm in a modern style}
     \label{alg:modern}
-    \KwData{a finite DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
-    \KwResult{the language partition $P_\ell$}
+    \KwData{a DFA $\mathcal{A} = (\mathcal{Q}, \Sigma, \delta, q_0, \mathcal{F})$}
+    \KwResult{the language partition $\mathcal{P}$}
     \eIf{$\mathcal{F} = \varnothing \lor \mathcal{Q} \setminus \mathcal{F} = \varnothing$}{
         \Return $\mathcal{Q}$
     }{
