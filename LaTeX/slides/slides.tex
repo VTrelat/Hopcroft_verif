@@ -51,7 +51,15 @@
   \hspace{1.2em}{\tiny\inserttocsectionnumber.\inserttocsubsectionnumber}~\small\inserttocsubsection\par}
 
 % \setbeamertemplate{footline}{} % Remove footer
-\setbeamertemplate{footline}[frame number]
+
+\setbeamertemplate{footline}{
+  \hfill%
+  \usebeamercolor[fg]{page number in head/foot}%
+  \usebeamerfont{page number in head/foot}%
+  \setbeamertemplate{page number in head/foot}[framenumber]%
+  \usebeamertemplate*{page number in head/foot}\kern1em\vskip2pt%
+}
+
 \setbeamertemplate{navigation symbols}{} % Remove navigation symbols
 
 
@@ -482,8 +490,18 @@ $$\mathcal{L} = \alpha^*\beta\alpha^*$$
 \section{Conduction of the project}
 \subsection{Gantt chart}
 
+\makeatletter
+\newcommand{\addsubsectiontotoc}[1]{%
+  \refstepcounter{subsection}
+  \addtocontents{toc}{%
+    \protect\beamer@subsectionintoc{\the\c@section}{\the\c@subsection}{#1}%
+      {\the\c@page}{\the\c@part}{\the\beamer@tocsectionnumber}}%
+}
+\makeatother
+\addsubsectiontotoc{Statistics}
+
 \begin{frame}
-  \tableofcontents[currentsection]
+  \tableofcontents[currentsection, subsectionstyle=show/show]
 \end{frame}
 
 \begin{frame}
@@ -529,10 +547,7 @@ $$\mathcal{L} = \alpha^*\beta\alpha^*$$
 
 \end{frame}
 
-\subsection{Some statistics}
+\subsection{Statistics}
 
-\begin{frame}
-  Statistics about the project:
-\end{frame}
 
 \end{document}
