@@ -11,6 +11,7 @@
   % audience=short
   audience=long
 ]{beameraudience}
+\usepackage{pgfgantt}
 
 \usetikzlibrary {arrows.meta,automata,positioning} 
 \usetikzlibrary{automata}
@@ -427,16 +428,111 @@
 $$\mathcal{L} = \alpha^*\beta\alpha^*$$
 \end{frame}
 
-\subsection{To be named}
+\subsection{Refinement steps}
 
 \begin{frame}
-    Formalization
+  \tableofcontents[currentsection, currentsubsection]
 \end{frame}
 
-\subsection{Application to Hopcroft's algorithm}
+% use rgb colors
+\definecolor{green1}{RGB}{205, 228, 211}
+\definecolor{green2}{RGB}{156, 201, 166}
+\definecolor{green3}{RGB}{106, 175, 122}
+\definecolor{green4}{RGB}{78, 145, 94}
 
 \begin{frame}
-    Coming soon
+  \begin{center}
+    \begin{tikzpicture}[shorten >=1pt,node distance=4cm, on grid, >={Stealth[round]},initial text=,rounded corners=0.2cm, minimum width=3.25cm, minimum height=1.45cm]
+      \small
+      \node[fill=green1] (spec) {Specification};
+      \only<1>{\node[fill=green2, below of=spec, yshift=1.9cm] (abs2) {Abstract II};}
+      \only<2->{\node[fill=green2, below of=spec, yshift=1.9cm, text width=3.15
+      cm] (abs2) {\scriptsize{Refinement of the specification for acquiring next state toward an inner loop}};}
+      \only<1-2>{\node[fill=green2, right of=abs2] (abs3) {Abstract III};}
+      \only<3->{\node[fill=green2, right of=abs2, text width=3.15
+      cm] (abs3) {\scriptsize{Precomputation of the set of predecessors of the currently chosen set}};}
+      \only<1-3>{\node[fill=green3, below of=abs3, yshift=1.9cm] (dat1) {Data Refinement I};}
+      \only<4->{\node[fill=green3, below of=abs3, yshift=1.9cm, text width=3.15
+      cm] (dat1) {\scriptsize{Refinement towards efficient data structures:
+      \begin{center}
+        partition of $\mathcal{Q}$ $\rightarrow$ maps
+      \end{center}}};}
+      \only<1-4>{\node[fill=green3, left of=dat1] (dat2) {Data Refinement II};}
+      \only<5->{\node[fill=green3, left of=dat1, text width=3.15
+      cm] (dat2) {\scriptsize{Classes as sets $\rightarrow$ maps}};}
+      \only<1-5>{\node[fill=green4, below of=dat2, yshift=1.9cm] (imp) {Implementation};}
+      \only<6->{\node[fill=green4, below of=dat2, yshift=1.9cm, text width=3.15
+      cm] (imp) {\scriptsize{Instantiation of the locales}};}
+
+      \draw[->, thick] (spec) -- (abs2);
+      \draw[->, thick] (abs2) -- (abs3);
+      \draw[->, thick] (abs3) -- (dat1);
+      \draw[->, thick] (dat1) -- (dat2);
+      \draw[->, thick] (dat2) -- (imp);
+
+      \onslide<7->{
+        \node[draw=red, fill=none, very thick, rounded corners=0.3cm, minimum width=7.7cm, minimum height=4cm] (frame) at (2,-1.13) {};
+        \node[xshift=1cm, text width=1.8cm] at (frame.east) {\color{red}\textbf{What I had time to do}};
+      }
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+
+\section{Conduction of the project}
+\subsection{Gantt chart}
+
+\begin{frame}
+  \tableofcontents[currentsection]
+\end{frame}
+
+\begin{frame}
+\frametitle{Gantt chart}
+  \begin{ganttchart}[
+    hgrid,
+    vgrid={*3{black,dotted}, *1{black, dashed}},
+    x unit=0.32cm,
+    y unit title=0.4cm,
+    y unit chart=0.5cm,
+    title height=1,
+    title/.style={fill=gray!20},
+    title label font=\bfseries\scriptsize,
+    group/.append style={fill=green!20!black!70},
+    bar/.style={fill=green!35!black!50},
+    bar height=0.5,
+    bar label font=\scriptsize,
+    % progress label text={\pgfmathprintnumber[precision=0,verbatim]{#1}\%},
+    group left shift=0,
+    group right shift=0
+  ]{1}{24}
+
+  \scriptsize
+  % Months every 4 units
+  \gantttitle{March}{4}
+  \gantttitle{April}{4}
+  \gantttitle{May}{4}
+  \gantttitle{June}{4}
+  \gantttitle{July}{4}
+  \gantttitle{August}{4}\\
+  
+  \ganttgroup{Porting old theories}{1}{5} \\
+  \ganttbar{Reading documentation}{1}{2} \\
+  \ganttbar{Fixing proofs}{2}{5} \\ \ganttnewline
+  
+  \ganttgroup{Time Complexity Analysis}{6}{22} \\
+  \ganttbar{Paper proof}{6}{12} \\
+  \ganttbar{Getting used to NREST}{9}{13} \\
+  \ganttbar{Isabelle formalization}{13}{21} \\
+  \ganttbar[bar/.append style={fill=orange!60}]{Proof of \texttt{estimate2\_decrease}}{14}{18} \\
+  \ganttbar{Writing documentation}{20}{22}
+  \end{ganttchart}
+
+\end{frame}
+
+\subsection{Some statistics}
+
+\begin{frame}
+  Statistics about the project:
 \end{frame}
 
 \end{document}
