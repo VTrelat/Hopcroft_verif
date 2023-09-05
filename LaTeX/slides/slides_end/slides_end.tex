@@ -1,6 +1,7 @@
 \documentclass{beamer}
 \usepackage{tikz, hyperref}
 \usepackage{listings}
+\usepackage{pgfgantt}
 \usetikzlibrary{decorations.pathreplacing}
 
 \usetheme{terminal}
@@ -22,6 +23,49 @@
 
 \setcounter{framenumber}{16}
 \begin{document}
+
+\begin{frame}
+    \frametitle{\prompt{echo gantt chart}}
+      \begin{ganttchart}[
+        hgrid,
+        vgrid={*3{black,dotted}, *1{black, dashed}},
+        x unit=0.32cm,
+        y unit title=0.4cm,
+        y unit chart=0.5cm,
+        title height=1,
+        title/.style={fill=gray!20},
+        title label font=\bfseries\scriptsize,
+        group/.append style={fill=green!20!black!70},
+        bar/.style={fill=green!35!black!50},
+        bar height=0.5,
+        bar label font=\scriptsize,
+        % progress label text={\pgfmathprintnumber[precision=0,verbatim]{#1}\%},
+        group left shift=0,
+        group right shift=0
+      ]{1}{24}
+    
+      \scriptsize
+      % Months every 4 units
+      \gantttitle{March}{4}
+      \gantttitle{April}{4}
+      \gantttitle{May}{4}
+      \gantttitle{June}{4}
+      \gantttitle{July}{4}
+      \gantttitle{August}{4}\\
+      
+      \ganttgroup{Porting old theories}{1}{5} \\
+      \ganttbar{Reading documentation}{1}{2} \\
+      \ganttbar{Fixing proofs}{2}{5} \\ \ganttnewline
+      
+      \ganttgroup{Time Complexity Analysis}{6}{22} \\
+      \ganttbar{Paper proof}{6}{12} \\
+      \ganttbar{Getting used to NREST}{9}{13} \\
+      \ganttbar{Isabelle formalization}{13}{21} \\
+      \ganttbar[bar/.append style={fill=orange!60}]{Proof of \texttt{estimate2\_decrease}}{14}{18} \\
+      \ganttbar{Writing documentation}{19}{22}
+      \end{ganttchart}
+    
+    \end{frame}
 
 \begin{frame}
 \frametitle{\prompt{show stats}}
